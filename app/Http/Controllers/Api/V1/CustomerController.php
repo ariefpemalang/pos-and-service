@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Api\Concerns\PaginatesApiQuery;
 use App\Http\Controllers\Api\Concerns\RespondsWithApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\CustomerResource;
@@ -11,6 +12,7 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
+    use PaginatesApiQuery;
     use RespondsWithApi;
 
     public function __construct()
@@ -23,43 +25,16 @@ class CustomerController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $perPage = min(max((int) $request->integer('per_page', 15), 1), 50);
-        $search = trim((string) $request->query('search', ''));
-
-        $query = Customer::query()
-            ->select([
-                'id',
-                'code',
-                'name',
-                'phone',
-                'email',
-                'address',
-                'notes',
-                'created_at',
-                'updated_at',
-            ])
-            ->latest('id');
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
-
-        $paginator = $query->paginate($perPage);
+        $paginator = $this->paginateQuery(
+            $request,
+            Customer::query(),
+            ['name', 'code', 'phone', 'email'],
+            ['id', 'code', 'name', 'phone', 'email', 'address', 'notes', 'created_at', 'updated_at'],
+        );
 
         return $this->apiSuccess('Daftar pelanggan berhasil diambil.', [
             'items' => CustomerResource::collection($paginator->items())->resolve(),
-            'meta' => [
-                'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
-                'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
-                'has_more' => $paginator->hasMorePages(),
-            ],
+            'meta' => $this->paginationMeta($paginator),
         ]);
     }
 

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\SupplierController;
+use App\Http\Controllers\Api\V1\TechnicianController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('api.key')->group(function () {
@@ -13,5 +15,7 @@ Route::middleware('api.key')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
 
         Route::apiResource('customers', CustomerController::class);
+        Route::apiResource('suppliers', SupplierController::class);
+        Route::apiResource('technicians', TechnicianController::class);
     });
 });
