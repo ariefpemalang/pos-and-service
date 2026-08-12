@@ -20,18 +20,19 @@ Route::middleware('api.key')->group(function () {
         Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-        Route::apiResource('customers', CustomerController::class);
-        Route::apiResource('suppliers', SupplierController::class);
-        Route::apiResource('technicians', TechnicianController::class);
-        Route::apiResource('bank-accounts', BankAccountController::class);
-        Route::apiResource('workshop-services', WorkshopServiceController::class);
-        Route::apiResource('item-categories', ItemCategoryController::class);
-        Route::apiResource('item-units', ItemUnitController::class);
-        Route::apiResource('items', ItemController::class);
+        // Prefix nama route `api.*` agar tidak menimpa route web (customers.index, dll).
+        Route::apiResource('customers', CustomerController::class)->names('api.customers');
+        Route::apiResource('suppliers', SupplierController::class)->names('api.suppliers');
+        Route::apiResource('technicians', TechnicianController::class)->names('api.technicians');
+        Route::apiResource('bank-accounts', BankAccountController::class)->names('api.bank-accounts');
+        Route::apiResource('workshop-services', WorkshopServiceController::class)->names('api.workshop-services');
+        Route::apiResource('item-categories', ItemCategoryController::class)->names('api.item-categories');
+        Route::apiResource('item-units', ItemUnitController::class)->names('api.item-units');
+        Route::apiResource('items', ItemController::class)->names('api.items');
         // Multipart update (PHP sering gagal parse file di PUT).
-        Route::post('items/{item}', [ItemController::class, 'update']);
+        Route::post('items/{item}', [ItemController::class, 'update'])->name('api.items.update.multipart');
 
-        Route::get('/settings', [SettingController::class, 'show']);
-        Route::match(['put', 'post'], '/settings', [SettingController::class, 'update']);
+        Route::get('/settings', [SettingController::class, 'show'])->name('api.settings.show');
+        Route::match(['put', 'post'], '/settings', [SettingController::class, 'update'])->name('api.settings.update');
     });
 });
