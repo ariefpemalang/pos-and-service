@@ -29,35 +29,100 @@
     }
 
     function optionData($el, key) {
+        const fromAttr = $el.attr('data-' + key);
+        if (fromAttr != null && fromAttr !== '') {
+            return String(fromAttr);
+        }
         const camel = key.replace(/-([a-z])/g, function (_, c) { return c.toUpperCase(); });
         const raw = $el.data(camel);
-        if (raw !== undefined && raw !== null) {
+        if (raw !== undefined && raw !== null && raw !== '') {
             return String(raw);
         }
-        return String($el.attr('data-' + key) || '');
+        return '';
     }
 
-    function isMemberOption(option) {
-        if (!option.element) {
+    function digitsOnly(value) {
+        return String(value || '').replace(/\D+/g, '');
+    }
+
+    function phoneCore(digits) {
+        if (!digits) {
+            return '';
+        }
+        if (digits.indexOf('62') === 0 && digits.length > 4) {
+            return digits.slice(2);
+        }
+        if (digits.indexOf('0') === 0 && digits.length > 3) {
+            return digits.slice(1);
+        }
+        return digits;
+    }
+
+    function phonesMatch(phone, term) {
+        const termDigits = digitsOnly(term);
+        if (termDigits.length < 3) {
             return false;
         }
 
-        const $el = $(option.element);
-        const raw = $el.data('isMember');
-
-        if (raw !== undefined) {
-            return String(raw) === '1' || raw === true;
+        const phoneDigits = digitsOnly(phone);
+        if (!phoneDigits) {
+            return false;
         }
 
-        return $el.attr('data-is-member') === '1';
+        if (phoneDigits.indexOf(termDigits) > -1) {
+            return true;
+        }
+
+        const haystack = phoneCore(phoneDigits);
+        const needle = phoneCore(termDigits);
+
+        return needle.length >= 3 && haystack.indexOf(needle) > -1;
+    }
+
+    function customerMatcher(params, data) {
+        const term = $.trim(params.term || '');
+        if (term === '') {
+            return data;
+        }
+
+        if (data.children && data.children.length > 0) {
+            const match = $.extend(true, {}, data);
+            match.children = [];
+            data.children.forEach(function (child) {
+                const matched = customerMatcher(params, child);
+                if (matched) {
+                    match.children.push(matched);
+                }
+            });
+            return match.children.length ? match : null;
+        }
+
+        if (data.id == null || data.id === '') {
+            return null;
+        }
+
+        const $el = data.element ? $(data.element) : $();
+        const id = String(data.id);
+        const name = optionData($el, 'name');
+        const code = optionData($el, 'code');
+        const phone = optionData($el, 'phone');
+        const haystack = [data.text, name, code, phone].join(' ').toLowerCase();
+
+        if (haystack.indexOf(term.toLowerCase()) > -1) {
+            return data;
+        }
+
+        if (id !== '__new__' && id !== '__umum__' && phonesMatch(phone || data.text, term)) {
+            return data;
+        }
+
+        return null;
     }
 
     function customerCardIcon(option, extraClass) {
-        const isMember = isMemberOption(option);
-        const tone = isMember ? 'member' : 'regular';
         const extra = extraClass ? ' ' + extraClass : '';
 
-        return '<i class="bi bi-person-vcard atha-s2-opt-card atha-s2-opt-card--' + tone + extra + '"></i>';
+        return '<i class="bi bi-person-vcard atha-s2-opt-card' + extra + '"></i>';
     }
 
     function formatCustomerOption(option) {
@@ -67,6 +132,7 @@
 
         const val = String(option.id);
         const text = option.text || '';
+        const $el = $(option.element);
 
         if (val === '__new__') {
             return $('<span class="atha-s2-opt atha-s2-opt--action"><i class="bi bi-person-plus"></i> Pelanggan baru</span>');
@@ -77,13 +143,21 @@
         }
 
         const sep = text.indexOf(' — ');
-        if (sep > -1) {
-            const code = text.slice(0, sep);
-            const name = text.slice(sep + 3);
-            return $('<span class="atha-s2-opt">' + customerCardIcon(option) + '<span class="atha-s2-opt-code">' + escapeHtml(code) + '</span><span class="atha-s2-opt-sep">—</span><span class="atha-s2-opt-name">' + escapeHtml(name) + '</span></span>');
-        }
+        const code = optionData($el, 'code') || (sep > -1 ? text.slice(0, sep) : '');
+        const name = optionData($el, 'name') || (sep > -1 ? text.slice(sep + 3) : text);
+        const phone = optionData($el, 'phone');
 
-        return $('<span class="atha-s2-opt">' + customerCardIcon(option) + escapeHtml(text) + '</span>');
+        let html = '<span class="atha-s2-opt">' + customerCardIcon(option);
+        if (code) {
+            html += '<span class="atha-s2-opt-code">' + escapeHtml(code) + '</span><span class="atha-s2-opt-sep">—</span>';
+        }
+        html += '<span class="atha-s2-opt-name">' + escapeHtml(name) + '</span>';
+        if (phone) {
+            html += '<span class="atha-s2-opt-phone"><i class="bi bi-whatsapp"></i> ' + escapeHtml(phone) + '</span>';
+        }
+        html += '</span>';
+
+        return $(html);
     }
 
     function formatCustomerSelection(option) {
@@ -93,15 +167,24 @@
 
         const val = String(option.id);
         const text = option.text || '';
+        const $el = $(option.element);
 
         if (val === '__new__' || val === '__umum__') {
             return text;
         }
 
         const sep = text.indexOf(' — ');
-        const label = sep > -1 ? text.slice(sep + 3) : text;
+        const name = optionData($el, 'name') || (sep > -1 ? text.slice(sep + 3) : text);
+        const phone = optionData($el, 'phone');
 
-        return $('<span class="atha-s2-opt atha-s2-opt--selection">' + customerCardIcon(option) + '<span class="atha-s2-opt-name">' + escapeHtml(label) + '</span></span>');
+        let html = '<span class="atha-s2-opt atha-s2-opt--selection">' + customerCardIcon(option) +
+            '<span class="atha-s2-opt-name">' + escapeHtml(name) + '</span>';
+        if (phone) {
+            html += '<span class="atha-s2-opt-phone">' + escapeHtml(phone) + '</span>';
+        }
+        html += '</span>';
+
+        return $(html);
     }
 
     function itemThumbHtml(photo, name) {
@@ -122,7 +205,6 @@
         const name = optionData($el, 'name') || option.text || '';
         const stock = optionData($el, 'stock') || '0';
         const price = optionData($el, 'price') || '0';
-        const memberPrice = optionData($el, 'member-price') || '0';
         const purchasePrice = optionData($el, 'purchase-price') || '0';
         const category = optionData($el, 'category');
         const unit = optionData($el, 'unit');
@@ -138,9 +220,6 @@
         metaParts.push('Stok: ' + Number(stock).toLocaleString('id-ID'));
 
         let priceLine = 'Jual: ' + formatRp(price);
-        if (Number(memberPrice) > 0) {
-            priceLine += ' · Member: ' + formatRp(memberPrice);
-        }
         if (Number(purchasePrice) > 0) {
             priceLine += ' · Beli: ' + formatRp(purchasePrice);
         }
@@ -210,6 +289,7 @@
                 if ($el.hasClass('atha-select2-customer')) {
                     opts.templateResult = formatCustomerOption;
                     opts.templateSelection = formatCustomerSelection;
+                    opts.matcher = customerMatcher;
                     opts.dropdownAutoWidth = false;
                 }
 

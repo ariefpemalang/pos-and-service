@@ -8,7 +8,6 @@
     data-name="{{ $item->name }}"
     data-stock="{{ $item->stock }}"
     data-price="{{ $item->selling_price }}"
-    data-member-price="{{ $item->member_price ?? 0 }}"
     data-purchase-price="{{ $item->purchase_price ?? 0 }}"
     data-category="{{ $item->category?->name ?? '' }}"
     data-unit="{{ $unitLabel }}"

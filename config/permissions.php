@@ -54,6 +54,10 @@ return [
         'access' => ['workshop service view', 'workshop service create', 'workshop service edit', 'workshop service delete'],
     ],
     [
+        'group' => 'Tiket Servis',
+        'access' => ['service ticket view', 'service ticket create', 'service ticket edit', 'service ticket delete'],
+    ],
+    [
         'group' => 'Transaksi',
         'access' => ['transaction view', 'transaction create', 'transaction edit', 'transaction delete'],
     ],

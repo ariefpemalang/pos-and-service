@@ -1510,6 +1510,47 @@ a.page-trail-link:hover {
   max-width: 100%;
 }
 
+.ticket-form-aside-wrap {
+  top: 1rem;
+}
+
+.ticket-form-aside-wrap .form-actions {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.ticket-form-aside-wrap .form-actions .btn-save {
+  width: 100%;
+}
+
+.ticket-form-aside .data-panel-body {
+  padding: 1rem 1.15rem 1.2rem;
+}
+
+.warranty-aside-preview {
+  padding: 0.85rem 0.9rem;
+  border-radius: 12px;
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+}
+
+.warranty-aside-tips {
+  margin: 1rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  color: var(--admin-text-muted);
+}
+
+.warranty-aside-tips li + li {
+  margin-top: 0.35rem;
+}
+
+.warranty-card--none .warranty-card-icon {
+  background: var(--admin-surface);
+  color: var(--admin-text-muted);
+}
+
 .form-panel-clean {
   background: var(--admin-surface);
   border-radius: 12px;
@@ -1590,8 +1631,16 @@ select.form-control-clean.atha-searchable-select {
 }
 
 textarea.form-control-clean {
-  height: auto;
-  min-height: 42px;
+  height: auto !important;
+  min-height: 2.75rem;
+  max-height: 12rem;
+  line-height: 1.45;
+  overflow-y: auto;
+  resize: vertical;
+}
+
+textarea.form-control-clean#notes {
+  min-height: 5.25rem;
 }
 
 .form-control-clean:focus,
@@ -1607,6 +1656,42 @@ textarea.form-control-clean {
   border-color: var(--admin-border);
   background: color-mix(in srgb, var(--admin-surface-2) 85%, var(--admin-bg));
   opacity: 0.8;
+}
+
+.secret-input-wrap {
+  position: relative;
+}
+
+.secret-input-wrap .form-control-clean {
+  padding-right: 2.6rem;
+}
+
+.secret-input-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.3rem;
+  transform: translateY(-50%);
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--admin-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.secret-input-toggle:hover,
+.secret-input-toggle:focus-visible {
+  color: var(--admin-text-heading);
+  background: var(--admin-surface);
+}
+
+.secret-input-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 input[type="password"].form-control-clean::placeholder,
@@ -2096,11 +2181,12 @@ a.dash-card-link .stat-card {
 }
 
 .select2-container--bootstrap-5.atha-select2-wrap .select2-selection--single .select2-selection__rendered {
-  padding: 0.5rem 2.35rem 0.5rem 0.85rem;
+  padding: 0.5rem 3.6rem 0.5rem 0.85rem;
   line-height: 1.25;
   color: var(--admin-text-heading);
   font-size: 0.875rem;
   font-weight: 500;
+  overflow: hidden;
 }
 
 .select2-container--bootstrap-5.atha-select2-wrap .select2-selection--single .select2-selection__placeholder {
@@ -2254,10 +2340,12 @@ a.dash-card-link .stat-card {
 
 /* Opsi pelanggan — kode & nama terpisah */
 .atha-s2-opt {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.35rem;
+  width: 100%;
   max-width: 100%;
+  min-width: 0;
 }
 
 .atha-s2-opt-code {
@@ -2283,6 +2371,22 @@ a.dash-card-link .stat-card {
   white-space: nowrap;
   color: var(--admin-text-heading);
   font-weight: 500;
+  min-width: 0;
+}
+
+.atha-s2-opt-phone {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+  color: var(--admin-text-muted);
+  white-space: nowrap;
+}
+
+.atha-s2-opt-phone i {
+  font-size: 0.85em;
+  color: #25d366;
 }
 
 .atha-s2-opt--walkin {
@@ -2299,18 +2403,15 @@ a.dash-card-link .stat-card {
   flex-shrink: 0;
   font-size: 1.05em;
   line-height: 1;
-}
-
-.atha-s2-opt-card--member {
-  color: #22a55e;
-}
-
-.atha-s2-opt-card--regular {
   color: var(--admin-text-muted);
 }
 
 .atha-s2-opt--selection .atha-s2-opt-name {
   font-weight: 500;
+}
+
+.atha-s2-opt--selection .atha-s2-opt-phone {
+  margin-left: 0.5rem;
 }
 
 .atha-s2-opt--action {
@@ -2934,11 +3035,7 @@ a.dash-card-link .stat-card {
   color: var(--accent-bright);
 }
 
-[data-bs-theme="dark"] .atha-s2-opt-card--member {
-  color: #4ade80;
-}
-
-[data-bs-theme="dark"] .atha-s2-opt-card--regular {
+[data-bs-theme="dark"] .atha-s2-opt-card {
   color: var(--admin-text-muted);
 }
 
@@ -3173,24 +3270,6 @@ a.dash-card-link .stat-card {
   flex-wrap: wrap;
 }
 
-.tx-detail-member-icon {
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.tx-detail-member-icon--member { color: #22a55e; }
-.tx-detail-member-icon--regular { color: var(--admin-text-muted); }
-
-.tx-detail-member-tag {
-  display: inline-block;
-  padding: 0.1rem 0.4rem;
-  border-radius: 999px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  background: rgba(34, 197, 94, 0.14);
-  color: #16a34a;
-}
-
 .tx-detail-notes {
   display: flex;
   align-items: flex-start;
@@ -3387,11 +3466,445 @@ a.dash-card-link .stat-card {
   background: var(--admin-bg);
 }
 
-[data-bs-theme="dark"] .tx-detail-member-tag {
-  background: rgba(74, 222, 128, 0.14);
-  color: #4ade80;
+.warranty-form-block {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: var(--admin-surface-2);
 }
 
-[data-bs-theme="dark"] .tx-detail-member-icon--member {
-  color: #4ade80;
+.warranty-form-block-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.warranty-form-block-head > i {
+  font-size: 1.15rem;
+  color: var(--accent-bright);
+  margin-top: 0.1rem;
+}
+
+.warranty-form-block-title {
+  font-weight: 600;
+  color: var(--admin-text-heading);
+}
+
+.warranty-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.warranty-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.warranty-card-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-muted);
+  color: var(--accent-bright);
+  flex-shrink: 0;
+}
+
+.warranty-card--active .warranty-card-icon {
+  background: rgba(25, 135, 84, 0.15);
+  color: #198754;
+}
+
+.warranty-card--expired .warranty-card-icon {
+  background: rgba(220, 53, 69, 0.12);
+  color: #dc3545;
+}
+
+.warranty-card-kicker {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-muted);
+}
+
+.warranty-card-title {
+  font-weight: 650;
+  color: var(--admin-text-heading);
+  line-height: 1.2;
+}
+
+.warranty-card-head .badge {
+  margin-left: auto;
+}
+
+.warranty-card-copy,
+.warranty-card-notes {
+  font-size: 0.82rem;
+  color: var(--admin-text-muted);
+  margin: 0;
+}
+
+.warranty-card-notes {
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+}
+
+.warranty-card-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.warranty-card-meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.warranty-card-meta span {
+  font-size: 0.7rem;
+  color: var(--admin-text-muted);
+}
+
+.warranty-card-meta strong {
+  font-size: 0.82rem;
+  color: var(--admin-text-heading);
+}
+
+.warranty-card-edit summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent-bright);
+}
+
+.warranty-card-edit summary:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 575.98px) {
+  .warranty-card-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ticket-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.ticket-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.ticket-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+  border-radius: 999px;
+  padding: 0.32rem 0.55rem 0.32rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+}
+
+.ticket-chip:hover {
+  border-color: var(--accent);
+  color: var(--admin-text-heading);
+}
+
+.ticket-chip:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+
+.ticket-chip.is-active {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--admin-text-heading);
+  box-shadow: 0 0 0 1px rgba(212, 160, 23, 0.25);
+}
+
+.ticket-chip-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--admin-text-muted);
+  flex-shrink: 0;
+}
+
+.ticket-chip--accent .ticket-chip-dot { background: var(--accent-bright); }
+.ticket-chip--primary .ticket-chip-dot { background: #6ea8fe; }
+.ticket-chip--secondary .ticket-chip-dot { background: #adb5bd; }
+.ticket-chip--info .ticket-chip-dot { background: #6edff6; }
+.ticket-chip--warning .ticket-chip-dot { background: #ffc107; }
+.ticket-chip--success .ticket-chip-dot { background: #3ddc84; }
+.ticket-chip--danger .ticket-chip-dot { background: #ff6b7a; }
+
+.ticket-chip-count {
+  min-width: 1.3rem;
+  height: 1.3rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--admin-surface);
+  color: var(--admin-text-heading);
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ticket-chip.is-active .ticket-chip-count {
+  background: var(--accent);
+  color: #1a1408;
+}
+
+.ticket-filter-extras {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.ticket-filter-reset-wrap {
+  padding-bottom: 1px;
+}
+
+@media (max-width: 991.98px) {
+  .ticket-filter-extras {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 575.98px) {
+  .ticket-filter-extras {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ticket-show .data-panel-head {
+  padding: 0.75rem 1rem;
+}
+
+.ticket-show .data-panel-body {
+  padding: 0.85rem 1rem 1rem;
+}
+
+.ticket-facts {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.ticket-fact {
+  grid-column: span 3;
+  min-width: 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 9px;
+  background: var(--admin-surface-2);
+}
+
+.ticket-fact--sm {
+  grid-column: span 2;
+}
+
+.ticket-fact--wide {
+  grid-column: span 6;
+}
+
+.ticket-fact-label {
+  display: block;
+  margin: 0 0 0.12rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.ticket-fact-value {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--admin-text-heading);
+  word-break: break-word;
+}
+
+.ticket-fact-sub {
+  display: inline-block;
+  margin-left: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--admin-text-muted);
+}
+
+.ticket-costbar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 10px;
+  background: var(--accent-muted);
+  border: 1px solid rgba(212, 160, 23, 0.22);
+}
+
+.ticket-costbar span {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.ticket-costbar strong {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.92rem;
+  color: var(--admin-text-heading);
+}
+
+.ticket-costbar em {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  font-style: normal;
+  color: var(--admin-text-muted);
+}
+
+.ticket-log {
+  display: grid;
+  grid-template-columns: 8.75rem minmax(0, 1fr);
+  gap: 0.65rem 0.75rem;
+  align-items: start;
+  padding: 0.55rem 0.65rem;
+  border-radius: 9px;
+  background: var(--admin-surface-2);
+}
+
+.ticket-log + .ticket-log {
+  margin-top: 0.4rem;
+}
+
+.ticket-log .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 1.55rem;
+  margin-top: 0.05rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.ticket-log-body {
+  min-width: 0;
+}
+
+.ticket-log-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ticket-log-meta,
+.ticket-log-wa {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+}
+
+.ticket-log-wa {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.ticket-log-note {
+  margin-top: 0.3rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  background: var(--admin-surface);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--admin-text);
+}
+
+.ticket-log-wa.is-sent {
+  color: #198754;
+}
+
+.ticket-show-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ticket-show .warranty-card {
+  gap: 0.55rem;
+}
+
+@media (max-width: 767.98px) {
+  .ticket-facts {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ticket-fact,
+  .ticket-fact--sm {
+    grid-column: span 1;
+  }
+
+  .ticket-fact--wide {
+    grid-column: span 2;
+  }
+
+  .ticket-costbar {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-log {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+
+  .ticket-log .badge {
+    width: auto;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .ticket-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-fact,
+  .ticket-fact--sm,
+  .ticket-fact--wide {
+    grid-column: span 1;
+  }
 }

@@ -16,11 +16,17 @@
             .replace(/"/g, '&quot;');
     }
 
-    function typeLabel(type) {
+    function typeLabel(type, isDownPayment) {
+        if (isDownPayment) {
+            return 'Uang muka';
+        }
         return { sale: 'Penjualan', service: 'Servis', combined: 'Gabungan' }[type] || type;
     }
 
-    function typeBadge(type) {
+    function typeBadge(type, isDownPayment) {
+        if (isDownPayment) {
+            return '<span class="tx-detail-badge tx-detail-badge--done">Uang muka</span>';
+        }
         const map = {
             sale: 'tx-detail-badge tx-detail-badge--sale',
             service: 'tx-detail-badge tx-detail-badge--service',
@@ -47,19 +53,7 @@
     }
 
     function customerLabel(d) {
-        const name = d.customer_name || d.customer?.name || '-';
-        const isMember = d.customer?.is_member;
-
-        if (!d.customer || isMember === undefined || isMember === null) {
-            return escapeHtml(name);
-        }
-
-        const iconClass = isMember ? 'tx-detail-member-icon--member' : 'tx-detail-member-icon--regular';
-        const memberTag = isMember
-            ? '<span class="tx-detail-member-tag">Member</span>'
-            : '';
-
-        return `<span class="tx-detail-customer"><i class="bi bi-person-vcard tx-detail-member-icon ${iconClass}"></i><span>${escapeHtml(name)}</span>${memberTag}</span>`;
+        return escapeHtml(d.customer_name || d.customer?.name || '-');
     }
 
     function metaItem(icon, label, value) {
@@ -220,10 +214,10 @@
                         <div class="tx-detail-hero">
                             <div class="tx-detail-hero__main">
                                 <div class="tx-detail-hero__badges">
-                                    ${typeBadge(d.type)}
+                                    ${typeBadge(d.type, d.is_down_payment)}
                                     ${statusBadge(d.status)}
                                 </div>
-                                <div class="tx-detail-hero__total-label">Total Transaksi</div>
+                                <div class="tx-detail-hero__total-label">${d.is_down_payment ? 'Uang muka' : (Number(d.down_payment) > 0 ? 'Sisa bayar' : 'Total Transaksi')}</div>
                                 <div class="tx-detail-hero__total">${formatRp(d.total)}</div>
                             </div>
                         </div>
@@ -234,6 +228,7 @@
                             ${metaItem('bi-person-badge', 'Kasir', escapeHtml(d.user?.name || '-'))}
                             ${metaItem('bi-wallet2', 'Metode Bayar', escapeHtml(paymentLabel(d)))}
                             ${metaItem('bi-calendar3', 'Waktu', escapeHtml(new Date(d.created_at).toLocaleString('id-ID')))}
+                            ${d.service_ticket ? metaItem('bi-phone', 'Tiket Servis', escapeHtml(d.service_ticket.ticket_no)) : ''}
                         </div>
 
                         ${notes}
@@ -254,8 +249,13 @@
                                 <span>Diskon</span>
                                 <span>- ${formatRp(d.discount)}</span>
                             </div>
+                            ${Number(d.down_payment) > 0 ? `
+                            <div class="tx-detail-summary__row tx-detail-summary__row--discount">
+                                <span>Uang muka</span>
+                                <span>- ${formatRp(d.down_payment)}</span>
+                            </div>` : ''}
                             <div class="tx-detail-summary__row tx-detail-summary__row--total">
-                                <span>Total</span>
+                                <span>${d.is_down_payment ? 'Uang muka' : (Number(d.down_payment) > 0 ? 'Sisa bayar' : 'Total')}</span>
                                 <span>${formatRp(d.total)}</span>
                             </div>
                             ${d.payment_method === 'cash' && d.cash_received != null ? `

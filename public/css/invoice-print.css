@@ -134,7 +134,8 @@ body.print-body {
 
 .receipt-row span:last-child {
   text-align: right;
-  flex-shrink: 0;
+  min-width: 0;
+  word-break: break-word;
   font-weight: 800;
 }
 
@@ -166,10 +167,10 @@ body.print-body {
   margin: 4px 0 2px;
 }
 
-.receipt-footer {
-  font-size: 10px;
+.receipt-warranty {
+  font-size: 11px;
   font-weight: 800;
-  line-height: 1.3;
+  margin: 2px 0 0;
 }
 
 @media print {
@@ -242,6 +243,11 @@ body.print-body {
   .receipt-status {
     font-size: 13px;
     font-weight: 900;
+  }
+
+  .receipt-warranty {
+    font-size: 11px;
+    font-weight: 800;
   }
 
   .receipt-footer {

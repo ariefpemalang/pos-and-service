@@ -82,6 +82,10 @@
                             <td class="text-danger">Diskon</td>
                             <td class="text-end text-danger">− {{ $rp($sales['discount']) }}</td>
                         </tr>
+                        <tr>
+                            <td>Uang muka tiket</td>
+                            <td class="text-end">{{ $rp($sales['down_payment_in'] ?? 0) }}</td>
+                        </tr>
                         <tr class="fr-total-row-web">
                             <td class="fw-bold">Pemasukan Bersih</td>
                             <td class="text-end fw-bold text-success">{{ $rp($sales['revenue']) }}</td>

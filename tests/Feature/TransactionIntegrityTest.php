@@ -126,7 +126,11 @@ class TransactionIntegrityTest extends TestCase
         $this->assertSame(120000.0, $report['sales']['revenue']);
         $this->assertSame(20000.0, $report['sales']['technician_commission']);
         $this->assertSame($expectedCashFlow, $report['profit']['cash_flow_estimate']);
-        $this->assertSame($expectedCashFlow, $report['profit']['owner_net_estimate']);
+        $this->assertSame(
+            round($report['sales']['owner_share'], 2),
+            $report['profit']['owner_net_estimate'],
+        );
+        $this->assertSame(100000.0, $report['profit']['owner_net_estimate']);
     }
 
     #[Test]

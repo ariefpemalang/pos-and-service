@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\RespondsToModal;
 use App\Models\Customer;
 use App\Models\Item;
+use App\Models\ServiceTicket;
 use App\Models\Technician;
 use App\Models\Transaction;
 use App\Models\WorkshopService;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use InvalidArgumentException;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Str;
 
 class TransactionController extends Controller
 {
@@ -37,10 +39,12 @@ class TransactionController extends Controller
                     ->latest()
             )
                 ->addIndexColumn()
-                ->addColumn('type_label', fn (Transaction $t) => match ($t->type) {
-                    'sale' => '<span class="badge bg-primary-subtle text-primary">Penjualan</span>',
-                    'service' => '<span class="badge bg-info-subtle text-info">Servis</span>',
-                    'combined' => '<span class="badge bg-warning-subtle text-warning">Gabungan</span>',
+                ->addColumn('type_label', fn (Transaction $t) => match (true) {
+                    $t->isDownPayment() && $t->isRefunded() => '<span class="badge bg-warning-subtle text-warning">UMK dikembalikan</span>',
+                    $t->isDownPayment() => '<span class="badge bg-success-subtle text-success">Uang muka</span>',
+                    $t->type === 'sale' => '<span class="badge bg-primary-subtle text-primary">Penjualan</span>',
+                    $t->type === 'service' => '<span class="badge bg-info-subtle text-info">Servis</span>',
+                    $t->type === 'combined' => '<span class="badge bg-warning-subtle text-warning">Gabungan</span>',
                     default => e($t->type),
                 })
                 ->addColumn('status_label', fn (Transaction $t) => match ($t->status) {
@@ -64,10 +68,25 @@ class TransactionController extends Controller
         return view('transactions.index');
     }
 
-    public function create(): View
+    public function create(Request $request): View|RedirectResponse
     {
+        $ticket = $this->resolveBillingTicket($request);
+
+        if ($request->filled('ticket') && ! $ticket) {
+            return redirect()
+                ->route('transactions.create')
+                ->with('error', 'Tiket servis tidak ditemukan.');
+        }
+
+        if ($ticket && ! $ticket->canCreateInvoice()) {
+            return redirect()
+                ->route('service-tickets.show', $ticket)
+                ->with('error', 'Tiket ini sudah punya nota pembayaran atau sudah dibatalkan.');
+        }
+
         return view('transactions.create', [
-            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name', 'phone', 'is_member']),
+            'ticket' => $ticket,
+            'customers' => Customer::query()->orderBy('name')->get(['id', 'code', 'name', 'phone']),
             'technicians' => Technician::query()->where('is_active', true)->orderBy('name')->get(['id', 'code', 'name', 'commission_percent']),
             'items' => Item::query()
                 ->with(['category:id,name', 'unit:id,name,abbreviation'])
@@ -75,7 +94,7 @@ class TransactionController extends Controller
                 ->orderBy('name')
                 ->get([
                     'id', 'code', 'name', 'photo', 'category_id', 'unit_id', 'stock',
-                    'purchase_price', 'selling_price', 'member_price',
+                    'purchase_price', 'selling_price',
                 ]),
             'services' => WorkshopService::query()
                 ->where('is_active', true)
@@ -124,14 +143,13 @@ class TransactionController extends Controller
         $items = Item::query()
             ->whereIn('id', $ids)
             ->where('is_active', true)
-            ->get(['id', 'code', 'name', 'stock', 'selling_price', 'member_price'])
+            ->get(['id', 'code', 'name', 'stock', 'selling_price'])
             ->map(fn (Item $item) => [
                 'id' => $item->id,
                 'code' => $item->code,
                 'name' => $item->name,
                 'stock' => (int) $item->stock,
                 'selling_price' => (float) $item->selling_price,
-                'member_price' => (float) $item->member_price,
             ]);
 
         return response()->json(['data' => $items]);
@@ -146,6 +164,7 @@ class TransactionController extends Controller
             'items',
             'serviceLines',
             'bankAccount',
+            'serviceTicket',
         ]);
 
         return response()->json(['data' => $transaction]);
@@ -162,7 +181,17 @@ class TransactionController extends Controller
             'items',
             'serviceLines',
             'bankAccount',
+            'serviceTicket.customer',
+            'serviceTicket.technician',
+            'serviceTicket.downPaymentTransaction.bankAccount',
         ]);
+
+        if ($transaction->isDownPayment() && $transaction->serviceTicket) {
+            return view('service-tickets.claim-slip', [
+                'ticket' => $transaction->serviceTicket,
+                'transaction' => $transaction,
+            ]);
+        }
 
         return view('transactions.invoice', compact('transaction'));
     }
@@ -170,6 +199,10 @@ class TransactionController extends Controller
     public function edit(Transaction $transaction): View
     {
         abort_unless($transaction->isCompleted(), 404);
+
+        if ($transaction->isDownPayment()) {
+            abort(403, 'Transaksi uang muka tidak bisa diubah. Ubah dari tiket servis.');
+        }
 
         $transaction->load(['items', 'serviceLines', 'customer', 'technician', 'bankAccount']);
 
@@ -182,7 +215,7 @@ class TransactionController extends Controller
                 ->orderBy('name')
                 ->get([
                     'id', 'code', 'name', 'photo', 'category_id', 'unit_id', 'stock',
-                    'purchase_price', 'selling_price', 'member_price',
+                    'purchase_price', 'selling_price',
                 ]),
             'services' => WorkshopService::query()
                 ->where('is_active', true)
@@ -241,16 +274,20 @@ class TransactionController extends Controller
             return $this->modalError($e->getMessage());
         }
 
+        $message = $cancelled->isDownPayment()
+            ? 'Uang muka dikembalikan dan dicatat sebagai pengeluaran.'
+            : 'Transaksi berhasil dibatalkan.';
+
         if ($request->expectsJson()) {
             return $this->modalSuccess(
-                'Transaksi berhasil dibatalkan.',
+                $message,
                 ['transaction_no' => $cancelled->transaction_no, 'id' => $cancelled->id]
             );
         }
 
         return redirect()
             ->route('transactions.index')
-            ->with('success', 'Transaksi '.$cancelled->transaction_no.' berhasil dibatalkan.');
+            ->with('success', $message);
     }
 
     private function validateTransactionPayload(Request $request, bool $requirePayment): array
@@ -265,6 +302,7 @@ class TransactionController extends Controller
             'technician_id' => ['nullable', 'required_with:services', 'exists:technicians,id'],
             'discount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
+            'service_ticket_id' => ['nullable', 'uuid', 'exists:service_tickets,id'],
             'items' => ['nullable', 'array'],
             'items.*.item_id' => ['required_with:items', 'exists:items,id'],
             'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
@@ -315,5 +353,15 @@ class TransactionController extends Controller
         }
 
         return '<span class="badge bg-secondary-subtle text-secondary">'.e($label).'</span>';
+    }
+
+    private function resolveBillingTicket(Request $request): ?ServiceTicket
+    {
+        $ticketId = $request->string('ticket')->toString();
+        if ($ticketId === '' || ! Str::isUuid($ticketId)) {
+            return null;
+        }
+
+        return ServiceTicket::query()->with(['customer', 'technician', 'paidTransaction'])->find($ticketId);
     }
 }

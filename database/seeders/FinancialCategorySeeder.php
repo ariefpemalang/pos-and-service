@@ -25,6 +25,7 @@ class FinancialCategorySeeder extends Seeder
         }
 
         $expense = [
+            ['name' => 'Pengembalian Uang Muka', 'sort_order' => 5],
             ['name' => 'Gaji Karyawan', 'sort_order' => 10],
             ['name' => 'Listrik & Utilitas', 'sort_order' => 20],
             ['name' => 'Sewa Tempat', 'sort_order' => 30],

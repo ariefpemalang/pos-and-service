@@ -28,7 +28,6 @@ class FixExcelStockOpnameMigrationTest extends TestCase
             'stock_opname' => 12,
             'purchase_price' => 1000,
             'selling_price' => 2000,
-            'member_price' => 0,
             'is_active' => true,
         ]);
 
@@ -41,7 +40,6 @@ class FixExcelStockOpnameMigrationTest extends TestCase
             'stock_opname' => 20,
             'purchase_price' => 1000,
             'selling_price' => 2000,
-            'member_price' => 0,
             'is_active' => true,
         ]);
 

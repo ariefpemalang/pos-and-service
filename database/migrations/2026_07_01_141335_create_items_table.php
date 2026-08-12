@@ -19,7 +19,6 @@ return new class extends Migration
             $table->unsignedInteger('stock_opname')->default(0);
             $table->decimal('purchase_price', 15, 2)->default(0);
             $table->decimal('selling_price', 15, 2)->default(0);
-            $table->decimal('member_price', 15, 2)->default(0);
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

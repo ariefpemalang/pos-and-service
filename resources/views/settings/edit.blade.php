@@ -85,13 +85,18 @@
                             <label class="form-check-label" for="hiwa_enabled">Aktifkan integrasi HiWA</label>
                         </div>
                         <div class="mb-0">
-                            <label class="form-label">Token Device</label>
-                            <input type="password" name="hiwa_token_device" class="form-control form-control-clean"
-                                placeholder="{{ $settings['hiwa_token_device_masked'] ? 'Token tersimpan — isi baru untuk mengganti' : 'Token dari perangkat HiWA' }}"
-                                autocomplete="new-password">
-                            @if ($settings['hiwa_token_device_masked'])
-                                <div class="form-hint-sm">Token saat ini: {{ $settings['hiwa_token_device_masked'] }}</div>
-                            @endif
+                            <label class="form-label" for="hiwa_token_device">Token Device</label>
+                            <div class="secret-input-wrap">
+                                <input type="password" name="hiwa_token_device" id="hiwa_token_device"
+                                    class="form-control form-control-clean"
+                                    value="{{ old('hiwa_token_device', $settings['hiwa_token_device'] ?? '') }}"
+                                    placeholder="Token dari perangkat HiWA"
+                                    autocomplete="new-password" spellcheck="false">
+                                <button type="button" class="secret-input-toggle" data-toggle-secret="hiwa_token_device"
+                                    aria-label="Tampilkan token">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
                             <div class="form-hint-sm">Dari dashboard HiWA saat perangkat pertama kali terhubung.</div>
                         </div>
                     </div>
@@ -113,5 +118,21 @@
                 AthaEntityPhoto.setPreview(@json($logoUrl));
             }
         @endif
+
+        document.querySelectorAll('[data-toggle-secret]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const input = document.getElementById(btn.getAttribute('data-toggle-secret'));
+                const icon = btn.querySelector('i');
+                if (!input || !icon) {
+                    return;
+                }
+
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                icon.classList.toggle('bi-eye', !show);
+                icon.classList.toggle('bi-eye-slash', show);
+                btn.setAttribute('aria-label', show ? 'Sembunyikan token' : 'Tampilkan token');
+            });
+        });
     </script>
 @endpush

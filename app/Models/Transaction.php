@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'transaction_no', 'type', 'customer_id', 'customer_name', 'technician_id', 'user_id',
-    'subtotal_items', 'subtotal_services', 'discount', 'total',
+    'service_ticket_id',
+    'subtotal_items', 'subtotal_services', 'discount', 'down_payment', 'is_down_payment', 'total',
     'technician_commission', 'owner_service_share', 'owner_items_share', 'owner_total_share',
     'status', 'notes', 'payment_method', 'bank_account_id', 'cash_received', 'cash_change',
-    'cancelled_at', 'cancelled_by',
+    'cancelled_at', 'cancelled_by', 'refunded_at', 'refund_entry_id',
 ])]
 class Transaction extends Model
 {
@@ -24,6 +25,30 @@ class Transaction extends Model
     public function isCancelled(): bool
     {
         return $this->status === 'cancelled';
+    }
+
+    public function isDownPayment(): bool
+    {
+        return (bool) $this->is_down_payment;
+    }
+
+    public function isRefunded(): bool
+    {
+        return $this->refunded_at !== null;
+    }
+
+    public function downPaymentAmount(): float
+    {
+        return max(0, (float) $this->down_payment);
+    }
+
+    public function jobTotal(): float
+    {
+        if ($this->isDownPayment()) {
+            return (float) $this->total;
+        }
+
+        return round((float) $this->total + $this->downPaymentAmount(), 2);
     }
 
     public function displayCustomerName(): string
@@ -55,9 +80,19 @@ class Transaction extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function serviceTicket(): BelongsTo
+    {
+        return $this->belongsTo(ServiceTicket::class);
+    }
+
     public function cancelledByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function refundEntry(): BelongsTo
+    {
+        return $this->belongsTo(ManualCashEntry::class, 'refund_entry_id');
     }
 
     public function items(): HasMany
@@ -76,6 +111,8 @@ class Transaction extends Model
             'subtotal_items' => 'decimal:2',
             'subtotal_services' => 'decimal:2',
             'discount' => 'decimal:2',
+            'down_payment' => 'decimal:2',
+            'is_down_payment' => 'boolean',
             'total' => 'decimal:2',
             'technician_commission' => 'decimal:2',
             'owner_service_share' => 'decimal:2',
@@ -84,6 +121,7 @@ class Transaction extends Model
             'cash_received' => 'decimal:2',
             'cash_change' => 'decimal:2',
             'cancelled_at' => 'datetime',
+            'refunded_at' => 'datetime',
         ];
     }
 }

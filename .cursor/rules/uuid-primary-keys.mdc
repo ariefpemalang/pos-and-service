@@ -1,0 +1,30 @@
+---
+description: Primary keys must be UUID, never auto-increment integers
+globs: database/migrations/**/*.php,app/Models/**/*.php
+alwaysApply: true
+---
+
+# UUID primary keys
+
+New tables use UUID primary keys. Do not use `$table->id()` or auto-increment integers.
+
+```php
+// ✅ GOOD
+$table->uuid('id')->primary();
+$table->foreignUuid('service_ticket_id')->constrained()->cascadeOnDelete();
+
+class ServiceTicket extends Model
+{
+    use HasUuids;
+}
+
+// ❌ BAD
+$table->id();
+$table->foreignId('service_ticket_id')->constrained();
+$ticketId = (int) $payload['service_ticket_id'];
+```
+
+- Model: `Illuminate\Database\Eloquent\Concerns\HasUuids`
+- Do not cast UUID ids to `(int)`
+- Foreign keys to UUID tables use `foreignUuid()`
+- Legacy tables (`users`, `customers`, `items`, `transactions`, etc.) stay bigint until explicitly migrated

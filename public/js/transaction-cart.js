@@ -4,8 +4,19 @@
 (function ($) {
     'use strict';
 
-    function formatRp(n) {
+            function formatRp(n) {
         return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+    }
+
+    function fitNotesField() {
+        const el = document.getElementById('notes');
+        if (!el) {
+            return;
+        }
+
+        el.style.height = 'auto';
+        const next = Math.min(192, Math.max(84, el.scrollHeight));
+        el.style.height = next + 'px';
     }
 
     window.AthaTransactionCart = {
@@ -20,6 +31,7 @@
                 defaultTechPercent: 20,
                 items: [],
                 services: [],
+                ticket: null,
             }, options);
 
             let orderTabs = [];
@@ -60,55 +72,12 @@
                 return false;
             }
 
-            function usesMemberPricing() {
-                if (getCustomerMode() !== 'existing') {
-                    return false;
-                }
-
-                const raw = $('#customer_id').find('option:selected').data('isMember');
-
-                return raw === 1 || raw === '1' || raw === true;
-            }
-
             function getDefaultItemPrice(item) {
                 if (!item) {
                     return 0;
                 }
 
-                if (usesMemberPricing()) {
-                    const memberPrice = parseFloat(item.member_price);
-                    if (!isNaN(memberPrice) && memberPrice > 0) {
-                        return memberPrice;
-                    }
-                }
-
                 return parseFloat(item.selling_price) || 0;
-            }
-
-            function updateCustomerRemark() {
-                const mode = getCustomerMode();
-                const $remark = $('#customer-type-remark');
-                const $badge = $('#customer-type-badge');
-
-                if (!hasCustomerSelected()) {
-                    $remark.addClass('d-none');
-                    return;
-                }
-
-                let label = 'Pelanggan Biasa';
-                let badgeClass = 'badge bg-secondary-subtle text-secondary';
-
-                if (mode === 'existing' && usesMemberPricing()) {
-                    label = 'Member';
-                    badgeClass = 'badge bg-primary-subtle text-primary';
-                } else if (mode === 'umum') {
-                    label = 'Pelanggan Biasa (Umum)';
-                } else if (mode === 'new') {
-                    label = 'Pelanggan Biasa (Baru)';
-                }
-
-                $badge.attr('class', badgeClass).text(label);
-                $remark.removeClass('d-none');
             }
 
             function toggleItemsSectionLock() {
@@ -127,14 +96,13 @@
                 }
 
                 const price = getDefaultItemPrice(item);
-                const priceLabel = usesMemberPricing() ? 'Harga Member' : 'Harga Jual';
                 const category = item.category?.name || item.category_name || '';
                 const unit = item.unit
                     ? (item.unit.abbreviation ? item.unit.name + ' (' + item.unit.abbreviation + ')' : item.unit.name)
                     : (item.unit_label || '');
 
                 let hint = 'Stok: ' + Number(item.stock).toLocaleString('id-ID')
-                    + ' | ' + priceLabel + ': ' + formatRp(price);
+                    + ' | Harga Jual: ' + formatRp(price);
                 if (category) {
                     hint += ' | ' + category;
                 }
@@ -142,18 +110,6 @@
                     hint += ' | ' + unit;
                 }
                 $('#item-hint').text(hint);
-            }
-
-            function recalculateItemCartPrices() {
-                itemCart.forEach(function (line) {
-                    const item = findItem(line.item_id);
-                    if (!item) {
-                        return;
-                    }
-
-                    line.unit_price = getDefaultItemPrice(item);
-                    recalcLine(line);
-                });
             }
 
             function toggleNewCustomerFields() {
@@ -192,7 +148,6 @@
                     if (idx >= 0) {
                         settings.items[idx].stock = row.stock;
                         settings.items[idx].selling_price = row.selling_price;
-                        settings.items[idx].member_price = row.member_price;
                     } else {
                         settings.items.push(row);
                     }
@@ -296,6 +251,7 @@
                 serviceCart.length = 0;
                 $('#discount').val('0');
                 $('#notes').val('');
+                fitNotesField();
                 $('#technician_id').val('').trigger('change');
                 $('#customer_id').val('').trigger('change');
                 $('#new_customer_name, #new_customer_phone, #new_customer_address').val('');
@@ -333,6 +289,7 @@
                 $('#new_customer_address').val(tab.newCustomer.address || '');
                 $('#discount').val(tab.discount || '0');
                 $('#notes').val(tab.notes || '');
+                fitNotesField();
                 if (tab.technicianId) {
                     $('#technician_id').val(tab.technicianId).trigger('change');
                 }
@@ -345,7 +302,6 @@
                 $('#amount_paid').val(tab.cashAmountPaid || '');
 
                 toggleNewCustomerFields();
-                updateCustomerRemark();
                 toggleItemsSectionLock();
                 renderItemCart();
                 renderServiceCart();
@@ -468,7 +424,6 @@
             function clearCartState() {
                 resetFormFields();
                 toggleNewCustomerFields();
-                updateCustomerRemark();
                 toggleItemsSectionLock();
                 renderItemCart();
                 renderServiceCart();
@@ -498,6 +453,12 @@
                         phone: $('#new_customer_phone').val().trim() || null,
                         address: $('#new_customer_address').val().trim() || null,
                     };
+                }
+
+                if (settings.ticket?.id) {
+                    payload.service_ticket_id = settings.ticket.id;
+                    payload.customer_mode = 'existing';
+                    payload.customer_id = settings.ticket.customer_id;
                 }
 
                 return payload;
@@ -541,13 +502,14 @@
                     let discount = parseFloat($('#discount').val()) || 0;
                     discount = Math.max(0, Math.min(discount, gross));
                     const total = gross - discount;
-                    const cash = window.AthaPaymentFields.getCashPayment(total);
+                    const due = amountDue(total);
+                    const cash = window.AthaPaymentFields.getCashPayment(due);
 
-                    if (!cash.paid || cash.paid < total) {
+                    if (cash.paid < due) {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Uang diterima kurang',
-                            text: 'Total ' + formatRp(total) + '. Masukkan uang dari pelanggan minimal sebesar total.',
+                            text: 'Sisa bayar ' + formatRp(due) + '. Masukkan uang dari pelanggan minimal sebesar sisa.',
                         });
                         return false;
                     }
@@ -635,6 +597,30 @@
                 updateSummary();
             }
 
+            function ticketDownPayment() {
+                return Math.max(0, parseFloat(settings.ticket && settings.ticket.down_payment) || 0);
+            }
+
+            function amountDue(jobTotal) {
+                return Math.max(0, jobTotal - ticketDownPayment());
+            }
+
+            function applyDueSummary(jobTotal) {
+                const dp = ticketDownPayment();
+                const applied = Math.min(dp, jobTotal);
+                const due = amountDue(jobTotal);
+
+                if (dp > 0) {
+                    $('#sum-dp-wrap').removeClass('d-none');
+                    $('#sum-down-payment').text('- ' + formatRp(applied));
+                    $('#sum-total-label').text('Sisa bayar');
+                }
+
+                $('#sum-total').text(formatRp(due));
+
+                return due;
+            }
+
             function updateSummary() {
                 const subItems = itemCart.reduce(function (s, l) { return s + l.subtotal; }, 0);
                 const subServices = serviceCart.reduce(function (s, l) { return s + l.subtotal; }, 0);
@@ -649,11 +635,11 @@
                 const ownerItems = subItems;
                 const ownerTotal = ownerService + ownerItems;
                 const total = gross - discount;
+                const due = applyDueSummary(total);
 
                 $('#sum-items').text(formatRp(subItems));
                 $('#sum-services').text(formatRp(subServices));
                 $('#sum-discount').text('- ' + formatRp(discount));
-                $('#sum-total').text(formatRp(total));
                 $('#label-tech-percent').text(techPercent);
                 $('#label-owner-percent').text(ownerPercent);
                 $('#sum-tech-commission').text(formatRp(techCommission));
@@ -662,7 +648,7 @@
                 $('#sum-owner-total').text(formatRp(ownerTotal));
 
                 if (window.AthaPaymentFields) {
-                    window.AthaPaymentFields.updateCashChange(total);
+                    window.AthaPaymentFields.updateCashChange(due);
                 }
 
                 const hasLines = itemCart.length || serviceCart.length;
@@ -671,7 +657,7 @@
                 const hasTech = !!$('#technician_id').val();
                 const paymentOk = $('#payment_method').val() !== 'transfer' || !!$('#bank_account_id').val();
                 const cashOk = $('#payment_method').val() !== 'cash'
-                    || (window.AthaPaymentFields && window.AthaPaymentFields.getCashPayment(total).sufficient);
+                    || (window.AthaPaymentFields && window.AthaPaymentFields.getCashPayment(due).sufficient);
 
                 $submit.prop('disabled', !(hasLines && hasCustomer && (!needsTech || hasTech) && paymentOk && cashOk));
             }
@@ -689,8 +675,6 @@
 
             $('#customer_id').on('change', function () {
                 toggleNewCustomerFields();
-                updateCustomerRemark();
-                recalculateItemCartPrices();
                 toggleItemsSectionLock();
                 updateItemHint();
                 renderItemCart();
@@ -699,7 +683,6 @@
             });
 
             $('#new_customer_name, #new_customer_phone, #new_customer_address').on('input', function () {
-                updateCustomerRemark();
                 toggleItemsSectionLock();
                 updateActiveTabLabel();
                 updateSummary();
@@ -948,11 +931,17 @@
                         text: res.data?.transaction_no || '',
                         timer: 1800,
                         showConfirmButton: false,
-                    });
-                    refreshItemStock().always(function () {
-                        removeActiveTabAfterSuccess();
-                        $submit.prop('disabled', false);
-                        updateSummary();
+                    }).then(function () {
+                        if (settings.ticket?.redirectUrl) {
+                            window.location.href = settings.ticket.redirectUrl;
+                            return;
+                        }
+
+                        refreshItemStock().always(function () {
+                            removeActiveTabAfterSuccess();
+                            $submit.prop('disabled', false);
+                            updateSummary();
+                        });
                     });
                 }
 
@@ -974,6 +963,7 @@
             });
 
             $('#btn-add-tab').on('click', addNewTab);
+            $('#notes').on('input', fitNotesField);
 
             $tabsList.on('click', '.tx-order-tab', function (e) {
                 if ($(e.target).closest('.tx-order-tab-close').length) {
@@ -987,15 +977,21 @@
                 closeTab($(this).data('tab-id'));
             });
 
-            const firstTab = createEmptyTab('Transaksi 1');
+            const firstTab = createEmptyTab(settings.ticket?.ticket_no || 'Transaksi 1');
+            if (settings.ticket) {
+                firstTab.customerId = String(settings.ticket.customer_id || '');
+                firstTab.technicianId = settings.ticket.technician_id ? String(settings.ticket.technician_id) : '';
+                firstTab.notes = settings.ticket.notes || '';
+                firstTab.label = settings.ticket.ticket_no || firstTab.label;
+            }
             orderTabs.push(firstTab);
             activeTabId = firstTab.id;
             renderTabBar();
             loadTabState(firstTab);
+            fitNotesField();
 
             updateSummary();
             toggleNewCustomerFields();
-            updateCustomerRemark();
             toggleItemsSectionLock();
             refreshItemStock();
         },

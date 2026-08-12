@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\Item;
+use App\Models\ServiceTicket;
 use App\Models\Technician;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
@@ -21,6 +22,7 @@ class TransactionService
         private StockService $stockService,
         private CommissionCalculator $commissionCalculator,
         private PaymentMethodResolver $paymentResolver,
+        private ServiceTicketService $ticketService,
     ) {}
 
     /**
@@ -32,6 +34,7 @@ class TransactionService
      *   technician_id?: int|null,
      *   discount?: float,
      *   notes?: string|null,
+     *   service_ticket_id?: string|null,
      *   items?: array<int, array{item_id: int, quantity: int, unit_price?: float}>,
      *   services?: array<int, array{workshop_service_id: int, quantity: int, unit_price?: float}>
      * }  $payload
@@ -39,6 +42,7 @@ class TransactionService
     public function create(array $payload, int $userId): Transaction
     {
         return DB::transaction(function () use ($payload, $userId) {
+            $payload = $this->applyServiceTicketToPayload($payload);
             $prepared = $this->preparePayload($payload, true);
             $payment = $this->paymentResolver->resolve(
                 $payload['payment_method'] ?? 'cash',
@@ -46,10 +50,16 @@ class TransactionService
             );
 
             $transactionNo = $this->nextTransactionNo($prepared['type']);
-            $cashPayment = $this->resolveCashPayment($payload, (float) $prepared['financials']['total'], $payment['payment_method']);
+            $downPayment = $this->downPaymentFromPayload($payload, (float) $prepared['financials']['total']);
+            $amountDue = round((float) $prepared['financials']['total'] - $downPayment, 2);
+            $cashPayment = $this->resolveCashPayment($payload, $amountDue, $payment['payment_method']);
 
             $transaction = Transaction::create([
                 ...$this->transactionAttributes($prepared, $userId, $transactionNo),
+                'service_ticket_id' => $payload['service_ticket_id'] ?? null,
+                'down_payment' => $downPayment,
+                'is_down_payment' => false,
+                'total' => $amountDue,
                 'status' => 'completed',
                 'payment_method' => $payment['payment_method'],
                 'bank_account_id' => $payment['bank_account_id'],
@@ -59,8 +69,9 @@ class TransactionService
 
             $this->deductStockForLines($prepared['resolved_items'], $userId, $transactionNo);
             $this->persistLines($transaction, $prepared['resolved_items'], $prepared['resolved_services']);
+            $this->completeLinkedTicket($transaction, $payload, $userId);
 
-            return $transaction->load(['customer', 'technician', 'user', 'items', 'serviceLines', 'bankAccount']);
+            return $transaction->load(['customer', 'technician', 'user', 'items', 'serviceLines', 'bankAccount', 'serviceTicket']);
         });
     }
 
@@ -83,6 +94,10 @@ class TransactionService
 
             if (! $locked || ! $locked->isCompleted()) {
                 throw new InvalidArgumentException('Transaksi tidak dapat diubah.');
+            }
+
+            if ($locked->isDownPayment()) {
+                throw new InvalidArgumentException('Transaksi uang muka tidak bisa diubah. Ubah dari tiket servis.');
             }
 
             $locked->load(['items', 'serviceLines']);
@@ -112,7 +127,7 @@ class TransactionService
 
             $cashPayment = $this->resolveCashPayment(
                 $payload,
-                (float) $prepared['financials']['total'],
+                round((float) $prepared['financials']['total'] - $locked->downPaymentAmount(), 2),
                 $payment['payment_method'],
             );
 
@@ -123,9 +138,12 @@ class TransactionService
                 $locked->transaction_no,
             );
 
+            $amountDue = round((float) $prepared['financials']['total'] - $locked->downPaymentAmount(), 2);
+
             $locked->update([
                 ...$this->transactionAttributes($prepared, $userId, $locked->transaction_no, $locked),
                 'type' => $prepared['type'],
+                'total' => $amountDue,
                 'payment_method' => $payment['payment_method'],
                 'bank_account_id' => $payment['bank_account_id'],
                 'cash_received' => $cashPayment['cash_received'],
@@ -147,6 +165,32 @@ class TransactionService
 
             if (! $locked || ! $locked->isCompleted()) {
                 throw new InvalidArgumentException('Transaksi tidak dapat dibatalkan.');
+            }
+
+            if ($locked->isDownPayment()) {
+                if ($locked->isRefunded()) {
+                    throw new InvalidArgumentException('Uang muka ini sudah dikembalikan.');
+                }
+
+                if ($locked->service_ticket_id) {
+                    $hasFinal = Transaction::query()
+                        ->where('service_ticket_id', $locked->service_ticket_id)
+                        ->where('is_down_payment', false)
+                        ->where('status', 'completed')
+                        ->exists();
+
+                    if ($hasFinal) {
+                        throw new InvalidArgumentException('Uang muka tidak bisa dikembalikan karena nota pelunasan sudah ada.');
+                    }
+                }
+
+                $this->ticketService->refundDownPayment(
+                    $locked,
+                    $userId,
+                    'Pengembalian uang muka.',
+                );
+
+                return $locked->fresh(['customer', 'technician', 'user', 'items', 'serviceLines', 'bankAccount', 'cancelledByUser', 'serviceTicket', 'refundEntry']);
             }
 
             $locked->load('items');
@@ -174,7 +218,14 @@ class TransactionService
                 'cancelled_by' => $userId,
             ]);
 
-            return $locked->fresh(['customer', 'technician', 'user', 'items', 'serviceLines', 'bankAccount', 'cancelledByUser']);
+            if ($locked->service_ticket_id) {
+                $ticket = ServiceTicket::query()->lockForUpdate()->find($locked->service_ticket_id);
+                if ($ticket) {
+                    $this->ticketService->reopenAfterInvoiceCancel($ticket, $locked, $userId);
+                }
+            }
+
+            return $locked->fresh(['customer', 'technician', 'user', 'items', 'serviceLines', 'bankAccount', 'cancelledByUser', 'serviceTicket']);
         });
     }
 
@@ -215,7 +266,6 @@ class TransactionService
         }
 
         $customerData = $this->resolveCustomer($payload);
-        $useMemberPricing = $this->customerQualifiesForMemberPricing($customerData, $payload);
 
         $technician = null;
         if (! empty($payload['technician_id'])) {
@@ -225,7 +275,7 @@ class TransactionService
             }
         }
 
-        $resolvedItems = $this->resolveItemLines($itemLines, $useMemberPricing, $previousItemQty);
+        $resolvedItems = $this->resolveItemLines($itemLines, $previousItemQty);
         $resolvedServices = $this->resolveServiceLines($serviceLines);
 
         $subtotalItems = (float) $resolvedItems->sum('subtotal');
@@ -283,6 +333,70 @@ class TransactionService
         ];
     }
 
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function applyServiceTicketToPayload(array $payload): array
+    {
+        $ticketId = trim((string) ($payload['service_ticket_id'] ?? ''));
+        if ($ticketId === '') {
+            unset($payload['service_ticket_id']);
+
+            return $payload;
+        }
+
+        $ticket = ServiceTicket::query()->lockForUpdate()->find($ticketId);
+        if (! $ticket) {
+            throw new InvalidArgumentException('Tiket servis tidak ditemukan.');
+        }
+
+        if (! $ticket->canCreateInvoice()) {
+            throw new InvalidArgumentException('Tiket ini sudah punya nota pembayaran atau sudah dibatalkan.');
+        }
+
+        $payload['service_ticket_id'] = $ticket->id;
+        $payload['customer_mode'] = 'existing';
+        $payload['customer_id'] = $ticket->customer_id;
+
+        if (empty($payload['technician_id']) && $ticket->technician_id) {
+            $payload['technician_id'] = $ticket->technician_id;
+        }
+
+        if (! filled($payload['notes'] ?? null)) {
+            $payload['notes'] = $ticket->invoiceNotes();
+        }
+
+        $payload['down_payment'] = $ticket->downPaymentAmount();
+
+        return $payload;
+    }
+
+    private function downPaymentFromPayload(array $payload, float $jobTotal): float
+    {
+        $downPayment = max(0, round((float) ($payload['down_payment'] ?? 0), 2));
+
+        return min($downPayment, $jobTotal);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function completeLinkedTicket(Transaction $transaction, array $payload, int $userId): void
+    {
+        $ticketId = trim((string) ($payload['service_ticket_id'] ?? ''));
+        if ($ticketId === '') {
+            return;
+        }
+
+        $ticket = ServiceTicket::query()->lockForUpdate()->find($ticketId);
+        if (! $ticket) {
+            return;
+        }
+
+        $this->ticketService->markPaid($ticket, $transaction, $userId);
+    }
+
     private function nextTransactionNo(string $type): string
     {
         $prefix = match ($type) {
@@ -307,6 +421,13 @@ class TransactionService
         $received = isset($payload['amount_paid'])
             ? round((float) $payload['amount_paid'], 2)
             : round($total, 2);
+
+        if ($total <= 0) {
+            return [
+                'cash_received' => 0,
+                'cash_change' => 0,
+            ];
+        }
 
         if ($received < $total) {
             throw new InvalidArgumentException('Uang diterima kurang dari total bayar.');
@@ -400,7 +521,7 @@ class TransactionService
         }
     }
 
-    private function resolveItemLines(array $lines, bool $useMemberPricing = false, array $previousItemQty = []): Collection
+    private function resolveItemLines(array $lines, array $previousItemQty = []): Collection
     {
         $merged = [];
 
@@ -459,7 +580,7 @@ class TransactionService
                 );
             }
 
-            $unitPrice = $entry['unit_price'] ?? $item->resolveSalePrice($useMemberPricing);
+            $unitPrice = $entry['unit_price'] ?? $item->resolveSalePrice();
 
             if ($unitPrice < 0) {
                 throw new InvalidArgumentException("Harga barang \"{$item->name}\" tidak valid.");
@@ -518,7 +639,6 @@ class TransactionService
         $customer = Customer::create([
             'code' => Customer::generateCode(),
             'name' => $name,
-            'is_member' => false,
             'phone' => isset($data['phone']) ? trim((string) $data['phone']) ?: null : null,
             'address' => isset($data['address']) ? trim((string) $data['address']) ?: null : null,
         ]);
@@ -527,23 +647,6 @@ class TransactionService
             'customer_id' => $customer->id,
             'customer_name' => $customer->name,
         ];
-    }
-
-    private function customerQualifiesForMemberPricing(array $customerData, array $payload): bool
-    {
-        $mode = $payload['customer_mode'] ?? null;
-
-        if ($mode === 'umum' || $mode === 'new') {
-            return false;
-        }
-
-        if (empty($customerData['customer_id'])) {
-            return false;
-        }
-
-        return (bool) Customer::query()
-            ->where('id', $customerData['customer_id'])
-            ->value('is_member');
     }
 
     /**

@@ -23,11 +23,16 @@ class FinancialReportService
       ->where('status', 'completed')
       ->whereBetween('created_at', [$fromStart, $toEnd]);
 
+    $downPaymentIn = (float) (clone $salesQuery)->where('is_down_payment', true)->sum('total');
+    $downPaymentRefunded = (float) (clone $salesQuery)->where('is_down_payment', true)->whereNotNull('refunded_at')->sum('total');
+
     $sales = [
       'transaction_count' => (int) (clone $salesQuery)->count(),
       'gross' => (float) (clone $salesQuery)->selectRaw('COALESCE(SUM(subtotal_items + subtotal_services), 0) as v')->value('v'),
       'discount' => (float) (clone $salesQuery)->sum('discount'),
       'revenue' => (float) (clone $salesQuery)->sum('total'),
+      'down_payment_in' => $downPaymentIn,
+      'down_payment_refunded' => $downPaymentRefunded,
       'items_revenue' => (float) (clone $salesQuery)->sum('subtotal_items'),
       'services_revenue' => (float) (clone $salesQuery)->sum('subtotal_services'),
       'technician_commission' => (float) (clone $salesQuery)->sum('technician_commission'),
@@ -80,6 +85,7 @@ class FinancialReportService
 
     $manualIncome = $this->buildManualSummary('income', $fromStart, $toEnd);
     $manualExpense = $this->buildManualSummary('expense', $fromStart, $toEnd);
+    $downPaymentRefundExpense = $this->downPaymentRefundAmount($fromStart, $toEnd);
 
     $totalInflow = round($sales['revenue'] + $manualIncome['amount'], 2);
     $totalOperatingOutflow = round($purchases['expense'] + $manualExpense['amount'] + $sales['technician_commission'], 2);
@@ -88,9 +94,9 @@ class FinancialReportService
     $cashFlowEstimate = round($totalInflow - $totalOperatingOutflow, 2);
 
     // Laba owner: margin barang (jual−beli) + bagian jasa + manual − pengeluaran manual.
-    // Pembelian stok tidak dikurangi lagi di sini agar tidak double-count dengan HPP.
+    // Pengembalian DP tidak dipotong dari laba karena uang muka memang belum dihitung sebagai laba.
     $ownerNetEstimate = round(
-      $sales['owner_share'] + $manualIncome['amount'] - $manualExpense['amount'],
+      $sales['owner_share'] + $manualIncome['amount'] - ($manualExpense['amount'] - $downPaymentRefundExpense),
       2
     );
 
@@ -161,6 +167,18 @@ class FinancialReportService
       'amount' => (float) (clone $baseQuery)->sum('amount'),
       'by_category' => $byCategory,
     ];
+  }
+
+  private function downPaymentRefundAmount(Carbon $fromStart, Carbon $toEnd): float
+  {
+    $categoryName = (string) config('service-tickets.dp_refund_category', 'Pengembalian Uang Muka');
+
+    return (float) ManualCashEntry::query()
+      ->completed()
+      ->expense()
+      ->whereBetween('occurred_at', [$fromStart, $toEnd])
+      ->whereHas('category', fn ($query) => $query->where('name', $categoryName))
+      ->sum('amount');
   }
 
   /**

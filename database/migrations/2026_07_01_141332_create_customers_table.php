@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->text('address')->nullable();
             $table->text('notes')->nullable();
-            $table->boolean('is_member')->default(false);
             $table->timestamps();
             $table->softDeletes();
 

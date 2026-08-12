@@ -46,6 +46,7 @@
                         <tr><td>Jasa Servis</td><td class="text-end">{{ $rp($sales['services_revenue']) }}</td></tr>
                         <tr class="fw-medium"><td>Subtotal Kotor</td><td class="text-end">{{ $rp($sales['gross']) }}</td></tr>
                         <tr><td class="fr-text-danger">Diskon</td><td class="text-end fr-text-danger">- {{ $rp($sales['discount']) }}</td></tr>
+                        <tr><td>Uang muka tiket</td><td class="text-end">{{ $rp($sales['down_payment_in'] ?? 0) }}</td></tr>
                         <tr class="fr-total-row"><td>Pemasukan Bersih</td><td class="text-end fr-text-success">{{ $rp($sales['revenue']) }}</td></tr>
                     </tbody>
                 </table>

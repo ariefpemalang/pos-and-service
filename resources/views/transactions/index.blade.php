@@ -72,7 +72,7 @@
 @endpush
 
 @push('js')
-    <script src="{{ asset('js/transaction-detail.js') }}"></script>
+    <script src="{{ asset('js/transaction-detail.js') }}?v={{ filemtime(public_path('js/transaction-detail.js')) }}"></script>
     <script>
         $('#data-table').DataTable({
             processing: true,

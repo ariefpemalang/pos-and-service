@@ -15,7 +15,7 @@ use App\Support\CodeGenerator;
 
 #[Fillable([
     'code', 'name', 'photo', 'category_id', 'unit_id', 'stock', 'stock_opname',
-    'purchase_price', 'selling_price', 'member_price', 'description', 'is_active',
+    'purchase_price', 'selling_price', 'description', 'is_active',
 ])]
 class Item extends Model
 {
@@ -48,12 +48,8 @@ class Item extends Model
         return $this->stock_opname > 0 && $this->stock <= $this->stock_opname;
     }
 
-    public function resolveSalePrice(bool $useMemberPrice): float
+    public function resolveSalePrice(): float
     {
-        if ($useMemberPrice && (float) $this->member_price > 0) {
-            return (float) $this->member_price;
-        }
-
         return (float) $this->selling_price;
     }
 
@@ -70,7 +66,6 @@ class Item extends Model
         return [
             'purchase_price' => 'decimal:2',
             'selling_price' => 'decimal:2',
-            'member_price' => 'decimal:2',
             'is_active' => 'boolean',
             'stock' => 'integer',
             'stock_opname' => 'integer',

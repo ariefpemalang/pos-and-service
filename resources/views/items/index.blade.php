@@ -95,7 +95,6 @@
                             <th>Stok</th>
                             <th class="text-center">Stock Opname</th>
                             <th>Harga Jual</th>
-                            <th>Harga Member</th>
                             <th>Status</th>
                             <th class="text-end">Aksi</th>
                         </tr>
@@ -180,18 +179,13 @@
                                 <input type="number" name="stock_opname" class="form-control form-control-clean" min="0" value="0">
                                 <div class="form-hint-sm">Batas minimum stok — jika stok ≤ nilai ini, muncul peringatan di dashboard.</div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label">Harga Beli</label>
                                 <input type="number" name="purchase_price" class="form-control form-control-clean" min="0" step="0.01" value="0">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <label class="form-label">Harga Jual</label>
                                 <input type="number" name="selling_price" class="form-control form-control-clean" min="0" step="0.01" value="0">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Harga Member</label>
-                                <input type="number" name="member_price" class="form-control form-control-clean" min="0" step="0.01" value="0">
-                                <div class="form-hint-sm">Harga khusus pelanggan member (dipakai saat transaksi member).</div>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Deskripsi</label>
@@ -253,7 +247,7 @@
                     params.low_stock = $('#filter-low-stock').val();
                 },
             },
-            order: [[11, 'desc']],
+            order: [[10, 'desc']],
             columns: [
                 { data: 'DT_RowIndex', orderable: false, searchable: false },
                 { data: 'photo_thumb', orderable: false, searchable: false },
@@ -264,7 +258,6 @@
                 { data: 'stock_display', name: 'stock', orderable: true, searchable: false },
                 { data: 'stock_opname_display', name: 'stock_opname', orderable: true, searchable: false, className: 'text-center' },
                 { data: 'selling_price', name: 'selling_price', orderable: false, searchable: false },
-                { data: 'member_price', name: 'member_price', orderable: false, searchable: false },
                 { data: 'status', name: 'is_active', orderable: false, searchable: false },
                 { data: 'created_at', name: 'created_at', visible: false, searchable: false },
                 { data: 'action', orderable: false, searchable: false, className: 'text-end' },
@@ -331,7 +324,6 @@
                         <dt>Stock Opname</dt><dd>${Number(d.stock_opname).toLocaleString('id-ID')}</dd>
                         <dt>Harga Beli</dt><dd>${rupiah(d.purchase_price)}</dd>
                         <dt>Harga Jual</dt><dd>${rupiah(d.selling_price)}</dd>
-                        <dt>Harga Member</dt><dd>${rupiah(d.member_price)}</dd>
                         <dt>Status</dt><dd>${d.is_active ? 'Aktif' : 'Nonaktif'}</dd>
                         <dt>Deskripsi</dt><dd>${d.description || '-'}</dd>
                     </dl>`;

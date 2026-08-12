@@ -2,6 +2,7 @@
     $submitLabel = $submitLabel ?? 'Bayar & Selesai';
     $showTechHint = $showTechHint ?? true;
     $submitDisabled = $submitDisabled ?? true;
+    $showDownPayment = $showDownPayment ?? (($ticket ?? null)?->hasDownPayment() ?? false);
 @endphp
 
 <div class="mb-3">
@@ -50,7 +51,7 @@
 
 <div class="mb-3">
     <label class="form-label" for="notes">Catatan</label>
-    <textarea name="notes" id="notes" class="form-control form-control-clean" rows="2">{{ $notesValue ?? '' }}</textarea>
+    <textarea name="notes" id="notes" class="form-control form-control-clean" rows="4">{{ $notesValue ?? '' }}</textarea>
 </div>
 
 <hr class="my-2">
@@ -68,8 +69,12 @@
         <span class="text-muted">Diskon</span>
         <span id="sum-discount" class="text-danger text-end">- Rp 0</span>
     </div>
+    <div class="col-6 d-flex justify-content-between gap-1 {{ $showDownPayment ? '' : 'd-none' }}" id="sum-dp-wrap">
+        <span class="text-muted">Uang muka</span>
+        <span id="sum-down-payment" class="text-danger text-end">- Rp 0</span>
+    </div>
     <div class="col-6 d-flex justify-content-between gap-1 fw-bold">
-        <span>Total</span>
+        <span id="sum-total-label">{{ $showDownPayment ? 'Sisa bayar' : 'Total' }}</span>
         <span id="sum-total" class="text-end">Rp 0</span>
     </div>
 </div>

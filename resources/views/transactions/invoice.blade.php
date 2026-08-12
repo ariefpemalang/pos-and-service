@@ -58,8 +58,11 @@
         @if (brand_whatsapp() !== '')
             <div class="receipt-center receipt-meta">WA: {{ brand_whatsapp() }}</div>
         @endif
-        <div class="receipt-center receipt-title">NOTA PENJUALAN</div>
+        <div class="receipt-center receipt-title">{{ $transaction->isDownPayment() ? 'TANDA TERIMA DP' : ($transaction->serviceTicket ? 'NOTA SERVIS' : 'NOTA PENJUALAN') }}</div>
         <div class="receipt-center receipt-meta">{{ $transaction->transaction_no }} · {{ $txDate }}</div>
+        @if ($transaction->serviceTicket)
+            <div class="receipt-center receipt-meta">Tiket {{ $transaction->serviceTicket->ticket_no }} · {{ $transaction->serviceTicket->deviceSummary() }}</div>
+        @endif
 
         <div class="receipt-sep"></div>
 
@@ -106,10 +109,27 @@
                 <span>- {{ $rp($transaction->discount) }}</span>
             </div>
         @endif
-        <div class="receipt-row receipt-row--total">
-            <span>TOTAL</span>
-            <span>{{ $rp($transaction->total) }}</span>
-        </div>
+        @if ($transaction->isDownPayment())
+            <div class="receipt-row receipt-row--total">
+                <span>UANG MUKA</span>
+                <span>{{ $rp($transaction->total) }}</span>
+            </div>
+        @else
+            @if ($transaction->downPaymentAmount() > 0)
+                <div class="receipt-row receipt-row--tight">
+                    <span>Total</span>
+                    <span>{{ $rp($transaction->jobTotal()) }}</span>
+                </div>
+                <div class="receipt-row receipt-row--tight">
+                    <span>Uang muka</span>
+                    <span>- {{ $rp($transaction->downPaymentAmount()) }}</span>
+                </div>
+            @endif
+            <div class="receipt-row receipt-row--total">
+                <span>{{ $transaction->downPaymentAmount() > 0 ? 'SISA BAYAR' : 'TOTAL' }}</span>
+                <span>{{ $rp($transaction->total) }}</span>
+            </div>
+        @endif
 
         @if ($transaction->payment_method === 'cash' && $transaction->cash_received !== null)
             <div class="receipt-row receipt-row--tight">
@@ -122,7 +142,17 @@
             </div>
         @endif
 
-        <div class="receipt-center receipt-status">LUNAS</div>
+        <div class="receipt-center receipt-status">{{ $transaction->isDownPayment() ? 'DP DITERIMA' : 'LUNAS' }}</div>
+
+        @if ($transaction->serviceTicket && ! $transaction->isDownPayment())
+            <div class="receipt-sep"></div>
+            <div class="receipt-center receipt-warranty">
+                Garansi: {{ $transaction->serviceTicket->warrantySummary() }}
+            </div>
+            @if (filled($transaction->serviceTicket->warranty_notes))
+                <div class="receipt-center receipt-text receipt-text--muted">{{ $transaction->serviceTicket->warranty_notes }}</div>
+            @endif
+        @endif
 
         @if ($transaction->notes)
             <div class="receipt-sep"></div>

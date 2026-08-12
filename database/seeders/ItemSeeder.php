@@ -70,7 +70,6 @@ class ItemSeeder extends Seeder
                 'unit_id' => $row['unit']->id,
                 'purchase_price' => $row['buy'],
                 'selling_price' => $row['sell'],
-                'member_price' => 0,
                 'stock_opname' => $row['min'],
                 'description' => null,
                 'is_active' => true,

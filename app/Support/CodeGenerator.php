@@ -23,8 +23,14 @@ class CodeGenerator
   /** Fase 2 — penjualan barang */
   public const PREFIX_SALE = 'JBL';
 
-  /** Fase 2 — service jasa */
+  /** Fase 2 — service jasa (transaksi POS) */
   public const PREFIX_SERVICE = 'SRV';
+
+  /** Tiket servis barang nginep (HP / laptop) */
+  public const PREFIX_SERVICE_TICKET = 'TKS';
+
+  /** Uang muka / DP tiket servis */
+  public const PREFIX_DOWN_PAYMENT = 'UMK';
 
   /** Fase 2 — transaksi gabungan barang + jasa */
   public const PREFIX_COMBINED = 'TRX';
@@ -83,9 +89,26 @@ class CodeGenerator
         $seq = (int) $matches[1] + 1;
       }
 
-      return sprintf('%s-%s-%04d', $prefix, $date, $seq);
-    } finally {
-      DB::select('SELECT RELEASE_LOCK(?)', [$lockName]);
+      $code = sprintf('%s-%s-%04d', $prefix, $date, $seq);
+    } catch (\Throwable $e) {
+      self::releaseLock($lockName);
+      throw $e;
     }
+
+    // Hold the advisory lock until the surrounding DB transaction commits so a
+    // concurrent request cannot reuse the same sequence before the row is visible.
+    if (DB::transactionLevel() === 0) {
+      self::releaseLock($lockName);
+    } else {
+      DB::afterCommit(static fn () => self::releaseLock($lockName));
+      DB::afterRollBack(static fn () => self::releaseLock($lockName));
+    }
+
+    return $code;
+  }
+
+  private static function releaseLock(string $lockName): void
+  {
+    DB::select('SELECT RELEASE_LOCK(?)', [$lockName]);
   }
 }

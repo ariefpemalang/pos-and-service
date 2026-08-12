@@ -1,3 +1,15 @@
+@php
+    $ticket = $ticket ?? null;
+    $ticketPrefill = $ticket ? [
+        'id' => $ticket->id,
+        'ticket_no' => $ticket->ticket_no,
+        'customer_id' => $ticket->customer_id,
+        'technician_id' => $ticket->technician_id,
+        'notes' => $ticket->invoiceNotes(),
+        'down_payment' => $ticket->downPaymentAmount(),
+        'redirectUrl' => route('service-tickets.show', $ticket),
+    ] : null;
+@endphp
 @extends('layouts.app')
 
 @section('title', 'Transaksi Baru')
@@ -9,13 +21,31 @@
             ['label' => 'Transaksi Penjualan', 'url' => route('transactions.index')],
             ['label' => 'Baru'],
         ],
-        'title' => 'Transaksi Baru',
-        'subtitle' => 'Penjualan sparepart, jasa service, atau gabungan keduanya.',
+        'title' => $ticket ? 'Nota Tiket '.$ticket->ticket_no : 'Transaksi Baru',
+        'subtitle' => $ticket
+            ? 'Bayar jasa servis saja, atau jasa plus sparepart dalam satu nota.'
+            : 'Penjualan sparepart, jasa service, atau gabungan keduanya.',
     ])
 
     <form id="transaction-form">
         @csrf
-        <div class="tx-order-tabs mb-3" id="tx-order-tabs">
+        @if ($ticket)
+            <input type="hidden" id="service_ticket_id" value="{{ $ticket->id }}">
+            <div class="alert alert-light border mb-3">
+                <div class="fw-semibold mb-1"><i class="bi bi-phone me-1"></i> Nota untuk tiket {{ $ticket->ticket_no }}</div>
+                <div class="small mb-0">
+                    {{ $ticket->deviceSummary() }} — {{ $ticket->customer?->name }}.
+                    Tambah <strong>jasa servis</strong> saja, atau jasa plus <strong>sparepart</strong> di nota yang sama.
+                    @if ($ticket->estimated_cost !== null)
+                        Estimasi: Rp {{ number_format((float) $ticket->estimated_cost, 0, ',', '.') }}.
+                    @endif
+                    @if ($ticket->hasDownPayment())
+                        Uang muka: Rp {{ number_format($ticket->downPaymentAmount(), 0, ',', '.') }} — dipotong dari sisa bayar.
+                    @endif
+                </div>
+            </div>
+        @else
+            <div class="tx-order-tabs mb-3" id="tx-order-tabs">
             <div class="tx-order-tabs-scroll">
                 <div class="tx-order-tabs-list" id="tx-order-tabs-list">
                     <button type="button" class="tx-order-tab-add" id="btn-add-tab" title="Transaksi baru">
@@ -25,6 +55,7 @@
             </div>
             <div class="form-hint-sm mt-2 mb-0">Pindah tab untuk layani pelanggan lain. Stok dicek saat bayar/submit.</div>
         </div>
+        @endif
         <div class="row g-4 align-items-lg-start">
             <div class="col-lg-8">
                 <div class="data-panel mb-4" id="customer-panel">
@@ -34,23 +65,22 @@
                     <div class="data-panel-body">
                         <div class="mb-3">
                             <label class="form-label">Pilih Pelanggan <span class="text-danger">*</span></label>
-                            <select id="customer_id" class="form-control-clean atha-searchable-select atha-select2-customer">
+                            <select id="customer_id" class="form-control-clean atha-searchable-select atha-select2-customer" @if ($ticket) disabled @endif>
                                 <option value="">-- Pilih Pelanggan --</option>
-                                <option value="__umum__" data-is-member="0">{{ config('workshop.walk_in_customer_label', 'Umum') }} (pelanggan lewat)</option>
+                                <option value="__umum__">{{ config('workshop.walk_in_customer_label', 'Umum') }} (pelanggan lewat)</option>
                                 <optgroup label="Pelanggan terdaftar">
                                     @foreach ($customers as $customer)
-                                        <option value="{{ $customer->id }}" data-is-member="{{ $customer->is_member ? '1' : '0' }}">
+                                        <option value="{{ $customer->id }}"
+                                            data-code="{{ $customer->code }}"
+                                            data-name="{{ $customer->name }}"
+                                            data-phone="{{ $customer->phone }}">
                                             {{ $customer->code }} — {{ $customer->name }}
                                         </option>
                                     @endforeach
                                 </optgroup>
-                                <option value="__new__" data-is-member="0">+ Pelanggan baru...</option>
+                                <option value="__new__">+ Pelanggan baru...</option>
                             </select>
-                            <div class="form-hint-sm">Pilih pelanggan terlebih dahulu sebelum menambah barang. Harga member hanya berlaku untuk barang.</div>
-                        </div>
-                        <div id="customer-type-remark" class="mb-3 d-none">
-                            <span class="text-muted small me-1">Tipe:</span>
-                            <span id="customer-type-badge" class="badge bg-secondary-subtle text-secondary">Pelanggan Biasa</span>
+                            <div class="form-hint-sm">{{ $ticket ? 'Pelanggan mengikuti data tiket servis.' : 'Cari nama, kode, atau nomor WhatsApp. Pilih pelanggan sebelum menambah barang.' }}</div>
                         </div>
                         <div id="new-customer-fields" class="border rounded p-3 d-none customer-inline-panel">
                             <div class="small fw-semibold mb-2"><i class="bi bi-person-plus me-1"></i> Data pelanggan baru</div>
@@ -66,7 +96,6 @@
                                 <label class="form-label small mb-0" for="new_customer_address">Alamat</label>
                                 <input type="text" id="new_customer_address" class="form-control form-control-clean" placeholder="Opsional" autocomplete="off">
                             </div>
-                            <div class="form-hint-sm mt-2 mb-0">Disimpan sebagai pelanggan biasa (bukan member) saat transaksi disimpan.</div>
                         </div>
                     </div>
                 </div>
@@ -211,6 +240,7 @@
             defaultTechPercent: {{ (int) config('workshop.default_technician_commission_percent', 20) }},
             items: @json($items),
             services: @json($services),
+            ticket: @json($ticketPrefill),
         });
     </script>
 @endpush

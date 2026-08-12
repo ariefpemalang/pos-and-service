@@ -154,6 +154,7 @@
                             'showTechHint' => false,
                             'discountValue' => (float) $transaction->discount,
                             'notesValue' => $transaction->notes,
+                            'showDownPayment' => $transaction->downPaymentAmount() > 0,
                         ])
                     </div>
                 </div>
@@ -164,7 +165,7 @@
 
 @push('js')
     <script src="{{ asset('js/payment-fields.js') }}"></script>
-    <script src="{{ asset('js/transaction-edit.js') }}"></script>
+    <script src="{{ asset('js/transaction-edit.js') }}?v={{ filemtime(public_path('js/transaction-edit.js')) }}"></script>
     <script>
         AthaPaymentFields.init();
         AthaTransactionEdit.init({
@@ -172,8 +173,8 @@
             redirectUrl: '{{ route('transactions.index') }}',
             itemAvailabilityUrl: '{{ route('transactions.items.availability') }}',
             defaultTechPercent: {{ (int) config('workshop.default_technician_commission_percent', 20) }},
+            downPayment: {{ (float) $transaction->down_payment }},
             stockCredit: @json($stockCredit),
-            usesMemberPricing: @json((bool) $transaction->customer?->is_member),
             initial: {
                 technician_id: @json($transaction->technician_id),
                 discount: {{ (float) $transaction->discount }},

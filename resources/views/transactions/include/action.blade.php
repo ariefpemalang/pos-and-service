@@ -9,14 +9,16 @@
             </a>
         @endif
     @endcan
-    @if ($status === 'completed')
+    @if ($status === 'completed' && ! $refunded_at)
         @can('transaction edit')
-            <a href="{{ route('transactions.edit', $id) }}" class="btn btn-action btn-action-edit" title="Edit Transaksi">
-                <i class="fa fa-pencil-alt"></i>
-            </a>
+            @if (! $is_down_payment)
+                <a href="{{ route('transactions.edit', $id) }}" class="btn btn-action btn-action-edit" title="Edit Transaksi">
+                    <i class="fa fa-pencil-alt"></i>
+                </a>
+            @endif
         @endcan
         @can('transaction delete')
-            <button type="button" class="btn btn-action btn-action-delete" data-action="cancel-tx" data-id="{{ $id }}" data-no="{{ $transaction_no }}" title="Batalkan Transaksi">
+            <button type="button" class="btn btn-action btn-action-delete" data-action="cancel-tx" data-id="{{ $id }}" data-no="{{ $transaction_no }}" title="{{ $is_down_payment ? 'Kembalikan uang muka' : 'Batalkan Transaksi' }}">
                 <i class="fa fa-trash-alt"></i>
             </button>
         @endcan

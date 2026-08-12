@@ -28,12 +28,9 @@ class CustomerController extends Controller
             return DataTables::of(Customer::query()->latest())
                 ->addIndexColumn()
                 ->addColumn('phone', fn (Customer $c) => $c->phone ?: '-')
-                ->addColumn('member_label', fn (Customer $c) => $c->is_member
-                    ? '<span class="badge bg-primary-subtle text-primary">Member</span>'
-                    : '<span class="badge bg-secondary-subtle text-secondary">Biasa</span>')
                 ->addColumn('created_at', fn (Customer $c) => $c->created_at?->format('d/m/Y H:i'))
                 ->addColumn('action', 'customers.include.action')
-                ->rawColumns(['action', 'member_label'])
+                ->rawColumns(['action'])
                 ->toJson();
         }
 
@@ -48,13 +45,11 @@ class CustomerController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-            'is_member' => ['nullable', 'boolean'],
         ]);
 
         $customer = Customer::create([
             ...$validated,
             'code' => Customer::generateCode(),
-            'is_member' => $request->boolean('is_member'),
         ]);
 
         return $this->modalSuccess('Pelanggan berhasil ditambahkan.', $customer);
@@ -73,13 +68,9 @@ class CustomerController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-            'is_member' => ['nullable', 'boolean'],
         ]);
 
-        $customer->update([
-            ...$validated,
-            'is_member' => $request->boolean('is_member'),
-        ]);
+        $customer->update($validated);
 
         return $this->modalSuccess('Pelanggan berhasil diperbarui.', $customer);
     }

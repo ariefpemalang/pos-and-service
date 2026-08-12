@@ -91,6 +91,12 @@ return [
             'title' => 'Transaksi',
             'items' => [
                 [
+                    'label' => 'Tiket Servis',
+                    'icon' => 'bi-phone',
+                    'route' => 'service-tickets.index',
+                    'permission' => 'service ticket view',
+                ],
+                [
                     'label' => 'Transaksi',
                     'icon' => 'bi-receipt-cutoff',
                     'permissions' => ['transaction view', 'purchase view'],

@@ -13,6 +13,8 @@ use App\Http\Controllers\ManualIncomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ServiceTicketController;
+use App\Http\Controllers\ServiceTicketTrackingController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockInController;
 use App\Http\Controllers\SupplierController;
@@ -29,6 +31,9 @@ Route::get('/', function () {
         ? redirect()->route('dashboard')
         : redirect()->route('login');
 });
+
+Route::get('/lacak/{token}', [ServiceTicketTrackingController::class, 'show'])
+    ->name('service-tickets.track');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -64,6 +69,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Fase 2 — Transaksi & komisi teknisi
     Route::resource('workshop-services', WorkshopServiceController::class)->except(['create', 'edit']);
+    Route::resource('service-tickets', ServiceTicketController::class);
+    Route::get('service-tickets/{serviceTicket}/claim-slip', [ServiceTicketController::class, 'claimSlip'])->name('service-tickets.claim-slip');
+    Route::post('service-tickets/{serviceTicket}/status', [ServiceTicketController::class, 'updateStatus'])->name('service-tickets.status');
+    Route::post('service-tickets/{serviceTicket}/warranty', [ServiceTicketController::class, 'updateWarranty'])->name('service-tickets.warranty');
+    Route::post('service-tickets/{serviceTicket}/resend', [ServiceTicketController::class, 'resendNotification'])->name('service-tickets.resend');
     Route::get('transactions/items/availability', [TransactionController::class, 'itemAvailability'])->name('transactions.items.availability');
     Route::get('transactions/{transaction}/invoice', [TransactionController::class, 'invoice'])->name('transactions.invoice');
     Route::resource('transactions', TransactionController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);

@@ -21,12 +21,8 @@ class SettingController extends Controller
 
     public function edit(): View
     {
-        $values = $this->settings->all();
-        $token = $values['hiwa_token_device'] ?? '';
-        $values['hiwa_token_device_masked'] = $token !== '' ? str_repeat('•', min(20, strlen($token))) : '';
-
         return view('settings.edit', [
-            'settings' => $values,
+            'settings' => $this->settings->all(),
             'logoUrl' => brand_has_custom_logo() ? brand_logo_url() : null,
         ]);
     }
@@ -56,9 +52,8 @@ class SettingController extends Controller
             'hiwa_enabled' => $request->boolean('hiwa_enabled'),
         ];
 
-        $newToken = trim((string) ($validated['hiwa_token_device'] ?? ''));
-        if ($newToken !== '') {
-            $payload['hiwa_token_device'] = $newToken;
+        if ($request->exists('hiwa_token_device')) {
+            $payload['hiwa_token_device'] = trim((string) ($validated['hiwa_token_device'] ?? ''));
         }
 
         $this->settings->setMany($payload);

@@ -30,6 +30,7 @@ class RoleAndPermissionSeeder extends Seeder
             'stock out view', 'stock out create',
             'stock report view',
             'workshop service view', 'workshop service create', 'workshop service edit', 'workshop service delete',
+            'service ticket view', 'service ticket create', 'service ticket edit', 'service ticket delete',
             'transaction view', 'transaction create', 'transaction edit', 'transaction delete',
             'purchase view', 'purchase create', 'purchase edit', 'purchase delete',
             'financial report view',
@@ -60,6 +61,7 @@ class RoleAndPermissionSeeder extends Seeder
             'stock in view', 'stock in create',
             'stock out view', 'stock out create',
             'stock report view',
+            'service ticket view', 'service ticket create', 'service ticket edit',
             'transaction view', 'transaction create',
             'purchase view', 'purchase create',
             'financial report view',
@@ -73,6 +75,7 @@ class RoleAndPermissionSeeder extends Seeder
             'technician view',
             'item view',
             'stock report view',
+            'service ticket view', 'service ticket edit',
             'transaction view',
         ]);
     }

@@ -16,9 +16,9 @@
                 itemAvailabilityUrl: '',
                 defaultTechPercent: 20,
                 stockCredit: {},
-                usesMemberPricing: false,
                 items: [],
                 services: [],
+                downPayment: 0,
             }, options);
 
             let itemCart = [];
@@ -34,12 +34,6 @@
             function getDefaultItemPrice(item) {
                 if (!item) {
                     return 0;
-                }
-                if (settings.usesMemberPricing) {
-                    const memberPrice = parseFloat(item.member_price);
-                    if (!isNaN(memberPrice) && memberPrice > 0) {
-                        return memberPrice;
-                    }
                 }
                 return parseFloat(item.selling_price) || 0;
             }
@@ -150,6 +144,30 @@
                 updateSummary();
             }
 
+            function downPaymentAmount() {
+                return Math.max(0, parseFloat(settings.downPayment) || 0);
+            }
+
+            function amountDue(jobTotal) {
+                return Math.max(0, jobTotal - downPaymentAmount());
+            }
+
+            function applyDueSummary(jobTotal) {
+                const dp = downPaymentAmount();
+                const applied = Math.min(dp, jobTotal);
+                const due = amountDue(jobTotal);
+
+                if (dp > 0) {
+                    $('#sum-dp-wrap').removeClass('d-none');
+                    $('#sum-down-payment').text('- ' + formatRp(applied));
+                    $('#sum-total-label').text('Sisa bayar');
+                }
+
+                $('#sum-total').text(formatRp(due));
+
+                return due;
+            }
+
             function updateSummary() {
                 const subItems = itemCart.reduce(function (s, l) { return s + l.subtotal; }, 0);
                 const subServices = serviceCart.reduce(function (s, l) { return s + l.subtotal; }, 0);
@@ -164,11 +182,11 @@
                 const ownerItems = subItems;
                 const ownerTotal = ownerService + ownerItems;
                 const total = gross - discount;
+                const due = applyDueSummary(total);
 
                 $('#sum-items').text(formatRp(subItems));
                 $('#sum-services').text(formatRp(subServices));
                 $('#sum-discount').text('- ' + formatRp(discount));
-                $('#sum-total').text(formatRp(total));
                 $('#label-tech-percent').text(techPercent);
                 $('#label-owner-percent').text(ownerPercent);
                 $('#sum-tech-commission').text(formatRp(techCommission));
@@ -177,7 +195,7 @@
                 $('#sum-owner-total').text(formatRp(ownerTotal));
 
                 if (window.AthaPaymentFields) {
-                    window.AthaPaymentFields.updateCashChange(total);
+                    window.AthaPaymentFields.updateCashChange(due);
                 }
 
                 const hasLines = itemCart.length || serviceCart.length;
@@ -185,7 +203,7 @@
                 const hasTech = !!$('#technician_id').val();
                 const paymentOk = $('#payment_method').val() !== 'transfer' || !!$('#bank_account_id').val();
                 const cashOk = $('#payment_method').val() !== 'cash'
-                    || (window.AthaPaymentFields && window.AthaPaymentFields.getCashPayment(total).sufficient);
+                    || (window.AthaPaymentFields && window.AthaPaymentFields.getCashPayment(due).sufficient);
 
                 $submit.prop('disabled', !(hasLines && (!needsTech || hasTech) && paymentOk && cashOk));
             }
@@ -230,13 +248,14 @@
                     let discount = parseFloat($('#discount').val()) || 0;
                     discount = Math.max(0, Math.min(discount, gross));
                     const total = gross - discount;
-                    const cash = window.AthaPaymentFields.getCashPayment(total);
+                    const due = amountDue(total);
+                    const cash = window.AthaPaymentFields.getCashPayment(due);
 
-                    if (!cash.paid || cash.paid < total) {
+                    if (cash.paid < due) {
                         Swal.fire({
                             icon: 'warning',
                             title: 'Uang diterima kurang',
-                            text: 'Total ' + formatRp(total) + '. Masukkan uang minimal sebesar total.',
+                            text: 'Sisa bayar ' + formatRp(due) + '. Masukkan uang minimal sebesar sisa.',
                         });
                         return false;
                     }

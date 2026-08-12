@@ -56,7 +56,7 @@
             return {
                 paid: paid,
                 change: change,
-                sufficient: paid >= total && total > 0,
+                sufficient: paid >= total,
             };
         },
 
