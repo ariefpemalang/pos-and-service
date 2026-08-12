@@ -23,7 +23,11 @@ trait PaginatesApiQuery
         $perPage = min(max((int) $request->integer('per_page', $defaultPerPage), 1), $maxPerPage);
         $search = trim((string) $request->query('search', ''));
 
-        $query->select($select)->latest('id');
+        if ($select !== []) {
+            $query->select($select);
+        }
+
+        $query->latest('id');
 
         if ($search !== '' && $searchColumns !== []) {
             $query->where(function (Builder $q) use ($search, $searchColumns) {
