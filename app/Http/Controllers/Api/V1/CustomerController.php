@@ -23,10 +23,22 @@ class CustomerController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $perPage = min(max((int) $request->integer('per_page', 15), 1), 100);
+        $perPage = min(max((int) $request->integer('per_page', 15), 1), 50);
         $search = trim((string) $request->query('search', ''));
 
-        $query = Customer::query()->latest();
+        $query = Customer::query()
+            ->select([
+                'id',
+                'code',
+                'name',
+                'phone',
+                'email',
+                'address',
+                'notes',
+                'created_at',
+                'updated_at',
+            ])
+            ->latest('id');
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -40,12 +52,13 @@ class CustomerController extends Controller
         $paginator = $query->paginate($perPage);
 
         return $this->apiSuccess('Daftar pelanggan berhasil diambil.', [
-            'items' => CustomerResource::collection($paginator->items()),
+            'items' => CustomerResource::collection($paginator->items())->resolve(),
             'meta' => [
                 'current_page' => $paginator->currentPage(),
                 'last_page' => $paginator->lastPage(),
                 'per_page' => $paginator->perPage(),
                 'total' => $paginator->total(),
+                'has_more' => $paginator->hasMorePages(),
             ],
         ]);
     }
