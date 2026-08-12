@@ -62,4 +62,36 @@ class AuthController extends Controller
 
         return $this->apiSuccess('Logout berhasil.');
     }
+
+    public function updateProfile(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'current_password' => ['nullable', 'required_with:password', 'string'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if (! empty($data['password'])) {
+            if (! Hash::check((string) ($data['current_password'] ?? ''), $user->password)) {
+                throw ValidationException::withMessages([
+                    'current_password' => ['Kata sandi saat ini tidak sesuai.'],
+                ]);
+            }
+
+            $user->password = $data['password'];
+        }
+
+        $user->name = $data['name'];
+        $user->email = $data['email'];
+        $user->save();
+        $user->load('roles');
+
+        return $this->apiSuccess('Profil berhasil diperbarui.', [
+            'user' => new UserResource($user),
+        ]);
+    }
 }
