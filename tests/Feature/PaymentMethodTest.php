@@ -52,7 +52,7 @@ class PaymentMethodTest extends TestCase
         $this->customer = Customer::create(['code' => 'PLG-PAY-01', 'name' => 'Cust Pay']);
         $this->bank = BankAccount::create([
             'bank_name' => 'BRI',
-            'account_name' => 'Atha Motor',
+            'account_name' => 'AR Service',
             'account_number' => '9876543210',
             'is_active' => true,
         ]);

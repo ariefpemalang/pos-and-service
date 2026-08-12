@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\HandlesEntityPhoto;
-use App\Models\WorkshopService;
-use App\Services\OilChangeReminderService;
 use App\Services\SettingService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,10 +14,9 @@ class SettingController extends Controller
 
     public function __construct(
         private SettingService $settings,
-        private OilChangeReminderService $reminders,
     ) {
         $this->middleware('permission:settings view')->only(['edit']);
-        $this->middleware('permission:settings edit')->only(['update', 'runReminders']);
+        $this->middleware('permission:settings edit')->only(['update']);
     }
 
     public function edit(): View
@@ -32,10 +28,6 @@ class SettingController extends Controller
         return view('settings.edit', [
             'settings' => $values,
             'logoUrl' => brand_has_custom_logo() ? brand_logo_url() : null,
-            'workshopServices' => WorkshopService::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'code', 'name']),
         ]);
     }
 
@@ -49,18 +41,7 @@ class SettingController extends Controller
             'company_whatsapp' => ['nullable', 'string', 'max:30'],
             'hiwa_enabled' => ['nullable', 'boolean'],
             'hiwa_token_device' => ['nullable', 'string', 'max:500'],
-            'oil_change_reminder_enabled' => ['nullable', 'boolean'],
-            'oil_change_reminder_months' => ['required', 'integer', 'min:1', 'max:24'],
-            'oil_change_workshop_service_ids' => ['nullable', 'array'],
-            'oil_change_workshop_service_ids.*' => ['integer', 'exists:workshop_services,id'],
         ], $this->photoRules()));
-
-        $serviceIds = collect($validated['oil_change_workshop_service_ids'] ?? [])
-            ->map(fn ($id) => (int) $id)
-            ->filter(fn (int $id) => $id > 0)
-            ->unique()
-            ->values()
-            ->all();
 
         $currentLogo = $this->settings->getString('company_logo') ?: null;
         $logoPath = $this->resolvePhotoPath($request, 'photos/branding', $currentLogo);
@@ -73,9 +54,6 @@ class SettingController extends Controller
             'company_whatsapp' => trim((string) ($validated['company_whatsapp'] ?? '')),
             'company_logo' => $logoPath ?? '',
             'hiwa_enabled' => $request->boolean('hiwa_enabled'),
-            'oil_change_reminder_enabled' => $request->boolean('oil_change_reminder_enabled'),
-            'oil_change_reminder_months' => (int) $validated['oil_change_reminder_months'],
-            'oil_change_workshop_service_ids' => $serviceIds,
         ];
 
         $newToken = trim((string) ($validated['hiwa_token_device'] ?? ''));
@@ -88,16 +66,5 @@ class SettingController extends Controller
         return redirect()
             ->route('settings.edit')
             ->with('success', 'Pengaturan aplikasi berhasil disimpan.');
-    }
-
-    public function runReminders(): JsonResponse
-    {
-        $result = $this->reminders->sendDueReminders();
-
-        return response()->json([
-            'ok' => true,
-            'message' => "Pengingat diproses: {$result['sent']} terkirim, {$result['skipped']} dilewati, {$result['failed']} gagal.",
-            'data' => $result,
-        ]);
     }
 }

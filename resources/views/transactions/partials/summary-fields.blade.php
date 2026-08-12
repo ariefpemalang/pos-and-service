@@ -100,7 +100,7 @@
             <span id="sum-owner-service" class="text-end">Rp 0</span>
         </div>
         <div class="col-6 d-flex justify-content-between gap-1">
-            <span>Sparepart</span>
+            <span>Barang</span>
             <span id="sum-owner-items" class="text-end">Rp 0</span>
         </div>
         <div class="col-6 d-flex justify-content-between gap-1 fw-semibold">

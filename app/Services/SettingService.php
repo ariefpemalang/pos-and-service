@@ -21,10 +21,6 @@ class SettingService
                 $merged[$key] = $this->decodeValue($key, $stored[$key] ?? $default);
             }
 
-            if (empty($merged['oil_change_workshop_service_ids']) && ! empty($stored['oil_change_workshop_service_id'])) {
-                $merged['oil_change_workshop_service_ids'] = [(int) $stored['oil_change_workshop_service_id']];
-            }
-
             return $merged;
         });
     }
@@ -51,23 +47,6 @@ class SettingService
     public function getInt(string $key, int $default = 0): int
     {
         return (int) $this->get($key, $default);
-    }
-
-    /**
-     * @return list<int>
-     */
-    public function getIntArray(string $key): array
-    {
-        $value = $this->get($key, []);
-
-        if (! is_array($value)) {
-            return [];
-        }
-
-        return array_values(array_unique(array_filter(
-            array_map('intval', $value),
-            fn (int $id) => $id > 0,
-        )));
     }
 
     /**
@@ -140,15 +119,8 @@ class SettingService
 
         if (in_array($key, [
             'hiwa_enabled',
-            'oil_change_reminder_enabled',
         ], true)) {
             return $raw === '1' || $raw === 1 || $raw === true;
-        }
-
-        if (in_array($key, [
-            'oil_change_reminder_months',
-        ], true)) {
-            return $raw === null || $raw === '' ? null : (int) $raw;
         }
 
         if (in_array($key, config('settings.json_array_keys', []), true)) {

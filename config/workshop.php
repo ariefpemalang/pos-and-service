@@ -2,8 +2,8 @@
 
 return [
     /*
-    | Komisi teknisi dihitung dari total biaya jasa (bukan sparepart).
-    | Sparepart 100% untuk toko.
+    | Komisi teknisi dihitung dari total biaya jasa (bukan barang/sparepart).
+    | Barang/sparepart 100% untuk toko.
     */
     'commission' => [
         'technician_percent' => 80,

@@ -9,7 +9,7 @@
             ['label' => 'Teknisi'],
         ],
         'title' => 'Data Teknisi',
-        'subtitle' => 'Kelola data teknisi bengkel.',
+        'subtitle' => 'Kelola data teknisi service smartphone & laptop.',
     ])
 
     <div class="data-panel">
@@ -69,7 +69,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Keahlian</label>
-                                <input type="text" name="specialty" class="form-control form-control-clean" placeholder="Mis. Mesin, Kelistrikan">
+                                <input type="text" name="specialty" class="form-control form-control-clean" placeholder="Mis. Hardware HP, Software Laptop">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Komisi (%)</label>

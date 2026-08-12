@@ -87,5 +87,4 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings', [SettingController::class, 'edit'])->name('settings.edit');
     Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
-    Route::post('settings/run-reminders', [SettingController::class, 'runReminders'])->name('settings.run-reminders');
 });

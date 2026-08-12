@@ -46,7 +46,7 @@
             <div class="dash-kpi-body">
                 <div class="dash-kpi-label">Estimasi Laba Owner</div>
                 <div class="dash-kpi-value">{{ $rp($profit['owner_net_estimate']) }}</div>
-                <div class="dash-kpi-meta">Margin sparepart + jasa owner − pengeluaran manual</div>
+                <div class="dash-kpi-meta">Margin barang + jasa owner − pengeluaran manual</div>
             </div>
         </div>
     </div>
@@ -60,14 +60,14 @@
                 <div class="data-panel-icon"><i class="bi bi-receipt"></i></div>
                 <div>
                     <h3 class="data-panel-title">Rincian Pemasukan Penjualan</h3>
-                    <p class="data-panel-desc">Breakdown pendapatan dari sparepart dan jasa servis</p>
+                    <p class="data-panel-desc">Breakdown pendapatan dari barang dan jasa service</p>
                 </div>
             </div>
             <div class="data-panel-body pt-3">
                 <table class="table table-borderless fr-detail-table mb-0">
                     <tbody>
                         <tr>
-                            <td>Penjualan Sparepart</td>
+                            <td>Penjualan Barang</td>
                             <td class="text-end">{{ $rp($sales['items_revenue']) }}</td>
                         </tr>
                         <tr>
@@ -112,11 +112,11 @@
                             <td class="text-end">{{ $rp($sales['owner_service_share']) }}</td>
                         </tr>
                         <tr>
-                            <td>HPP Sparepart (harga beli)</td>
+                            <td>HPP Barang (harga beli)</td>
                             <td class="text-end">{{ $rp($sales['items_cost'] ?? 0) }}</td>
                         </tr>
                         <tr>
-                            <td>Bagian Owner — Sparepart (margin)</td>
+                            <td>Bagian Owner — Barang (margin)</td>
                             <td class="text-end">{{ $rp($sales['owner_items_share']) }}</td>
                         </tr>
                         <tr class="fr-total-row-web">
@@ -127,7 +127,7 @@
                 </table>
                 <p class="fr-hint-web mb-0">
                     <i class="bi bi-info-circle me-1"></i>
-                    Margin sparepart = harga jual − harga beli. Komisi hanya dari jasa servis.
+                    Margin barang = harga jual − harga beli. Komisi hanya dari jasa service.
                 </p>
             </div>
         </div>

@@ -28,7 +28,7 @@ class CommissionCalculator
         $itemsCost = max(0, $itemsCost);
         $technicianCommission = round($subtotalServices * ($techPercent / 100), 2);
         $ownerServiceShare = round($subtotalServices * ($ownerPercent / 100), 2);
-        // Margin sparepart = harga jual − harga beli (bukan 100% omzet).
+        // Margin barang = harga jual − harga beli (bukan 100% omzet).
         $ownerItemsShare = round($subtotalItems - $itemsCost, 2);
         $ownerTotalShare = round($ownerServiceShare + $ownerItemsShare, 2);
 

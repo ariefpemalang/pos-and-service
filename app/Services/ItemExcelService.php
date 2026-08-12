@@ -132,7 +132,7 @@ class ItemExcelService
             'create_missing_masters' => true,
             'max_rows' => null,
             'default_unit_label' => 'Pieces (pcs)',
-            // File Atha Motor: kolom D = stok tersedia, bukan stock opname.
+            // Import seeder: kolom D = stok tersedia, bukan stock opname.
             'column_d_as_available_stock' => true,
         ]);
     }
@@ -263,7 +263,7 @@ class ItemExcelService
                     $columnDValue,
                     $seedUserId,
                     null,
-                    'Stok awal dari seeder Excel Atha Motor'
+                    'Stok awal dari seeder Excel'
                 );
             }
 
@@ -401,10 +401,10 @@ class ItemExcelService
     private function styleHeaderRow(Worksheet $sheet, string $range): void
     {
         $sheet->getStyle($range)->applyFromArray([
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'font' => ['bold' => true, 'color' => ['rgb' => '1A1A1A']],
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '8B1538'],
+                'startColor' => ['rgb' => 'D4A017'],
             ],
         ]);
     }

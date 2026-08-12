@@ -9,7 +9,7 @@
             ['label' => 'Master Jasa'],
         ],
         'title' => 'Master Jasa Servis',
-        'subtitle' => 'Kelola daftar jasa dan harga servis bengkel.',
+        'subtitle' => 'Kelola daftar jasa dan harga service smartphone & laptop.',
     ])
 
     <div class="data-panel">

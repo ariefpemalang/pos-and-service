@@ -9,7 +9,7 @@
             ['label' => 'Pembelian Barang'],
         ],
         'title' => 'Pembelian Barang',
-        'subtitle' => 'Catat pembelian sparepart — stok masuk & pengeluaran otomatis.',
+        'subtitle' => 'Catat pembelian sparepart HP & laptop — stok masuk & pengeluaran otomatis.',
     ])
 
     <div class="data-panel">

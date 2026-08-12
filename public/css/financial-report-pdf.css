@@ -18,13 +18,13 @@ body {
 .fr-pdf-header {
     margin-bottom: 14px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #8B1538;
+    border-bottom: 2px solid #D4A017;
 }
 
 .fr-pdf-header h1 {
     margin: 0 0 2px;
     font-size: 18px;
-    color: #8B1538;
+    color: #D4A017;
 }
 
 .fr-pdf-header p {

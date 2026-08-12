@@ -10,7 +10,7 @@
             ['label' => 'Baru'],
         ],
         'title' => 'Transaksi Baru',
-        'subtitle' => 'Penjualan sparepart, servis jasa, atau gabungan keduanya.',
+        'subtitle' => 'Penjualan sparepart, jasa service, atau gabungan keduanya.',
     ])
 
     <form id="transaction-form">
@@ -73,7 +73,7 @@
 
                 <div class="data-panel mb-4" id="items-section">
                     <div class="data-panel-head">
-                        <h2 class="data-panel-title"><i class="bi bi-box-seam me-1"></i> Barang / Sparepart</h2>
+                        <h2 class="data-panel-title"><i class="bi bi-box-seam me-1"></i> Barang / Sparepart HP & Laptop</h2>
                     </div>
                     <div class="data-panel-body">
                         <div id="items-section-lock" class="items-section-empty text-center text-muted py-4 px-3">

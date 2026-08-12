@@ -29,7 +29,7 @@
             <td class="fr-stat-card">
                 <div class="fr-stat-label">Estimasi Laba Owner</div>
                 <div class="fr-stat-value">{{ $rp($profit['owner_net_estimate']) }}</div>
-                <div class="fr-stat-meta">Margin sparepart + jasa owner − pengeluaran manual</div>
+                <div class="fr-stat-meta">Margin barang + jasa owner − pengeluaran manual</div>
             </td>
         </tr>
     </table>
@@ -42,7 +42,7 @@
             <div class="fr-panel-body">
                 <table class="fr-table fr-table-simple" width="100%">
                     <tbody>
-                        <tr><td>Penjualan Sparepart</td><td class="text-end">{{ $rp($sales['items_revenue']) }}</td></tr>
+                        <tr><td>Penjualan Barang</td><td class="text-end">{{ $rp($sales['items_revenue']) }}</td></tr>
                         <tr><td>Jasa Servis</td><td class="text-end">{{ $rp($sales['services_revenue']) }}</td></tr>
                         <tr class="fw-medium"><td>Subtotal Kotor</td><td class="text-end">{{ $rp($sales['gross']) }}</td></tr>
                         <tr><td class="fr-text-danger">Diskon</td><td class="text-end fr-text-danger">- {{ $rp($sales['discount']) }}</td></tr>
@@ -59,12 +59,12 @@
                     <tbody>
                         <tr><td>Komisi Teknisi (dari jasa)</td><td class="text-end">{{ $rp($sales['technician_commission']) }}</td></tr>
                         <tr><td>Bagian Owner — Jasa</td><td class="text-end">{{ $rp($sales['owner_service_share']) }}</td></tr>
-                        <tr><td>HPP Sparepart (harga beli)</td><td class="text-end">{{ $rp($sales['items_cost'] ?? 0) }}</td></tr>
-                        <tr><td>Bagian Owner — Sparepart (margin)</td><td class="text-end">{{ $rp($sales['owner_items_share']) }}</td></tr>
+                        <tr><td>HPP Barang (harga beli)</td><td class="text-end">{{ $rp($sales['items_cost'] ?? 0) }}</td></tr>
+                        <tr><td>Bagian Owner — Barang (margin)</td><td class="text-end">{{ $rp($sales['owner_items_share']) }}</td></tr>
                         <tr class="fr-total-row"><td>Total Bagian Owner</td><td class="text-end">{{ $rp($sales['owner_share']) }}</td></tr>
                     </tbody>
                 </table>
-                <p class="fr-hint">Margin sparepart = harga jual − harga beli. Komisi hanya dari jasa servis.</p>
+                <p class="fr-hint">Margin barang = harga jual − harga beli. Komisi hanya dari jasa service.</p>
             </div>
         </td>
     </tr>

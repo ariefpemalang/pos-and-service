@@ -10,9 +10,9 @@ class FinancialCategorySeeder extends Seeder
     public function run(): void
     {
         $income = [
-            ['name' => 'Penjualan Barang Bekas', 'sort_order' => 10],
-            ['name' => 'Penjualan Scrap / Besi', 'sort_order' => 20],
-            ['name' => 'Penjualan Voucher / Lainnya', 'sort_order' => 30],
+            ['name' => 'Penjualan HP / Laptop Bekas', 'sort_order' => 10],
+            ['name' => 'Penjualan Sparepart Bekas', 'sort_order' => 20],
+            ['name' => 'Penjualan Aksesoris / Lainnya', 'sort_order' => 30],
             ['name' => 'Jasa Luar / Titip', 'sort_order' => 40],
             ['name' => 'Lainnya', 'sort_order' => 99],
         ];

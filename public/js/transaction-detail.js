@@ -275,7 +275,7 @@
                                 Pembagian hasil
                             </div>
                             <div class="tx-detail-commission__hint">
-                                Teknisi ${settings.techPercent}% jasa · Owner ${settings.ownerPercent}% jasa · Sparepart 100% toko
+                                Teknisi ${settings.techPercent}% jasa · Owner ${settings.ownerPercent}% jasa · Barang 100% toko
                             </div>
                             <div class="tx-detail-commission__row">
                                 <span>Komisi teknisi</span>
@@ -286,7 +286,7 @@
                                 <span>${formatRp(d.owner_service_share)}</span>
                             </div>
                             <div class="tx-detail-commission__row">
-                                <span>Bagian owner (sparepart)</span>
+                                <span>Bagian owner (barang)</span>
                                 <span>${formatRp(d.owner_items_share)}</span>
                             </div>
                             <div class="tx-detail-commission__row tx-detail-commission__row--total">

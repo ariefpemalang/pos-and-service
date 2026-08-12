@@ -9,7 +9,7 @@
             ['label' => 'Supplier'],
         ],
         'title' => 'Data Supplier',
-        'subtitle' => 'Kelola data supplier bengkel.',
+        'subtitle' => 'Kelola data supplier sparepart HP & laptop.',
     ])
 
     <div class="data-panel">

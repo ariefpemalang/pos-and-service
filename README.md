@@ -1,6 +1,6 @@
-# app-bengkel
+# pos-and-service
 
-Aplikasi bengkel **Atha Motor** berbasis Laravel 13.
+Aplikasi POS & service **AR Service** (smartphone dan laptop) berbasis Laravel 13.
 
 ## Paket
 
@@ -23,23 +23,23 @@ php artisan serve
 
 | Field | Value |
 |-------|-------|
-| Email | `admin@athamotor.com` |
+| Email | `saepulramdan244@gmail.com` |
 | Password | `password` |
 
-## Palette Warna (Atha Motor)
+## Palette Warna (AR Service)
 
 | Token | Hex | Penggunaan |
 |-------|-----|------------|
-| Merah utama | `#E31E24` | Primary, sidebar active, navbar border |
-| Kuning | `#FFD200` | Accent, warning, highlight |
-| Hitam | `#1A1A1A` | Sidebar background |
-| Abu terang | `#F4F4F4` | Background konten |
+| Emas utama | `#D4A017` | Primary, accent, tombol |
+| Emas terang | `#F0C040` | Highlight |
+| Amber gelap | `#8C5A14` | Hover / depth |
+| Charcoal | `#2B2B2B` | Sidebar & login |
 
 ## Struktur Layout
 
 Layout admin **custom** (bukan template pihak ketiga):
 
 - Bootstrap **5.3.3** + Bootstrap Icons
-- `public/css/atha-admin.css` — tema Atha Motor (light & dark)
+- `public/css/atha-admin.css` — tema AR Service (light & dark)
 - `public/js/admin.js` — sidebar mobile, theme toggle
 - `resources/views/layouts/` — header, sidebar, footer

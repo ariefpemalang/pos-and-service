@@ -1,5 +1,5 @@
 /**
- * Atha Motor — Modal CRUD helper (Bootstrap 5 + DataTables + SweetAlert2)
+ * AR Service — Modal CRUD helper (Bootstrap 5 + DataTables + SweetAlert2)
  */
 (function ($) {
     'use strict';
@@ -197,7 +197,7 @@
                     text: 'Data yang dihapus tidak dapat dikembalikan.',
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#8B1538',
+                    confirmButtonColor: '#D4A017',
                     cancelButtonText: 'Batal',
                     confirmButtonText: 'Ya, hapus',
                 }).then(function (result) {

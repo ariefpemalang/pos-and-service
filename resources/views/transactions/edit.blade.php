@@ -44,7 +44,7 @@
             <div class="col-lg-8">
                 <div class="data-panel mb-4">
                     <div class="data-panel-head">
-                        <h2 class="data-panel-title"><i class="bi bi-box-seam me-1"></i> Barang / Sparepart</h2>
+                        <h2 class="data-panel-title"><i class="bi bi-box-seam me-1"></i> Barang / Sparepart HP & Laptop</h2>
                     </div>
                     <div class="data-panel-body">
                         <div class="stock-cart-add border rounded p-3 mb-3">

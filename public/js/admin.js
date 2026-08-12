@@ -1,5 +1,5 @@
 /**
- * Atha Motor — Admin layout scripts (Bootstrap 5.3, no Mazer)
+ * AR Service — Admin layout scripts (Bootstrap 5.3, no Mazer)
  */
 (function () {
     const THEME_KEY = 'atha-theme';

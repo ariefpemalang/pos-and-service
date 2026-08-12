@@ -9,7 +9,7 @@
             ['label' => 'Pelanggan'],
         ],
         'title' => 'Data Pelanggan',
-        'subtitle' => 'Kelola data pelanggan bengkel.',
+        'subtitle' => 'Kelola data pelanggan service smartphone & laptop.',
     ])
 
     <div class="data-panel">

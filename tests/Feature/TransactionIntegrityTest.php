@@ -134,7 +134,7 @@ class TransactionIntegrityTest extends TestCase
     {
         $bank = BankAccount::create([
             'bank_name' => 'BCA',
-            'account_name' => 'Atha Motor',
+            'account_name' => 'AR Service',
             'account_number' => '1234567890',
             'is_active' => true,
         ]);

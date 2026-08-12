@@ -8,8 +8,7 @@
             <div class="auth-brand">
                 <div class="auth-brand-glow" aria-hidden="true"></div>
                 <img src="{{ brand_logo_url() }}" alt="{{ brand_name() }}" class="auth-logo">
-                <h1 class="auth-brand-name">{{ brand_name() }}</h1>
-                <p class="auth-brand-tagline">{{ brand_tagline() }}</p>
+                <h1 class="visually-hidden">{{ brand_name() }}</h1>
             </div>
 
             <div class="auth-body">

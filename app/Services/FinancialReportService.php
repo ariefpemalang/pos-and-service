@@ -87,7 +87,7 @@ class FinancialReportService
     // Arus kas kasar (tetap ditampilkan sebagai info).
     $cashFlowEstimate = round($totalInflow - $totalOperatingOutflow, 2);
 
-    // Laba owner: margin sparepart (jual−beli) + bagian jasa + manual − pengeluaran manual.
+    // Laba owner: margin barang (jual−beli) + bagian jasa + manual − pengeluaran manual.
     // Pembelian stok tidak dikurangi lagi di sini agar tidak double-count dengan HPP.
     $ownerNetEstimate = round(
       $sales['owner_share'] + $manualIncome['amount'] - $manualExpense['amount'],
