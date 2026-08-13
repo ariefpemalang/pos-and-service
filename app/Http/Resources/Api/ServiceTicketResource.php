@@ -42,6 +42,7 @@ class ServiceTicketResource extends JsonResource
             'complaint' => $this->complaint,
             'diagnosis' => $this->diagnosis,
             'internal_notes' => $this->internal_notes,
+            'invoice_notes' => $this->invoiceNotes(),
             'estimated_cost' => $this->estimated_cost !== null ? (float) $this->estimated_cost : null,
             'down_payment' => $this->downPaymentAmount(),
             'down_payment_payment_method' => $this->down_payment_payment_method,
@@ -60,8 +61,11 @@ class ServiceTicketResource extends JsonResource
             'warranty_status' => $this->warrantyStatus(),
             'warranty_status_label' => $this->warrantyStatusLabel(),
             'warranty_label' => $this->warrantyIndexLabel(),
+            'warranty_period_label' => $this->warrantyPeriodLabel(),
             'warranty_summary' => $this->warrantySummary(),
+            'warranty_starts_at' => $this->warrantyStartsAt()?->toIso8601String(),
             'warranty_ends_at' => $this->warrantyEndsAt()?->toIso8601String(),
+            'warranty_days_remaining' => $this->warrantyDaysRemaining(),
             'tracking_token' => $this->when(
                 $this->relationLoaded('statusLogs') || $this->relationLoaded('customer'),
                 $this->tracking_token,
@@ -81,6 +85,9 @@ class ServiceTicketResource extends JsonResource
             'technician' => $this->when($this->relationLoaded('technician'), fn () => $technician ? [
                 'id' => $technician->id,
                 'name' => $technician->name,
+                'commission_percent' => $technician->commission_percent !== null
+                    ? (float) $technician->commission_percent
+                    : null,
                 'photo' => $technician->photo,
                 'photo_url' => $technician->absolutePhotoUrl(),
             ] : null),

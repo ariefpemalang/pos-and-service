@@ -37,7 +37,7 @@ class ServiceTicketController extends Controller
         $search = trim((string) $request->query('search', ''));
 
         $query = ServiceTicket::query()
-            ->with(['customer:id,code,name,phone', 'technician:id,name,photo', 'paidTransaction', 'downPaymentTransaction'])
+            ->with(['customer:id,code,name,phone', 'technician:id,name,commission_percent,photo', 'paidTransaction', 'downPaymentTransaction'])
             ->latest('created_at');
 
         $this->applyIndexFilters($query, $request);
@@ -468,7 +468,7 @@ class ServiceTicketController extends Controller
     {
         return $ticket->load([
             'customer:id,code,name,phone',
-            'technician:id,name,photo',
+            'technician:id,name,commission_percent,photo',
             'user:id,name',
             'downPaymentBankAccount',
             'paidTransaction',
