@@ -10,8 +10,10 @@ use App\Http\Controllers\Api\V1\ItemUnitController;
 use App\Http\Controllers\Api\V1\SettingController;
 use App\Http\Controllers\Api\V1\StockInController;
 use App\Http\Controllers\Api\V1\StockOutController;
+use App\Http\Controllers\Api\V1\StockReportController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\TechnicianController;
+use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WorkshopServiceController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,12 +40,17 @@ Route::middleware('api.key')->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'show'])->name('api.dashboard.show');
 
+        Route::get('users/roles', [UserController::class, 'roles'])->name('api.users.roles');
+        Route::apiResource('users', UserController::class)->names('api.users');
+
         Route::get('/settings', [SettingController::class, 'show'])->name('api.settings.show');
         Route::match(['put', 'post'], '/settings', [SettingController::class, 'update'])->name('api.settings.update');
 
         Route::get('stock-ins', [StockInController::class, 'index'])->name('api.stock-ins.index');
         Route::post('stock-ins', [StockInController::class, 'store'])->name('api.stock-ins.store');
         Route::get('stock-ins/{batchNo}', [StockInController::class, 'show'])->name('api.stock-ins.show');
+
+        Route::get('stock-reports', [StockReportController::class, 'show'])->name('api.stock-reports.show');
 
         Route::get('stock-outs', [StockOutController::class, 'index'])->name('api.stock-outs.index');
         Route::post('stock-outs', [StockOutController::class, 'store'])->name('api.stock-outs.store');

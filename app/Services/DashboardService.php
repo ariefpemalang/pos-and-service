@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\Item;
+use App\Models\ManualCashEntry;
 use App\Models\Purchase;
 use App\Models\Technician;
 use App\Models\Transaction;
@@ -39,8 +40,20 @@ class DashboardService
 
         $revenueToday = (float) (clone $txToday)->sum('total');
         $revenueMonth = (float) (clone $txMonth)->sum('total');
-        $expenseMonth = (float) (clone $purchaseMonth)->sum('total');
+        $purchaseExpense = (float) (clone $purchaseMonth)->sum('total');
         $commissionMonth = (float) (clone $txMonth)->sum('technician_commission');
+        $manualIncomeMonth = (float) ManualCashEntry::query()
+            ->completed()
+            ->income()
+            ->whereBetween('occurred_at', [$monthStart, $monthEnd])
+            ->sum('amount');
+        $manualExpenseMonth = (float) ManualCashEntry::query()
+            ->completed()
+            ->expense()
+            ->whereBetween('occurred_at', [$monthStart, $monthEnd])
+            ->sum('amount');
+        $outflowMonth = round($purchaseExpense + $manualExpenseMonth + $commissionMonth, 2);
+        $inflowMonth = round($revenueMonth + $manualIncomeMonth, 2);
 
         $lowStockCount = Item::lowStock()->count();
 
@@ -49,9 +62,12 @@ class DashboardService
                 'transactions_today' => (int) (clone $txToday)->count(),
                 'revenue_today' => $revenueToday,
                 'revenue_month' => $revenueMonth,
-                'expense_month' => $expenseMonth,
+                'expense_month' => $purchaseExpense,
                 'commission_month' => $commissionMonth,
-                'profit_estimate_month' => round($revenueMonth - $expenseMonth - $commissionMonth, 2),
+                'manual_income_month' => $manualIncomeMonth,
+                'manual_expense_month' => $manualExpenseMonth,
+                'outflow_month' => $outflowMonth,
+                'profit_estimate_month' => round($inflowMonth - $outflowMonth, 2),
                 'customers' => Customer::count(),
                 'items_active' => Item::where('is_active', true)->count(),
                 'low_stock' => $lowStockCount,
