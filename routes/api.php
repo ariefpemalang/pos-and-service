@@ -3,10 +3,14 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BankAccountController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\FinancialReportController;
+use App\Http\Controllers\Api\V1\ManualCashEntryController;
 use App\Http\Controllers\Api\V1\ItemCategoryController;
 use App\Http\Controllers\Api\V1\ItemController;
 use App\Http\Controllers\Api\V1\ItemUnitController;
+use App\Http\Controllers\Api\V1\ServiceTicketController;
 use App\Http\Controllers\Api\V1\SettingController;
 use App\Http\Controllers\Api\V1\StockInController;
 use App\Http\Controllers\Api\V1\StockOutController;
@@ -39,9 +43,32 @@ Route::middleware('api.key')->group(function () {
         Route::post('items/{item}', [ItemController::class, 'update'])->name('api.items.update.multipart');
 
         Route::get('/dashboard', [DashboardController::class, 'show'])->name('api.dashboard.show');
+        Route::get('financial-reports', [FinancialReportController::class, 'show'])->name('api.financial-reports.show');
+
+        Route::get('manual-incomes/options', [ManualCashEntryController::class, 'incomeOptions'])->name('api.manual-incomes.options');
+        Route::get('manual-incomes', [ManualCashEntryController::class, 'incomeIndex'])->name('api.manual-incomes.index');
+        Route::post('manual-incomes', [ManualCashEntryController::class, 'incomeStore'])->name('api.manual-incomes.store');
+        Route::get('manual-incomes/{manualCashEntry}', [ManualCashEntryController::class, 'incomeShow'])->name('api.manual-incomes.show');
+        Route::delete('manual-incomes/{manualCashEntry}', [ManualCashEntryController::class, 'incomeDestroy'])->name('api.manual-incomes.destroy');
+
+        Route::get('manual-expenses/options', [ManualCashEntryController::class, 'expenseOptions'])->name('api.manual-expenses.options');
+        Route::get('manual-expenses', [ManualCashEntryController::class, 'expenseIndex'])->name('api.manual-expenses.index');
+        Route::post('manual-expenses', [ManualCashEntryController::class, 'expenseStore'])->name('api.manual-expenses.store');
+        Route::get('manual-expenses/{manualCashEntry}', [ManualCashEntryController::class, 'expenseShow'])->name('api.manual-expenses.show');
+        Route::delete('manual-expenses/{manualCashEntry}', [ManualCashEntryController::class, 'expenseDestroy'])->name('api.manual-expenses.destroy');
 
         Route::get('users/roles', [UserController::class, 'roles'])->name('api.users.roles');
         Route::apiResource('users', UserController::class)->names('api.users');
+
+        Route::get('roles/catalog', [RoleController::class, 'catalog'])->name('api.roles.catalog');
+        Route::apiResource('roles', RoleController::class)->names('api.roles');
+
+        Route::get('service-tickets/options', [ServiceTicketController::class, 'options'])->name('api.service-tickets.options');
+        Route::get('service-tickets/{service_ticket}/claim-slip', [ServiceTicketController::class, 'claimSlip'])->name('api.service-tickets.claim-slip');
+        Route::post('service-tickets/{service_ticket}/status', [ServiceTicketController::class, 'updateStatus'])->name('api.service-tickets.status');
+        Route::post('service-tickets/{service_ticket}/warranty', [ServiceTicketController::class, 'updateWarranty'])->name('api.service-tickets.warranty');
+        Route::post('service-tickets/{service_ticket}/resend', [ServiceTicketController::class, 'resendNotification'])->name('api.service-tickets.resend');
+        Route::apiResource('service-tickets', ServiceTicketController::class)->names('api.service-tickets');
 
         Route::get('/settings', [SettingController::class, 'show'])->name('api.settings.show');
         Route::match(['put', 'post'], '/settings', [SettingController::class, 'update'])->name('api.settings.update');

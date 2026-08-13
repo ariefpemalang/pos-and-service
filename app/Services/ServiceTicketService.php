@@ -55,25 +55,43 @@ class ServiceTicketService
      */
     public function updateDetails(ServiceTicket $ticket, array $data, int $userId): ServiceTicket
     {
-        if ($ticket->isClosed()) {
-            throw new InvalidArgumentException('Tiket yang sudah selesai atau dibatalkan tidak bisa diubah.');
-        }
-
-        if (! $ticket->canCreateInvoice()) {
-            $incomingDp = round((float) ($data['down_payment'] ?? 0), 2);
-            if (abs($incomingDp - $ticket->downPaymentAmount()) > 0.009
-                || ($data['down_payment_payment_method'] ?? null) !== $ticket->down_payment_payment_method
-                || (int) ($data['down_payment_bank_account_id'] ?? 0) !== (int) ($ticket->down_payment_bank_account_id ?? 0)
-            ) {
-                throw new InvalidArgumentException('Uang muka tidak bisa diubah setelah nota pelunasan dibuat.');
-            }
-        }
-
         return DB::transaction(function () use ($ticket, $data, $userId) {
-            $ticket->update($this->resolveCustomer($data));
-            $this->syncDownPaymentTransaction($ticket->fresh('customer'), $userId);
+            /** @var ServiceTicket|null $locked */
+            $locked = ServiceTicket::query()->whereKey($ticket->id)->lockForUpdate()->first();
+            if (! $locked) {
+                throw new InvalidArgumentException('Tiket servis tidak ditemukan.');
+            }
 
-            return $ticket->fresh(['customer', 'technician', 'downPaymentTransaction']);
+            if ($locked->isClosed()) {
+                throw new InvalidArgumentException('Tiket yang sudah selesai atau dibatalkan tidak bisa diubah.');
+            }
+
+            $clientUpdatedAt = $data['updated_at'] ?? null;
+            unset($data['updated_at']);
+
+            if (filled($clientUpdatedAt) && $locked->updated_at) {
+                $tz = (string) config('app.timezone', 'UTC');
+                $incoming = \Carbon\Carbon::parse((string) $clientUpdatedAt)->timezone($tz)->format('Y-m-d H:i:s');
+                $current = $locked->updated_at->copy()->timezone($tz)->format('Y-m-d H:i:s');
+                if ($incoming !== $current) {
+                    throw new InvalidArgumentException('Tiket baru saja diubah orang lain. Muat ulang lalu simpan lagi.');
+                }
+            }
+
+            if (! $locked->canCreateInvoice()) {
+                $incomingDp = round((float) ($data['down_payment'] ?? 0), 2);
+                if (abs($incomingDp - $locked->downPaymentAmount()) > 0.009
+                    || ($data['down_payment_payment_method'] ?? null) !== $locked->down_payment_payment_method
+                    || (int) ($data['down_payment_bank_account_id'] ?? 0) !== (int) ($locked->down_payment_bank_account_id ?? 0)
+                ) {
+                    throw new InvalidArgumentException('Uang muka tidak bisa diubah setelah nota pelunasan dibuat.');
+                }
+            }
+
+            $locked->update($this->resolveCustomer($data));
+            $this->syncDownPaymentTransaction($locked->fresh('customer'), $userId);
+
+            return $locked->fresh(['customer', 'technician', 'downPaymentTransaction']);
         });
     }
 
@@ -311,16 +329,45 @@ class ServiceTicketService
      */
     public function updateWarranty(ServiceTicket $ticket, array $data): ServiceTicket
     {
-        if ($ticket->status === 'cancelled') {
-            throw new InvalidArgumentException('Tiket yang dibatalkan tidak bisa diubah garansinya.');
-        }
+        return DB::transaction(function () use ($ticket, $data) {
+            /** @var ServiceTicket|null $locked */
+            $locked = ServiceTicket::query()->whereKey($ticket->id)->lockForUpdate()->first();
+            if (! $locked) {
+                throw new InvalidArgumentException('Tiket servis tidak ditemukan.');
+            }
 
-        $ticket->update([
-            'warranty_days' => $data['warranty_days'],
-            'warranty_notes' => $data['warranty_notes'] ?? null,
-        ]);
+            if ($locked->status === 'cancelled') {
+                throw new InvalidArgumentException('Tiket yang dibatalkan tidak bisa diubah garansinya.');
+            }
 
-        return $ticket->fresh();
+            $locked->update([
+                'warranty_days' => $data['warranty_days'],
+                'warranty_notes' => $data['warranty_notes'] ?? null,
+            ]);
+
+            return $locked->fresh();
+        });
+    }
+
+    public function deleteTicket(ServiceTicket $ticket): void
+    {
+        DB::transaction(function () use ($ticket) {
+            /** @var ServiceTicket|null $locked */
+            $locked = ServiceTicket::query()->whereKey($ticket->id)->lockForUpdate()->first();
+            if (! $locked) {
+                throw new InvalidArgumentException('Tiket servis tidak ditemukan.');
+            }
+
+            if ($locked->downPaymentTransaction) {
+                throw new InvalidArgumentException('Tiket sudah ada uang muka. Batalkan transaksi uang muka di menu Transaksi terlebih dahulu.');
+            }
+
+            if (! in_array($locked->status, ['received', 'cancelled'], true)) {
+                throw new InvalidArgumentException('Hanya tiket berstatus diterima atau dibatalkan yang bisa dihapus.');
+            }
+
+            $locked->delete();
+        });
     }
 
     private function paidNotificationNote(ServiceTicket $ticket, Transaction $transaction): string

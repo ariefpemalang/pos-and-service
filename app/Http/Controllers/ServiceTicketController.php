@@ -201,15 +201,11 @@ class ServiceTicketController extends Controller
 
     public function destroy(ServiceTicket $serviceTicket): RedirectResponse
     {
-        if ($serviceTicket->downPaymentTransaction) {
-            return back()->with('error', 'Tiket sudah ada uang muka. Batalkan transaksi uang muka di menu Transaksi terlebih dahulu.');
+        try {
+            $this->tickets->deleteTicket($serviceTicket);
+        } catch (InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        if (! in_array($serviceTicket->status, ['received', 'cancelled'], true)) {
-            return back()->with('error', 'Hanya tiket berstatus diterima atau dibatalkan yang bisa dihapus.');
-        }
-
-        $serviceTicket->delete();
 
         return redirect()
             ->route('service-tickets.index')
