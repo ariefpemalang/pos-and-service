@@ -25,7 +25,8 @@ class TechnicianResource extends JsonResource
                 : null,
             'is_active' => (bool) $this->is_active,
             'notes' => $this->notes,
-            'photo_url' => $this->photo_url,
+            'photo' => $this->photo,
+            'photo_url' => $this->absolutePhotoUrl(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

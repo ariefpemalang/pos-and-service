@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Concerns\PaginatesApiQuery;
 use App\Http\Controllers\Api\Concerns\RespondsWithApi;
+use App\Http\Controllers\Concerns\HandlesEntityPhoto;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\TechnicianResource;
 use App\Models\Technician;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 
 class TechnicianController extends Controller
 {
+    use HandlesEntityPhoto;
     use PaginatesApiQuery;
     use RespondsWithApi;
 
@@ -53,7 +55,7 @@ class TechnicianController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -61,11 +63,12 @@ class TechnicianController extends Controller
             'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_active' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ], $this->photoRules()));
 
         $technician = Technician::create([
-            ...$validated,
+            ...collect($validated)->except(['photo', 'remove_photo'])->all(),
             'code' => Technician::generateCode(),
+            'photo' => $this->resolvePhotoPath($request, 'photos/technicians'),
             'commission_percent' => $validated['commission_percent']
                 ?? config('workshop.default_technician_commission_percent', 20),
             'is_active' => $request->boolean('is_active', true),
@@ -85,7 +88,7 @@ class TechnicianController extends Controller
 
     public function update(Request $request, Technician $technician): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -93,10 +96,11 @@ class TechnicianController extends Controller
             'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_active' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ], $this->photoRules()));
 
         $technician->update([
-            ...$validated,
+            ...collect($validated)->except(['photo', 'remove_photo'])->all(),
+            'photo' => $this->resolvePhotoPath($request, 'photos/technicians', $technician->photo),
             'commission_percent' => $validated['commission_percent']
                 ?? config('workshop.default_technician_commission_percent', 20),
             'is_active' => array_key_exists('is_active', $validated)

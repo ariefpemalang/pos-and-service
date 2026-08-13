@@ -13,16 +13,12 @@ class ItemResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $photoUrl = $this->photo_url;
-        if ($photoUrl && ! str_starts_with($photoUrl, 'http://') && ! str_starts_with($photoUrl, 'https://')) {
-            $photoUrl = url($photoUrl);
-        }
-
         return [
             'id' => $this->id,
             'code' => $this->code,
             'name' => $this->name,
-            'photo_url' => $photoUrl,
+            'photo' => $this->photo,
+            'photo_url' => $this->absolutePhotoUrl(),
             'category_id' => $this->category_id,
             'unit_id' => $this->unit_id,
             'category' => $this->whenLoaded('category', fn () => $this->category ? [

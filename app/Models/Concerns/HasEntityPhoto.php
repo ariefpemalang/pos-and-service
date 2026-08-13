@@ -18,6 +18,15 @@ trait HasEntityPhoto
         });
     }
 
+    public function absolutePhotoUrl(): ?string
+    {
+        if (! $this->photo) {
+            return null;
+        }
+
+        return url('storage/'.ltrim((string) $this->photo, '/'));
+    }
+
     public function deletePhotoFile(): void
     {
         if ($this->photo && Storage::disk('public')->exists($this->photo)) {

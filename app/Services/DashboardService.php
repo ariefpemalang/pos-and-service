@@ -72,7 +72,7 @@ class DashboardService
                 ->orderBy('stock')
                 ->orderBy('name')
                 ->limit(8)
-                ->get(['id', 'code', 'name', 'stock', 'stock_opname', 'category_id', 'unit_id']),
+                ->get(['id', 'code', 'name', 'photo', 'stock', 'stock_opname', 'category_id', 'unit_id']),
         ];
     }
 
