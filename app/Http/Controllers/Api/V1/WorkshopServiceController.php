@@ -25,9 +25,14 @@ class WorkshopServiceController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $query = WorkshopService::query();
+        if ($request->has('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
         $paginator = $this->paginateQuery(
             $request,
-            WorkshopService::query(),
+            $query,
             ['name', 'code', 'description'],
             ['id', 'code', 'name', 'description', 'price', 'is_active', 'created_at', 'updated_at'],
         );

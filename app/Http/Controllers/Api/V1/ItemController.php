@@ -43,6 +43,10 @@ class ItemController extends Controller
             $query->lowStock();
         }
 
+        if ($request->has('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
         $paginator = $this->paginateQuery(
             $request,
             $query,

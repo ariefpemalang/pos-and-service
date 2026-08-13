@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\V1\StockOutController;
 use App\Http\Controllers\Api\V1\StockReportController;
 use App\Http\Controllers\Api\V1\SupplierController;
 use App\Http\Controllers\Api\V1\TechnicianController;
+use App\Http\Controllers\Api\V1\TransactionController;
+use App\Http\Controllers\Api\V1\PurchaseController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\WorkshopServiceController;
 use Illuminate\Support\Facades\Route;
@@ -78,6 +80,12 @@ Route::middleware('api.key')->group(function () {
         Route::get('stock-ins/{batchNo}', [StockInController::class, 'show'])->name('api.stock-ins.show');
 
         Route::get('stock-reports', [StockReportController::class, 'show'])->name('api.stock-reports.show');
+
+        Route::get('transactions/options', [TransactionController::class, 'options'])->name('api.transactions.options');
+        Route::apiResource('transactions', TransactionController::class)->names('api.transactions');
+
+        Route::get('purchases/options', [PurchaseController::class, 'options'])->name('api.purchases.options');
+        Route::apiResource('purchases', PurchaseController::class)->names('api.purchases');
 
         Route::get('stock-outs', [StockOutController::class, 'index'])->name('api.stock-outs.index');
         Route::post('stock-outs', [StockOutController::class, 'store'])->name('api.stock-outs.store');
