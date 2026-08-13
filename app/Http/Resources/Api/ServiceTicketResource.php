@@ -81,6 +81,8 @@ class ServiceTicketResource extends JsonResource
             'technician' => $this->when($this->relationLoaded('technician'), fn () => $technician ? [
                 'id' => $technician->id,
                 'name' => $technician->name,
+                'photo' => $technician->photo,
+                'photo_url' => $technician->absolutePhotoUrl(),
             ] : null),
             'paid_transaction' => $this->when($this->relationLoaded('paidTransaction'), fn () => $paid ? [
                 'id' => $paid->id,

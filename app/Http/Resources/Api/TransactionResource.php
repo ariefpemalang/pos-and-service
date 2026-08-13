@@ -53,6 +53,8 @@ class TransactionResource extends JsonResource
                 'id' => $technician->id,
                 'name' => $technician->name,
                 'commission_percent' => (float) $technician->commission_percent,
+                'photo' => $technician->photo,
+                'photo_url' => $technician->absolutePhotoUrl(),
             ] : null,
             'user' => $user ? [
                 'id' => $user->id,

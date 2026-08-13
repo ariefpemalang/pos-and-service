@@ -43,12 +43,14 @@ class TransactionController extends Controller
             'technicians' => Technician::query()
                 ->where('is_active', true)
                 ->orderBy('name')
-                ->get(['id', 'code', 'name', 'commission_percent'])
+                ->get(['id', 'code', 'name', 'commission_percent', 'photo'])
                 ->map(fn (Technician $t) => [
                     'id' => $t->id,
                     'code' => $t->code,
                     'name' => $t->name,
                     'commission_percent' => (float) $t->commission_percent,
+                    'photo' => $t->photo,
+                    'photo_url' => $t->absolutePhotoUrl(),
                 ])
                 ->values(),
             'bank_accounts' => $this->activeBanks(),
@@ -59,7 +61,7 @@ class TransactionController extends Controller
     {
         $query = Transaction::query()->with([
             'customer:id,code,name,phone',
-            'technician:id,code,name,commission_percent',
+            'technician:id,code,name,commission_percent,photo',
             'user:id,name',
             'bankAccount',
             'serviceTicket:id,ticket_no,brand,model,device_type',
@@ -125,7 +127,7 @@ class TransactionController extends Controller
     {
         $transaction->load([
             'customer:id,code,name,phone',
-            'technician:id,code,name,commission_percent',
+            'technician:id,code,name,commission_percent,photo',
             'user:id,name',
             'bankAccount',
             'items',
@@ -153,7 +155,7 @@ class TransactionController extends Controller
             'transaction' => (new TransactionResource(
                 $updated->load([
                     'customer:id,code,name,phone',
-                    'technician:id,code,name,commission_percent',
+                    'technician:id,code,name,commission_percent,photo',
                     'user:id,name',
                     'bankAccount',
                     'items',
@@ -180,7 +182,7 @@ class TransactionController extends Controller
             'transaction' => (new TransactionResource(
                 $cancelled->load([
                     'customer:id,code,name,phone',
-                    'technician:id,code,name,commission_percent',
+                    'technician:id,code,name,commission_percent,photo',
                     'user:id,name',
                     'bankAccount',
                     'items',
