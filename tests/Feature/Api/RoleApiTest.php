@@ -64,7 +64,16 @@ class RoleApiTest extends TestCase
 
         $this->assertIsArray($dashboard);
         $this->assertSame(
-            ['dashboard view', 'dashboard finance view', 'dashboard low stock view'],
+            [
+                'dashboard view',
+                'dashboard finance view',
+                'dashboard low stock view',
+                'dashboard items view',
+                'dashboard customers view',
+                'dashboard technicians view',
+                'dashboard services view',
+                'dashboard commission view',
+            ],
             $dashboard['access'],
         );
     }

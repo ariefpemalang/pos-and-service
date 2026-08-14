@@ -84,4 +84,40 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertSee('Stok Menipis');
     }
+
+    #[Test]
+    public function dashboard_operational_cards_hidden_without_permission(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+
+        $kasir = User::factory()->create();
+        $kasir->assignRole('Kasir');
+
+        $this->actingAs($kasir)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('Barang Aktif')
+            ->assertDontSee('stat-label">Pelanggan')
+            ->assertDontSee('Komisi Bulan Ini');
+    }
+
+    #[Test]
+    public function dashboard_operational_cards_visible_with_permission(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+
+        $kasir = User::factory()->create();
+        $kasir->assignRole('Kasir');
+        $kasir->givePermissionTo([
+            'dashboard items view',
+            'dashboard customers view',
+            'dashboard commission view',
+        ]);
+
+        $this->actingAs($kasir)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Barang Aktif')
+            ->assertSee('Komisi Bulan Ini');
+    }
 }

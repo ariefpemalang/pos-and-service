@@ -18,6 +18,8 @@ class RoleAndPermissionSeeder extends Seeder
     {
         return [
             'dashboard view', 'dashboard finance view', 'dashboard low stock view',
+            'dashboard items view', 'dashboard customers view',
+            'dashboard technicians view', 'dashboard services view', 'dashboard commission view',
             'user view', 'user create', 'user edit', 'user delete',
             'role view', 'role create', 'role edit', 'role delete',
             'customer view', 'customer create', 'customer edit', 'customer delete',

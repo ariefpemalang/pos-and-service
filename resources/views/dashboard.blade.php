@@ -80,7 +80,7 @@
 
     {{-- KPI operasional --}}
     <div class="row g-3 mb-4">
-        @can('item view')
+        @can('dashboard items view')
             <div class="col-6 col-md-4 col-xl-2">
                 <a href="{{ route('items.index') }}" class="dash-card-link" title="Lihat data barang">
                     <div class="stat-card dash-mini-stat">
@@ -102,7 +102,7 @@
                 </a>
             </div>
         @endcan
-        @can('customer view')
+        @can('dashboard customers view')
             <div class="col-6 col-md-4 col-xl-2">
                 <a href="{{ route('customers.index') }}" class="dash-card-link" title="Lihat data pelanggan">
                     <div class="stat-card dash-mini-stat">
@@ -113,7 +113,7 @@
                 </a>
             </div>
         @endcan
-        @can('technician view')
+        @can('dashboard technicians view')
             <div class="col-6 col-md-4 col-xl-2">
                 <a href="{{ route('technicians.index') }}" class="dash-card-link" title="Lihat data teknisi">
                     <div class="stat-card dash-mini-stat">
@@ -124,7 +124,7 @@
                 </a>
             </div>
         @endcan
-        @can('workshop service view')
+        @can('dashboard services view')
             <div class="col-6 col-md-4 col-xl-2">
                 <a href="{{ route('workshop-services.index') }}" class="dash-card-link" title="Lihat master jasa">
                     <div class="stat-card dash-mini-stat">
@@ -135,7 +135,7 @@
                 </a>
             </div>
         @endcan
-        @can('transaction view')
+        @can('dashboard commission view')
             <div class="col-6 col-md-4 col-xl-2">
                 @can('financial report view')
                     <a href="{{ $financialMonthUrl }}" class="dash-card-link" title="Lihat komisi di laporan keuangan">
