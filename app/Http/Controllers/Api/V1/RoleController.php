@@ -12,7 +12,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
@@ -231,14 +230,7 @@ class RoleController extends Controller
 
     private function syncConfigPermissions(): void
     {
-        $guard = (string) config('auth.defaults.guard', 'web');
-
-        foreach (PermissionGroups::names() as $name) {
-            Permission::firstOrCreate([
-                'name' => $name,
-                'guard_name' => $guard,
-            ]);
-        }
+        PermissionGroups::syncToDatabase();
     }
 
     /**

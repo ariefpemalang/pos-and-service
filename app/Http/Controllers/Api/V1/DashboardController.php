@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\Transaction;
 use App\Services\DashboardService;
+use App\Support\PermissionGroups;
 use Illuminate\Http\JsonResponse;
 
 class DashboardController extends Controller
@@ -20,6 +21,8 @@ class DashboardController extends Controller
 
     public function show(): JsonResponse
     {
+        PermissionGroups::syncToDatabase();
+
         $payload = $this->dashboard->build();
 
         $lowStock = collect($payload['low_stock_items'])->map(function (Item $item) {

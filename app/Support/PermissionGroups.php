@@ -2,6 +2,9 @@
 
 namespace App\Support;
 
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+
 class PermissionGroups
 {
     /**
@@ -29,5 +32,22 @@ class PermissionGroups
             ->unique()
             ->values()
             ->all();
+    }
+
+    public static function syncToDatabase(): void
+    {
+        $guard = (string) config('auth.defaults.guard', 'web');
+
+        foreach (self::names() as $name) {
+            Permission::firstOrCreate([
+                'name' => $name,
+                'guard_name' => $guard,
+            ]);
+        }
+
+        $superAdmin = Role::query()->where('name', 'Super Admin')->first();
+        if ($superAdmin) {
+            $superAdmin->givePermissionTo(self::names());
+        }
     }
 }

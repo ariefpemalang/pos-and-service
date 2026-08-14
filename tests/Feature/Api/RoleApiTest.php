@@ -56,10 +56,17 @@ class RoleApiTest extends TestCase
     #[Test]
     public function catalog_returns_permission_groups(): void
     {
-        $this->api('GET', '/api/roles/catalog')
+        $response = $this->api('GET', '/api/roles/catalog')
             ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonStructure(['data' => ['groups']]);
+            ->assertJsonPath('success', true);
+
+        $dashboard = collect($response->json('data.groups'))->firstWhere('group', 'Dashboard');
+
+        $this->assertIsArray($dashboard);
+        $this->assertSame(
+            ['dashboard view', 'dashboard finance view', 'dashboard low stock view'],
+            $dashboard['access'],
+        );
     }
 
     #[Test]

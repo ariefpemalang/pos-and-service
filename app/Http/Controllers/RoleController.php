@@ -7,7 +7,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -116,13 +115,6 @@ class RoleController extends Controller
 
     private function syncConfigPermissions(): void
     {
-        $guard = config('auth.defaults.guard', 'web');
-
-        foreach (PermissionGroups::names() as $name) {
-            Permission::firstOrCreate([
-                'name' => $name,
-                'guard_name' => $guard,
-            ]);
-        }
+        PermissionGroups::syncToDatabase();
     }
 }

@@ -20,67 +20,63 @@
         'subtitle' => brand_name() . ' — Ringkasan operasional ' . $monthLabel,
     ])
 
-    {{-- KPI utama --}}
+    {{-- KPI keuangan: tampil jika role punya dashboard finance view --}}
+    @can('dashboard finance view')
     <div class="row g-3 mb-4">
-        @can('transaction view')
-            <div class="col-6 col-xl-3">
+        <div class="col-6 col-xl-3">
+            <a href="{{ route('transactions.index') }}" class="dash-card-link" title="Lihat transaksi penjualan">
+                <div class="dash-kpi dash-kpi-primary">
+                    <div class="dash-kpi-icon"><i class="bi bi-cash-stack"></i></div>
+                    <div class="dash-kpi-body">
+                        <div class="dash-kpi-label">Pemasukan Hari Ini</div>
+                        <div class="dash-kpi-value">{{ $rp($kpis['revenue_today'] ?? 0) }}</div>
+                        <div class="dash-kpi-meta">{{ $kpis['transactions_today'] ?? 0 }} transaksi</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-xl-3">
+            @can('financial report view')
+                <a href="{{ $financialMonthUrl }}" class="dash-card-link" title="Lihat laporan keuangan bulan ini">
+            @else
                 <a href="{{ route('transactions.index') }}" class="dash-card-link" title="Lihat transaksi penjualan">
-                    <div class="dash-kpi dash-kpi-primary">
-                        <div class="dash-kpi-icon"><i class="bi bi-cash-stack"></i></div>
-                        <div class="dash-kpi-body">
-                            <div class="dash-kpi-label">Pemasukan Hari Ini</div>
-                            <div class="dash-kpi-value">{{ $rp($kpis['revenue_today'] ?? 0) }}</div>
-                            <div class="dash-kpi-meta">{{ $kpis['transactions_today'] ?? 0 }} transaksi</div>
-                        </div>
+            @endcan
+                <div class="dash-kpi dash-kpi-success">
+                    <div class="dash-kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div class="dash-kpi-body">
+                        <div class="dash-kpi-label">Pemasukan Bulan Ini</div>
+                        <div class="dash-kpi-value">{{ $rp($kpis['revenue_month'] ?? 0) }}</div>
+                        <div class="dash-kpi-meta">{{ $monthLabel }}</div>
                     </div>
-                </a>
-            </div>
-            <div class="col-6 col-xl-3">
-                @can('financial report view')
-                    <a href="{{ $financialMonthUrl }}" class="dash-card-link" title="Lihat laporan keuangan bulan ini">
-                @else
-                    <a href="{{ route('transactions.index') }}" class="dash-card-link" title="Lihat transaksi penjualan">
-                @endcan
-                    <div class="dash-kpi dash-kpi-success">
-                        <div class="dash-kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
-                        <div class="dash-kpi-body">
-                            <div class="dash-kpi-label">Pemasukan Bulan Ini</div>
-                            <div class="dash-kpi-value">{{ $rp($kpis['revenue_month'] ?? 0) }}</div>
-                            <div class="dash-kpi-meta">{{ $monthLabel }}</div>
-                        </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-xl-3">
+            <a href="{{ route('purchases.index') }}" class="dash-card-link" title="Lihat daftar pembelian">
+                <div class="dash-kpi dash-kpi-warning">
+                    <div class="dash-kpi-icon"><i class="bi bi-cart-dash"></i></div>
+                    <div class="dash-kpi-body">
+                        <div class="dash-kpi-label">Pengeluaran Bulan Ini</div>
+                        <div class="dash-kpi-value">{{ $rp($kpis['expense_month'] ?? 0) }}</div>
+                        <div class="dash-kpi-meta">{{ $kpis['purchases_month'] ?? 0 }} pembelian</div>
                     </div>
-                </a>
-            </div>
-        @endcan
-        @can('purchase view')
-            <div class="col-6 col-xl-3">
-                <a href="{{ route('purchases.index') }}" class="dash-card-link" title="Lihat daftar pembelian">
-                    <div class="dash-kpi dash-kpi-warning">
-                        <div class="dash-kpi-icon"><i class="bi bi-cart-dash"></i></div>
-                        <div class="dash-kpi-body">
-                            <div class="dash-kpi-label">Pengeluaran Bulan Ini</div>
-                            <div class="dash-kpi-value">{{ $rp($kpis['expense_month'] ?? 0) }}</div>
-                            <div class="dash-kpi-meta">{{ $kpis['purchases_month'] ?? 0 }} pembelian</div>
-                        </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-xl-3">
+            <a href="{{ $financialMonthUrl }}" class="dash-card-link" title="Lihat laporan keuangan">
+                <div class="dash-kpi dash-kpi-info">
+                    <div class="dash-kpi-icon"><i class="bi bi-piggy-bank"></i></div>
+                    <div class="dash-kpi-body">
+                        <div class="dash-kpi-label">Estimasi Sisa Kas</div>
+                        <div class="dash-kpi-value">{{ $rp($kpis['profit_estimate_month'] ?? 0) }}</div>
+                        <div class="dash-kpi-meta">Setelah pembelian & komisi</div>
                     </div>
-                </a>
-            </div>
-        @endcan
-        @can('financial report view')
-            <div class="col-6 col-xl-3">
-                <a href="{{ $financialMonthUrl }}" class="dash-card-link" title="Lihat laporan keuangan">
-                    <div class="dash-kpi dash-kpi-info">
-                        <div class="dash-kpi-icon"><i class="bi bi-piggy-bank"></i></div>
-                        <div class="dash-kpi-body">
-                            <div class="dash-kpi-label">Estimasi Sisa Kas</div>
-                            <div class="dash-kpi-value">{{ $rp($kpis['profit_estimate_month'] ?? 0) }}</div>
-                            <div class="dash-kpi-meta">Setelah pembelian & komisi</div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        @endcan
+                </div>
+            </a>
+        </div>
     </div>
+    @endcan
 
     {{-- KPI operasional --}}
     <div class="row g-3 mb-4">
@@ -94,6 +90,8 @@
                     </div>
                 </a>
             </div>
+        @endcan
+        @can('dashboard low stock view')
             <div class="col-6 col-md-4 col-xl-2">
                 <a href="{{ $lowStockUrl }}" class="dash-card-link" title="Lihat barang stok menipis">
                     <div class="stat-card dash-mini-stat {{ ($kpis['low_stock'] ?? 0) > 0 ? 'dash-mini-stat-danger' : '' }}">

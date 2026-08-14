@@ -3,7 +3,7 @@
 return [
     [
         'group' => 'Dashboard',
-        'access' => ['dashboard view'],
+        'access' => ['dashboard view', 'dashboard finance view', 'dashboard low stock view'],
     ],
     [
         'group' => 'User',

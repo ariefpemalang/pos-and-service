@@ -24,4 +24,64 @@ class DashboardTest extends TestCase
             ->assertSee('Tren 7 Hari Terakhir')
             ->assertSee('chart-daily-trend');
     }
+
+    #[Test]
+    public function dashboard_finance_kpis_hidden_without_permission(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+
+        $kasir = User::factory()->create();
+        $kasir->assignRole('Kasir');
+
+        $this->actingAs($kasir)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('Pemasukan Hari Ini')
+            ->assertDontSee('Estimasi Sisa Kas');
+    }
+
+    #[Test]
+    public function dashboard_finance_kpis_visible_with_permission(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+
+        $kasir = User::factory()->create();
+        $kasir->assignRole('Kasir');
+        $kasir->givePermissionTo('dashboard finance view');
+
+        $this->actingAs($kasir)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Pemasukan Hari Ini')
+            ->assertSee('Estimasi Sisa Kas');
+    }
+
+    #[Test]
+    public function dashboard_low_stock_hidden_without_permission(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+
+        $kasir = User::factory()->create();
+        $kasir->assignRole('Kasir');
+
+        $this->actingAs($kasir)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('Stok Menipis');
+    }
+
+    #[Test]
+    public function dashboard_low_stock_visible_with_permission(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+
+        $kasir = User::factory()->create();
+        $kasir->assignRole('Kasir');
+        $kasir->givePermissionTo('dashboard low stock view');
+
+        $this->actingAs($kasir)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Stok Menipis');
+    }
 }

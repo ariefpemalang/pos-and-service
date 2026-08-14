@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Support\PermissionGroups;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
@@ -16,7 +17,7 @@ class RoleAndPermissionSeeder extends Seeder
     public static function permissionNames(): array
     {
         return [
-            'dashboard view',
+            'dashboard view', 'dashboard finance view', 'dashboard low stock view',
             'user view', 'user create', 'user edit', 'user delete',
             'role view', 'role create', 'role edit', 'role delete',
             'customer view', 'customer create', 'customer edit', 'customer delete',
@@ -43,7 +44,7 @@ class RoleAndPermissionSeeder extends Seeder
 
     public function syncPermissionsAndRoles(): void
     {
-        foreach (self::permissionNames() as $permission) {
+        foreach (array_unique([...self::permissionNames(), ...PermissionGroups::names()]) as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
 
