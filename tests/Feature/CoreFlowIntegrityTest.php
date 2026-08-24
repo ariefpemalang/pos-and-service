@@ -108,6 +108,8 @@ class CoreFlowIntegrityTest extends TestCase
             'Bisa diambil',
             $this->admin->id,
             false,
+            [],
+            [['workshop_service_id' => $this->service->id, 'quantity' => 1, 'unit_price' => 150000]],
         );
 
         $this->assertTrue($ticket->fresh()->canCreateInvoice());
@@ -536,10 +538,22 @@ class CoreFlowIntegrityTest extends TestCase
     private function billTicket(ServiceTicket $ticket, float $amountPaid = 150000): Transaction
     {
         if ($ticket->status !== 'ready' && ! $ticket->isClosed()) {
-            $ticket->update([
-                'status' => 'ready',
-                'ready_at' => now(),
-            ]);
+            app(ServiceTicketService::class)->updateStatus(
+                $ticket,
+                'ready',
+                'Bisa diambil',
+                $this->admin->id,
+                false,
+                [],
+                [['workshop_service_id' => $this->service->id, 'quantity' => 1, 'unit_price' => (float) $this->service->price]],
+            );
+            $ticket->refresh();
+        } elseif ($ticket->status === 'ready' && ! $ticket->hasWorkLines()) {
+            app(ServiceTicketService::class)->updateWorkLines(
+                $ticket,
+                [],
+                [['workshop_service_id' => $this->service->id, 'quantity' => 1, 'unit_price' => (float) $this->service->price]],
+            );
             $ticket->refresh();
         }
 

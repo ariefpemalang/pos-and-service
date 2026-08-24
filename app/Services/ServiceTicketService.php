@@ -4,10 +4,14 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\FinancialCategory;
+use App\Models\Item;
 use App\Models\ManualCashEntry;
 use App\Models\ServiceTicket;
+use App\Models\ServiceTicketItem;
+use App\Models\ServiceTicketServiceLine;
 use App\Models\ServiceTicketStatusLog;
 use App\Models\Transaction;
+use App\Models\WorkshopService;
 use App\Support\CodeGenerator;
 use App\Support\PaymentMethodResolver;
 use Illuminate\Support\Facades\Auth;
@@ -99,16 +103,25 @@ class ServiceTicketService
     }
 
     /**
+     * @param  array<int, array{item_id?: int, quantity?: int, unit_price?: float|int|string|null}>  $items
+     * @param  array<int, array{workshop_service_id?: int, quantity?: int, unit_price?: float|int|string|null}>  $services
      * @return array{ticket: ServiceTicket, notify: array{notified: bool, hiwa_job_id: string|null, error: string|null}}
      */
-    public function updateStatus(ServiceTicket $ticket, string $status, ?string $note, int $userId, bool $notifyCustomer = true): array
-    {
+    public function updateStatus(
+        ServiceTicket $ticket,
+        string $status,
+        ?string $note,
+        int $userId,
+        bool $notifyCustomer = true,
+        array $items = [],
+        array $services = [],
+    ): array {
         $allowed = array_keys(config('service-tickets.statuses', []));
         if (! in_array($status, $allowed, true)) {
             throw new InvalidArgumentException('Status tidak valid.');
         }
 
-        return DB::transaction(function () use ($ticket, $status, $note, $userId, $notifyCustomer) {
+        return DB::transaction(function () use ($ticket, $status, $note, $userId, $notifyCustomer, $items, $services) {
             $locked = ServiceTicket::query()->whereKey($ticket->id)->lockForUpdate()->first();
             if (! $locked) {
                 throw new InvalidArgumentException('Tiket servis tidak ditemukan.');
@@ -122,11 +135,21 @@ class ServiceTicketService
                 throw new InvalidArgumentException('Tiket yang sudah selesai atau dibatalkan tidak bisa diubah statusnya.');
             }
 
+            // Sudah diambil hanya lewat Nota Bayar (markPaid), bukan ubah status manual.
+            if ($status === 'completed') {
+                throw new InvalidArgumentException('Status Sudah diambil hanya lewat Nota Bayar oleh kasir.');
+            }
+
+            if ($status === 'ready') {
+                $this->syncWorkLines($locked, $items, $services, requireAtLeastOne: true);
+            }
+
             $from = $locked->status;
             $payload = ['status' => $status];
 
             if ($status === 'ready') {
                 $payload['ready_at'] = now();
+                $payload['estimated_cost'] = $locked->fresh()->workTotal();
             }
             if ($status === 'completed') {
                 $payload['completed_at'] = now();
@@ -149,8 +172,219 @@ class ServiceTicketService
                 $this->notifier->applyToLog($log, $notify);
             }
 
-            return ['ticket' => $locked->fresh(['customer', 'technician', 'statusLogs']), 'notify' => $notify];
+            return [
+                'ticket' => $locked->fresh(['customer', 'technician', 'statusLogs', 'itemLines', 'serviceLines']),
+                'notify' => $notify,
+            ];
         });
+    }
+
+    /**
+     * Update rincian jasa/barang saat tiket masih Bisa diambil (belum nota bayar).
+     *
+     * @param  array<int, array{item_id?: int, quantity?: int, unit_price?: float|int|string|null}>  $items
+     * @param  array<int, array{workshop_service_id?: int, quantity?: int, unit_price?: float|int|string|null}>  $services
+     */
+    public function updateWorkLines(ServiceTicket $ticket, array $items, array $services): ServiceTicket
+    {
+        return DB::transaction(function () use ($ticket, $items, $services) {
+            $locked = ServiceTicket::query()->whereKey($ticket->id)->lockForUpdate()->first();
+            if (! $locked) {
+                throw new InvalidArgumentException('Tiket servis tidak ditemukan.');
+            }
+
+            if ($locked->status !== 'ready') {
+                throw new InvalidArgumentException('Rincian jasa & barang hanya bisa diubah saat status Bisa diambil.');
+            }
+
+            if ($locked->hasFinalInvoice()) {
+                throw new InvalidArgumentException('Rincian tidak bisa diubah setelah nota bayar dibuat.');
+            }
+
+            $this->syncWorkLines($locked, $items, $services, requireAtLeastOne: true);
+            $locked->update(['estimated_cost' => $locked->fresh()->workTotal()]);
+
+            return $locked->fresh(['customer', 'technician', 'itemLines', 'serviceLines']);
+        });
+    }
+
+    /**
+     * @param  array<int, array{item_id?: int, quantity?: int, unit_price?: float|int|string|null}>  $items
+     * @param  array<int, array{workshop_service_id?: int, quantity?: int, unit_price?: float|int|string|null}>  $services
+     */
+    public function syncWorkLines(
+        ServiceTicket $ticket,
+        array $items,
+        array $services,
+        bool $requireAtLeastOne = true,
+    ): void {
+        $resolvedItems = $this->resolveItemLines($items);
+        $resolvedServices = $this->resolveServiceLines($services);
+
+        if ($requireAtLeastOne && $resolvedItems === [] && $resolvedServices === []) {
+            throw new InvalidArgumentException('Saat status Bisa diambil, wajib isi minimal 1 jasa service atau barang.');
+        }
+
+        $ticket->itemLines()->delete();
+        $ticket->serviceLines()->delete();
+
+        foreach ($resolvedItems as $line) {
+            ServiceTicketItem::create([
+                'service_ticket_id' => $ticket->id,
+                ...$line,
+            ]);
+        }
+
+        foreach ($resolvedServices as $line) {
+            ServiceTicketServiceLine::create([
+                'service_ticket_id' => $ticket->id,
+                ...$line,
+            ]);
+        }
+    }
+
+    /**
+     * @param  array<int, array{item_id?: int, quantity?: int, unit_price?: float|int|string|null}>  $lines
+     * @return list<array{item_id: int, item_code: string, item_name: string, quantity: int, unit_price: float, subtotal: float}>
+     */
+    private function resolveItemLines(array $lines): array
+    {
+        $merged = [];
+
+        foreach ($lines as $line) {
+            $itemId = (int) ($line['item_id'] ?? 0);
+            $qty = (int) ($line['quantity'] ?? 0);
+            if ($itemId <= 0 || $qty <= 0) {
+                continue;
+            }
+
+            if (! isset($merged[$itemId])) {
+                $merged[$itemId] = [
+                    'quantity' => 0,
+                    'unit_price' => array_key_exists('unit_price', $line) && $line['unit_price'] !== null && $line['unit_price'] !== ''
+                        ? (float) $line['unit_price']
+                        : null,
+                ];
+            }
+
+            $merged[$itemId]['quantity'] += $qty;
+            if (array_key_exists('unit_price', $line) && $line['unit_price'] !== null && $line['unit_price'] !== '') {
+                $merged[$itemId]['unit_price'] = (float) $line['unit_price'];
+            }
+        }
+
+        if ($merged === []) {
+            return [];
+        }
+
+        $catalog = Item::query()
+            ->whereIn('id', array_keys($merged))
+            ->where('is_active', true)
+            ->get()
+            ->keyBy('id');
+
+        $resolved = [];
+        foreach ($merged as $itemId => $data) {
+            $item = $catalog->get($itemId);
+            if (! $item) {
+                throw new InvalidArgumentException('Barang tidak ditemukan atau tidak aktif.');
+            }
+
+            $unitPrice = $data['unit_price'] !== null
+                ? round((float) $data['unit_price'], 2)
+                : round((float) $item->selling_price, 2);
+            if ($unitPrice < 0) {
+                throw new InvalidArgumentException('Harga barang tidak valid.');
+            }
+
+            $qty = (int) $data['quantity'];
+            // Draft teknisi: belum potong stok, tapi qty tidak boleh melebihi stok saat ini.
+            // Potongan stok final + lock terjadi saat kasir submit Nota Bayar.
+            if ($qty > (int) $item->stock) {
+                throw new InvalidArgumentException(
+                    'Stok "'.$item->name.'" tidak mencukupi untuk draft. Tersedia: '.(int) $item->stock.'. Stok baru dipotong saat Nota Bayar.'
+                );
+            }
+
+            $resolved[] = [
+                'item_id' => $item->id,
+                'item_code' => (string) $item->code,
+                'item_name' => (string) $item->name,
+                'quantity' => $qty,
+                'unit_price' => $unitPrice,
+                'subtotal' => round($qty * $unitPrice, 2),
+            ];
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * @param  array<int, array{workshop_service_id?: int, quantity?: int, unit_price?: float|int|string|null}>  $lines
+     * @return list<array{workshop_service_id: int, service_code: string, service_name: string, quantity: int, unit_price: float, subtotal: float}>
+     */
+    private function resolveServiceLines(array $lines): array
+    {
+        $merged = [];
+
+        foreach ($lines as $line) {
+            $serviceId = (int) ($line['workshop_service_id'] ?? 0);
+            $qty = (int) ($line['quantity'] ?? 0);
+            if ($serviceId <= 0 || $qty <= 0) {
+                continue;
+            }
+
+            if (! isset($merged[$serviceId])) {
+                $merged[$serviceId] = [
+                    'quantity' => 0,
+                    'unit_price' => array_key_exists('unit_price', $line) && $line['unit_price'] !== null && $line['unit_price'] !== ''
+                        ? (float) $line['unit_price']
+                        : null,
+                ];
+            }
+
+            $merged[$serviceId]['quantity'] += $qty;
+            if (array_key_exists('unit_price', $line) && $line['unit_price'] !== null && $line['unit_price'] !== '') {
+                $merged[$serviceId]['unit_price'] = (float) $line['unit_price'];
+            }
+        }
+
+        if ($merged === []) {
+            return [];
+        }
+
+        $catalog = WorkshopService::query()
+            ->whereIn('id', array_keys($merged))
+            ->where('is_active', true)
+            ->get()
+            ->keyBy('id');
+
+        $resolved = [];
+        foreach ($merged as $serviceId => $data) {
+            $service = $catalog->get($serviceId);
+            if (! $service) {
+                throw new InvalidArgumentException('Jasa service tidak ditemukan atau tidak aktif.');
+            }
+
+            $unitPrice = $data['unit_price'] !== null
+                ? round((float) $data['unit_price'], 2)
+                : round((float) $service->price, 2);
+            if ($unitPrice < 0) {
+                throw new InvalidArgumentException('Harga jasa tidak valid.');
+            }
+
+            $qty = (int) $data['quantity'];
+            $resolved[] = [
+                'workshop_service_id' => $service->id,
+                'service_code' => (string) $service->code,
+                'service_name' => (string) $service->name,
+                'quantity' => $qty,
+                'unit_price' => $unitPrice,
+                'subtotal' => round($qty * $unitPrice, 2),
+            ];
+        }
+
+        return $resolved;
     }
 
     public function resendNotification(ServiceTicket $ticket): array

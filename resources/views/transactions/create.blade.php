@@ -10,6 +10,8 @@
         'warranty_days' => $ticket->warranty_days,
         'warranty_notes' => $ticket->warranty_notes,
         'redirectUrl' => route('service-tickets.show', $ticket),
+        'items' => $ticket->relationLoaded('itemLines') ? $ticket->workItemsPayload() : [],
+        'services' => $ticket->relationLoaded('serviceLines') ? $ticket->workServicesPayload() : [],
     ] : null;
 @endphp
 @extends('layouts.app')

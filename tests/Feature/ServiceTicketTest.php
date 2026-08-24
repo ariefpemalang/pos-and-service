@@ -133,16 +133,23 @@ class ServiceTicketTest extends TestCase
 
         $ticket = ServiceTicket::query()->first();
 
+        $service = $this->makeWorkshopService();
+
         $this->actingAs($this->admin)
             ->post(route('service-tickets.status', $ticket), [
                 'status' => 'ready',
                 'note' => 'Siap diambil',
                 'notify_customer' => 1,
+                'services' => [
+                    ['workshop_service_id' => $service->id, 'quantity' => 1, 'unit_price' => 150000],
+                ],
             ])
             ->assertRedirect(route('service-tickets.show', $ticket));
 
         $ticket->refresh();
         $this->assertSame('ready', $ticket->status);
+        $this->assertTrue($ticket->hasWorkLines());
+        $this->assertSame(150000.0, (float) $ticket->estimated_cost);
 
         $this->get(route('service-tickets.track', $ticket->tracking_token))
             ->assertSee('Bisa diambil')
@@ -551,13 +558,63 @@ class ServiceTicketTest extends TestCase
         $this->assertTrue($ticket->canCreateInvoice());
     }
 
-    private function markReadyForInvoice(ServiceTicket $ticket): void
+    #[Test]
+    public function ready_status_requires_work_lines_and_rejects_oversold_stock(): void
     {
-        $ticket->update([
-            'status' => 'ready',
-            'ready_at' => now(),
-        ]);
+        $ticket = $this->makeTicket();
+        $service = $this->makeWorkshopService();
+        $item = $this->makeItem();
+
+        $this->actingAs($this->admin)
+            ->post(route('service-tickets.status', $ticket), [
+                'status' => 'ready',
+                'notify_customer' => 0,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSame('received', $ticket->fresh()->status);
+
+        $this->actingAs($this->admin)
+            ->post(route('service-tickets.status', $ticket), [
+                'status' => 'ready',
+                'notify_customer' => 0,
+                'items' => [
+                    ['item_id' => $item->id, 'quantity' => 99, 'unit_price' => 35000],
+                ],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSame('received', $ticket->fresh()->status);
+
+        $this->actingAs($this->admin)
+            ->post(route('service-tickets.status', $ticket), [
+                'status' => 'completed',
+                'notify_customer' => 0,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->actingAs($this->admin)
+            ->post(route('service-tickets.status', $ticket), [
+                'status' => 'ready',
+                'notify_customer' => 0,
+                'services' => [
+                    ['workshop_service_id' => $service->id, 'quantity' => 1, 'unit_price' => 150000],
+                ],
+                'items' => [
+                    ['item_id' => $item->id, 'quantity' => 1, 'unit_price' => 35000],
+                ],
+            ])
+            ->assertRedirect(route('service-tickets.show', $ticket))
+            ->assertSessionHas('success');
+
         $ticket->refresh();
+        $this->assertSame('ready', $ticket->status);
+        $this->assertTrue($ticket->hasWorkLines());
+        $this->assertSame(5, (int) $item->fresh()->stock);
+        $this->assertSame(185000.0, (float) $ticket->estimated_cost);
     }
 
     private function makeTicket(): ServiceTicket
@@ -574,39 +631,78 @@ class ServiceTicketTest extends TestCase
         return ServiceTicket::query()->latest('id')->firstOrFail();
     }
 
+    private function markReadyForInvoice(ServiceTicket $ticket): void
+    {
+        $service = \App\Models\WorkshopService::query()->where('code', 'JSV-TKS-01')->first()
+            ?? $this->makeWorkshopService();
+
+        if ($ticket->status === 'ready') {
+            if (! $ticket->hasWorkLines()) {
+                app(\App\Services\ServiceTicketService::class)->updateWorkLines(
+                    $ticket,
+                    [],
+                    [['workshop_service_id' => $service->id, 'quantity' => 1, 'unit_price' => (float) $service->price]],
+                );
+            }
+            $ticket->refresh();
+
+            return;
+        }
+
+        app(\App\Services\ServiceTicketService::class)->updateStatus(
+            $ticket,
+            'ready',
+            'Siap diambil',
+            $this->admin->id,
+            false,
+            [],
+            [['workshop_service_id' => $service->id, 'quantity' => 1, 'unit_price' => (float) $service->price]],
+        );
+        $ticket->refresh();
+    }
+
     private function makeTechnician(): \App\Models\Technician
     {
-        return \App\Models\Technician::create([
-            'code' => 'TKN-TKS-01',
-            'name' => 'Teknisi Tiket',
-            'commission_percent' => 20,
-            'is_active' => true,
-        ]);
+        return \App\Models\Technician::query()->firstOrCreate(
+            ['code' => 'TKN-TKS-01'],
+            [
+                'name' => 'Teknisi Tiket',
+                'commission_percent' => 20,
+                'is_active' => true,
+            ],
+        );
     }
 
     private function makeWorkshopService(): \App\Models\WorkshopService
     {
-        return \App\Models\WorkshopService::create([
-            'code' => 'JSV-TKS-01',
-            'name' => 'Ganti LCD',
-            'price' => 150000,
-            'is_active' => true,
-        ]);
+        return \App\Models\WorkshopService::query()->firstOrCreate(
+            ['code' => 'JSV-TKS-01'],
+            [
+                'name' => 'Ganti LCD',
+                'price' => 150000,
+                'is_active' => true,
+            ],
+        );
     }
 
     private function makeItem(): \App\Models\Item
     {
-        $category = \App\Models\ItemCategory::create(['name' => 'Sparepart HP']);
-        $unit = \App\Models\ItemUnit::create(['name' => 'Pcs', 'abbreviation' => 'pcs']);
+        $category = \App\Models\ItemCategory::query()->firstOrCreate(['name' => 'Sparepart HP']);
+        $unit = \App\Models\ItemUnit::query()->firstOrCreate(
+            ['abbreviation' => 'pcs'],
+            ['name' => 'Pcs'],
+        );
 
-        return \App\Models\Item::create([
-            'code' => 'BRG-TKS-01',
-            'name' => 'LCD Samsung A54',
-            'category_id' => $category->id,
-            'unit_id' => $unit->id,
-            'stock' => 5,
-            'selling_price' => 35000,
-            'is_active' => true,
-        ]);
+        return \App\Models\Item::query()->firstOrCreate(
+            ['code' => 'BRG-TKS-01'],
+            [
+                'name' => 'LCD Samsung A54',
+                'category_id' => $category->id,
+                'unit_id' => $unit->id,
+                'stock' => 5,
+                'selling_price' => 35000,
+                'is_active' => true,
+            ],
+        );
     }
 }

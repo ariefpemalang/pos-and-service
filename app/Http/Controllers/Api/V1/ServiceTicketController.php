@@ -7,8 +7,10 @@ use App\Http\Controllers\Api\Concerns\RespondsWithApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\ServiceTicketResource;
 use App\Models\BankAccount;
+use App\Models\Item;
 use App\Models\ServiceTicket;
 use App\Models\Technician;
+use App\Models\WorkshopService;
 use App\Services\ServiceTicketService;
 use App\Services\SettingService;
 use App\Support\PaymentMethodResolver;
@@ -27,7 +29,7 @@ class ServiceTicketController extends Controller
     {
         $this->middleware('permission:service ticket view')->only(['index', 'show', 'options', 'claimSlip']);
         $this->middleware('permission:service ticket create')->only('store');
-        $this->middleware('permission:service ticket edit')->only(['update', 'updateStatus', 'updateWarranty', 'resendNotification']);
+        $this->middleware('permission:service ticket edit')->only(['update', 'updateStatus', 'updateWorkLines', 'updateWarranty', 'resendNotification']);
         $this->middleware('permission:service ticket delete')->only('destroy');
     }
 
@@ -111,6 +113,31 @@ class ServiceTicketController extends Controller
                     'account_number' => $a->account_number,
                 ])
                 ->values(),
+            'items' => Item::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'stock', 'selling_price', 'photo'])
+                ->map(fn (Item $item) => [
+                    'id' => $item->id,
+                    'code' => $item->code,
+                    'name' => $item->name,
+                    'stock' => (int) $item->stock,
+                    'selling_price' => (float) $item->selling_price,
+                    'photo' => $item->photo,
+                    'photo_url' => $item->absolutePhotoUrl(),
+                ])
+                ->values(),
+            'services' => WorkshopService::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'price'])
+                ->map(fn (WorkshopService $service) => [
+                    'id' => $service->id,
+                    'code' => $service->code,
+                    'name' => $service->name,
+                    'price' => (float) $service->price,
+                ])
+                ->values(),
         ]);
     }
 
@@ -166,6 +193,14 @@ class ServiceTicketController extends Controller
             'status' => ['required', 'string', Rule::in(array_keys(config('service-tickets.statuses')))],
             'note' => ['nullable', 'string', 'max:1000'],
             'notify_customer' => ['nullable', 'boolean'],
+            'items' => ['nullable', 'array'],
+            'items.*.item_id' => ['required_with:items', 'integer', 'exists:items,id'],
+            'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
+            'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
+            'services' => ['nullable', 'array'],
+            'services.*.workshop_service_id' => ['required_with:services', 'integer', 'exists:workshop_services,id'],
+            'services.*.quantity' => ['required_with:services', 'integer', 'min:1'],
+            'services.*.unit_price' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         try {
@@ -175,6 +210,8 @@ class ServiceTicketController extends Controller
                 $validated['note'] ?? null,
                 (int) $request->user()->id,
                 $request->boolean('notify_customer', true),
+                $validated['items'] ?? [],
+                $validated['services'] ?? [],
             );
         } catch (InvalidArgumentException $e) {
             return $this->apiError($e->getMessage(), 422);
@@ -191,6 +228,34 @@ class ServiceTicketController extends Controller
                 'notify' => $result['notify'],
             ],
         );
+    }
+
+    public function updateWorkLines(Request $request, ServiceTicket $serviceTicket): JsonResponse
+    {
+        $validated = $request->validate([
+            'items' => ['nullable', 'array'],
+            'items.*.item_id' => ['required_with:items', 'integer', 'exists:items,id'],
+            'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
+            'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
+            'services' => ['nullable', 'array'],
+            'services.*.workshop_service_id' => ['required_with:services', 'integer', 'exists:workshop_services,id'],
+            'services.*.quantity' => ['required_with:services', 'integer', 'min:1'],
+            'services.*.unit_price' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        try {
+            $ticket = $this->tickets->updateWorkLines(
+                $serviceTicket,
+                $validated['items'] ?? [],
+                $validated['services'] ?? [],
+            );
+        } catch (InvalidArgumentException $e) {
+            return $this->apiError($e->getMessage(), 422);
+        }
+
+        return $this->apiSuccess('Rincian jasa & barang diperbarui.', [
+            'ticket' => new ServiceTicketResource($this->loadDetail($ticket)),
+        ]);
     }
 
     public function updateWarranty(Request $request, ServiceTicket $serviceTicket): JsonResponse
@@ -472,6 +537,8 @@ class ServiceTicketController extends Controller
             'paidTransaction',
             'downPaymentTransaction',
             'statusLogs' => fn ($q) => $q->latest()->with('user:id,name'),
+            'itemLines',
+            'serviceLines',
         ]);
     }
 

@@ -996,12 +996,48 @@
                 closeTab($(this).data('tab-id'));
             });
 
+            function mapTicketItemLines(lines) {
+                return (lines || []).map(function (line) {
+                    const quantity = parseInt(line.quantity, 10) || 1;
+                    const unitPrice = parseFloat(line.unit_price) || 0;
+                    return {
+                        item_id: line.item_id,
+                        code: line.code || '',
+                        name: line.name || '',
+                        quantity: quantity,
+                        unit_price: unitPrice,
+                        subtotal: Math.round(unitPrice * quantity),
+                    };
+                }).filter(function (line) {
+                    return !!line.item_id;
+                });
+            }
+
+            function mapTicketServiceLines(lines) {
+                return (lines || []).map(function (line) {
+                    const quantity = parseInt(line.quantity, 10) || 1;
+                    const unitPrice = parseFloat(line.unit_price) || 0;
+                    return {
+                        workshop_service_id: line.workshop_service_id,
+                        code: line.code || '',
+                        name: line.name || '',
+                        quantity: quantity,
+                        unit_price: unitPrice,
+                        subtotal: Math.round(unitPrice * quantity),
+                    };
+                }).filter(function (line) {
+                    return line.workshop_service_id || line.name;
+                });
+            }
+
             const firstTab = createEmptyTab(settings.ticket?.ticket_no || 'Transaksi 1');
             if (settings.ticket) {
                 firstTab.customerId = String(settings.ticket.customer_id || '');
                 firstTab.technicianId = settings.ticket.technician_id ? String(settings.ticket.technician_id) : '';
                 firstTab.notes = settings.ticket.notes || '';
                 firstTab.label = settings.ticket.ticket_no || firstTab.label;
+                firstTab.items = mapTicketItemLines(settings.ticket.items || []);
+                firstTab.services = mapTicketServiceLines(settings.ticket.services || []);
             }
             orderTabs.push(firstTab);
             activeTabId = firstTab.id;

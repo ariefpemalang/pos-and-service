@@ -369,7 +369,9 @@ class TransactionController extends Controller
             return null;
         }
 
-        return ServiceTicket::query()->with(['customer', 'technician', 'paidTransaction'])->find($ticketId);
+        return ServiceTicket::query()
+            ->with(['customer', 'technician', 'paidTransaction', 'itemLines', 'serviceLines'])
+            ->find($ticketId);
     }
 
     /**

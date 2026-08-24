@@ -21,7 +21,7 @@ class ServiceTicketController extends Controller
     {
         $this->middleware('permission:service ticket view')->only(['index', 'show', 'claimSlip']);
         $this->middleware('permission:service ticket create')->only(['create', 'store']);
-        $this->middleware('permission:service ticket edit')->only(['edit', 'update', 'updateStatus', 'updateWarranty', 'resendNotification']);
+        $this->middleware('permission:service ticket edit')->only(['edit', 'update', 'updateStatus', 'updateWorkLines', 'updateWarranty', 'resendNotification']);
         $this->middleware('permission:service ticket delete')->only('destroy');
     }
 
@@ -98,6 +98,8 @@ class ServiceTicketController extends Controller
             'paidTransaction',
             'downPaymentTransaction.bankAccount',
             'statusLogs' => fn ($q) => $q->latest()->with('user'),
+            'itemLines',
+            'serviceLines',
         ]);
 
         $selectable = array_fill_keys(
@@ -108,6 +110,14 @@ class ServiceTicketController extends Controller
         return view('service-tickets.show', [
             'ticket'   => $serviceTicket,
             'statuses' => array_intersect_key(config('service-tickets.statuses', []), $selectable),
+            'catalogItems' => \App\Models\Item::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'stock', 'selling_price']),
+            'catalogServices' => \App\Models\WorkshopService::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'price']),
         ]);
     }
 
@@ -169,6 +179,14 @@ class ServiceTicketController extends Controller
             'status' => ['required', 'string', Rule::in(array_keys(config('service-tickets.statuses')))],
             'note' => ['nullable', 'string', 'max:1000'],
             'notify_customer' => ['nullable', 'boolean'],
+            'items' => ['nullable', 'array'],
+            'items.*.item_id' => ['required_with:items', 'integer', 'exists:items,id'],
+            'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
+            'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
+            'services' => ['nullable', 'array'],
+            'services.*.workshop_service_id' => ['required_with:services', 'integer', 'exists:workshop_services,id'],
+            'services.*.quantity' => ['required_with:services', 'integer', 'min:1'],
+            'services.*.unit_price' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         try {
@@ -178,9 +196,11 @@ class ServiceTicketController extends Controller
                 $validated['note'] ?? null,
                 (int) $request->user()->id,
                 $request->boolean('notify_customer', true),
+                $validated['items'] ?? [],
+                $validated['services'] ?? [],
             );
         } catch (InvalidArgumentException $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', $e->getMessage())->withInput();
         }
 
         $redirect = redirect()->route('service-tickets.show', $result['ticket'])
@@ -191,6 +211,34 @@ class ServiceTicketController extends Controller
         }
 
         return $redirect;
+    }
+
+    public function updateWorkLines(Request $request, ServiceTicket $serviceTicket): RedirectResponse
+    {
+        $validated = $request->validate([
+            'items' => ['nullable', 'array'],
+            'items.*.item_id' => ['required_with:items', 'integer', 'exists:items,id'],
+            'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
+            'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
+            'services' => ['nullable', 'array'],
+            'services.*.workshop_service_id' => ['required_with:services', 'integer', 'exists:workshop_services,id'],
+            'services.*.quantity' => ['required_with:services', 'integer', 'min:1'],
+            'services.*.unit_price' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        try {
+            $ticket = $this->tickets->updateWorkLines(
+                $serviceTicket,
+                $validated['items'] ?? [],
+                $validated['services'] ?? [],
+            );
+        } catch (InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage())->withInput();
+        }
+
+        return redirect()
+            ->route('service-tickets.show', $ticket)
+            ->with('success', 'Rincian jasa & barang diperbarui.');
     }
 
     public function resendNotification(ServiceTicket $serviceTicket): RedirectResponse
@@ -429,7 +477,7 @@ class ServiceTicketController extends Controller
             ['key' => '', 'label' => 'Semua', 'color' => 'accent'],
         ];
 
-        $selectable = (array) config('service-tickets.selectable_statuses', []);
+        $selectable = (array) config('service-tickets.filter_statuses', config('service-tickets.selectable_statuses', []));
         $allLabels  = config('service-tickets.statuses', []);
 
         foreach ($selectable as $key) {

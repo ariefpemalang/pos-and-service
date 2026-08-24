@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Customer;
 use App\Models\ServiceTicket;
 use App\Models\User;
+use App\Models\WorkshopService;
 use Database\Seeders\RoleAndPermissionSeeder;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -84,14 +85,27 @@ class ServiceTicketApiTest extends TestCase
             'warranty_days' => 30,
         ]);
 
+        $service = WorkshopService::create([
+            'code' => 'JSV-API-01',
+            'name' => 'Ganti LCD API',
+            'price' => 150000,
+            'is_active' => true,
+        ]);
+
         $this->api('POST', '/api/service-tickets/'.$ticket->id.'/status', [
             'status' => 'ready',
             'notify_customer' => false,
+            'services' => [
+                ['workshop_service_id' => $service->id, 'quantity' => 1, 'unit_price' => 150000],
+            ],
         ])->assertOk()->assertJsonPath('data.ticket.status', 'ready');
 
         $this->api('POST', '/api/service-tickets/'.$ticket->id.'/status', [
             'status' => 'ready',
             'notify_customer' => false,
+            'services' => [
+                ['workshop_service_id' => $service->id, 'quantity' => 1, 'unit_price' => 150000],
+            ],
         ])->assertStatus(422);
     }
 

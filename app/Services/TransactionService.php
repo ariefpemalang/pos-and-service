@@ -361,6 +361,10 @@ class TransactionService
             throw new InvalidArgumentException('Nota bayar hanya bisa dibuat jika status tiket Bisa diambil dan belum ada nota pelunasan.');
         }
 
+        if (! $ticket->hasWorkLines()) {
+            throw new InvalidArgumentException('Tiket belum punya rincian jasa/barang dari teknisi. Lengkapi dulu saat status Bisa diambil.');
+        }
+
         $payload['service_ticket_id'] = $ticket->id;
         $payload['customer_mode'] = 'existing';
         $payload['customer_id'] = $ticket->customer_id;

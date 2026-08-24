@@ -112,6 +112,77 @@
                 </div>
             </div>
 
+            @if ($ticket->hasWorkLines())
+                <div class="data-panel">
+                    <div class="data-panel-head data-panel-head-row">
+                        <h2 class="data-panel-title"><i class="bi bi-receipt me-1"></i> Rincian jasa & barang</h2>
+                        <strong>Rp {{ number_format($ticket->workTotal(), 0, ',', '.') }}</strong>
+                    </div>
+                    <div class="data-panel-body">
+                        @if ($ticket->serviceLines->isNotEmpty())
+                            <div class="small text-muted text-uppercase fw-semibold mb-2">Jasa</div>
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Jasa</th>
+                                            <th class="text-center">Qty</th>
+                                            <th class="text-end">Harga</th>
+                                            <th class="text-end">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($ticket->serviceLines as $line)
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-medium">{{ $line->service_name }}</div>
+                                                    @if ($line->service_code)
+                                                        <div class="text-muted small">{{ $line->service_code }}</div>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">{{ number_format((int) $line->quantity, 0, ',', '.') }}</td>
+                                                <td class="text-end">Rp {{ number_format((float) $line->unit_price, 0, ',', '.') }}</td>
+                                                <td class="text-end fw-medium">Rp {{ number_format((float) $line->subtotal, 0, ',', '.') }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                        @if ($ticket->itemLines->isNotEmpty())
+                            <div class="small text-muted text-uppercase fw-semibold mb-2">Barang</div>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Barang</th>
+                                            <th class="text-center">Qty</th>
+                                            <th class="text-end">Harga</th>
+                                            <th class="text-end">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($ticket->itemLines as $line)
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-medium">{{ $line->item_name }}</div>
+                                                    @if ($line->item_code)
+                                                        <div class="text-muted small">{{ $line->item_code }}</div>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">{{ number_format((int) $line->quantity, 0, ',', '.') }}</td>
+                                                <td class="text-end">Rp {{ number_format((float) $line->unit_price, 0, ',', '.') }}</td>
+                                                <td class="text-end fw-medium">Rp {{ number_format((float) $line->subtotal, 0, ',', '.') }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             <div class="data-panel">
                 <div class="data-panel-head">
                     <h2 class="data-panel-title"><i class="bi bi-clock-history me-1"></i> Riwayat status</h2>
@@ -188,7 +259,7 @@
                                 @csrf
                                 <div class="mb-2">
                                     <label class="form-label">Status baru</label>
-                                    <select name="status" class="form-control form-control-clean" required>
+                                    <select name="status" id="ticket-status-select" class="form-control form-control-clean" required>
                                         @foreach ($statuses as $value => $label)
                                             @if ($value !== $ticket->status)
                                                 <option value="{{ $value }}">{{ $label }}</option>
@@ -196,6 +267,7 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div id="ticket-work-lines" class="d-none mb-3"></div>
                                 <div class="mb-2">
                                     <label class="form-label">Catatan untuk pelanggan</label>
                                     <textarea name="note" class="form-control form-control-clean" rows="2"
@@ -207,6 +279,23 @@
                                     <label class="form-check-label" for="notify_customer">Kirim WhatsApp ke pelanggan</label>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100">Update status</button>
+                            </form>
+                        </div>
+                    </div>
+                @endif
+            @endcan
+
+            @can('service ticket edit')
+                @if ($ticket->canCreateInvoice())
+                    <div class="data-panel">
+                        <div class="data-panel-head">
+                            <h2 class="data-panel-title"><i class="bi bi-cart3 me-1"></i> Ubah jasa & barang</h2>
+                        </div>
+                        <div class="data-panel-body">
+                            <form method="POST" action="{{ route('service-tickets.work-lines', $ticket) }}">
+                                @csrf
+                                <div id="ticket-work-lines-edit"></div>
+                                <button type="submit" class="btn btn-primary w-100 mt-3">Simpan rincian</button>
                             </form>
                         </div>
                     </div>
@@ -250,3 +339,67 @@
         </div>
     </div>
 @endsection
+
+@push('js')
+    <script src="{{ asset('js/ticket-work-lines.js') }}?v={{ filemtime(public_path('js/ticket-work-lines.js')) }}"></script>
+    <script>
+        (function ($) {
+            const itemsCatalog = @json(($catalogItems ?? collect())->map(fn ($item) => [
+                'id' => $item->id,
+                'code' => $item->code,
+                'name' => $item->name,
+                'stock' => (int) $item->stock,
+                'selling_price' => (float) $item->selling_price,
+            ])->values());
+            const servicesCatalog = @json(($catalogServices ?? collect())->map(fn ($service) => [
+                'id' => $service->id,
+                'code' => $service->code,
+                'name' => $service->name,
+                'price' => (float) $service->price,
+            ])->values());
+            const initialItems = @json($ticket->relationLoaded('itemLines') ? $ticket->workItemsPayload() : []);
+            const initialServices = @json($ticket->relationLoaded('serviceLines') ? $ticket->workServicesPayload() : []);
+
+            function setWorkLinesEnabled($container, enabled) {
+                $container.find('input, select, button, textarea').prop('disabled', !enabled);
+            }
+
+            if ($('#ticket-work-lines').length && window.AthaTicketWorkLines) {
+                const $status = $('#ticket-status-select');
+                const $work = $('#ticket-work-lines');
+                const canSelectReady = $status.find('option[value="ready"]').length > 0;
+
+                if (canSelectReady) {
+                    AthaTicketWorkLines.init({
+                        itemsCatalog: itemsCatalog,
+                        servicesCatalog: servicesCatalog,
+                        initialItems: initialItems,
+                        initialServices: initialServices,
+                        containerSelector: '#ticket-work-lines',
+                        helperText: 'Wajib isi minimal 1 jasa atau barang. Stok BARANG belum dipotong di sini — potong saat kasir buat Nota Bayar.',
+                    });
+
+                    function syncStatusWorkLines() {
+                        const show = $status.val() === 'ready';
+                        $work.toggleClass('d-none', !show);
+                        setWorkLinesEnabled($work, show);
+                    }
+
+                    $status.on('change', syncStatusWorkLines);
+                    syncStatusWorkLines();
+                }
+            }
+
+            if ($('#ticket-work-lines-edit').length && window.AthaTicketWorkLines) {
+                AthaTicketWorkLines.init({
+                    itemsCatalog: itemsCatalog,
+                    servicesCatalog: servicesCatalog,
+                    initialItems: initialItems,
+                    initialServices: initialServices,
+                    containerSelector: '#ticket-work-lines-edit',
+                    helperText: 'Ubah jasa & barang sebelum Nota Bayar. Stok belum dipotong sampai kasir bayar.',
+                });
+            }
+        })(jQuery);
+    </script>
+@endpush

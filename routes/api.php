@@ -71,6 +71,7 @@ Route::middleware('api.key')->group(function () {
         Route::get('service-tickets/options', [ServiceTicketController::class, 'options'])->name('api.service-tickets.options');
         Route::get('service-tickets/{service_ticket}/claim-slip', [ServiceTicketController::class, 'claimSlip'])->name('api.service-tickets.claim-slip');
         Route::post('service-tickets/{service_ticket}/status', [ServiceTicketController::class, 'updateStatus'])->name('api.service-tickets.status');
+        Route::post('service-tickets/{service_ticket}/work-lines', [ServiceTicketController::class, 'updateWorkLines'])->name('api.service-tickets.work-lines');
         Route::post('service-tickets/{service_ticket}/warranty', [ServiceTicketController::class, 'updateWarranty'])->name('api.service-tickets.warranty');
         Route::post('service-tickets/{service_ticket}/resend', [ServiceTicketController::class, 'resendNotification'])->name('api.service-tickets.resend');
         Route::apiResource('service-tickets', ServiceTicketController::class)->names('api.service-tickets');

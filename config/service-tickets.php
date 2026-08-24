@@ -22,10 +22,15 @@ return [
     ],
 
     /*
-     * Only these statuses appear in the "change status" UI dropdown and
-     * mobile filter chips. Keeping this list short per business requirement.
+     * Statuses technician/kasir can set manually from ticket UI.
+     * "completed" (Sudah diambil) hanya lewat Nota Bayar — jangan di sini.
      */
-    'selectable_statuses' => ['received', 'ready', 'completed'],
+    'selectable_statuses' => ['received', 'ready'],
+
+    /*
+     * Status chips on ticket index / mobile list filters.
+     */
+    'filter_statuses' => ['received', 'ready', 'completed'],
 
     'status_colors' => [
         'received'      => 'secondary',

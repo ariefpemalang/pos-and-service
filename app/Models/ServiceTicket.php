@@ -83,6 +83,71 @@ class ServiceTicket extends Model
         return $this->hasMany(ServiceTicketStatusLog::class);
     }
 
+    public function itemLines(): HasMany
+    {
+        return $this->hasMany(ServiceTicketItem::class);
+    }
+
+    public function serviceLines(): HasMany
+    {
+        return $this->hasMany(ServiceTicketServiceLine::class);
+    }
+
+    public function hasWorkLines(): bool
+    {
+        if ($this->relationLoaded('itemLines') && $this->relationLoaded('serviceLines')) {
+            return $this->itemLines->isNotEmpty() || $this->serviceLines->isNotEmpty();
+        }
+
+        return $this->itemLines()->exists() || $this->serviceLines()->exists();
+    }
+
+    /**
+     * @return list<array{item_id: int, code: string, name: string, quantity: int, unit_price: float}>
+     */
+    public function workItemsPayload(): array
+    {
+        return $this->itemLines
+            ->map(fn (ServiceTicketItem $line) => [
+                'item_id' => (int) $line->item_id,
+                'code' => (string) $line->item_code,
+                'name' => (string) $line->item_name,
+                'quantity' => (int) $line->quantity,
+                'unit_price' => (float) $line->unit_price,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return list<array{workshop_service_id: int|null, code: string|null, name: string, quantity: int, unit_price: float}>
+     */
+    public function workServicesPayload(): array
+    {
+        return $this->serviceLines
+            ->map(fn (ServiceTicketServiceLine $line) => [
+                'workshop_service_id' => $line->workshop_service_id !== null ? (int) $line->workshop_service_id : null,
+                'code' => $line->service_code,
+                'name' => (string) $line->service_name,
+                'quantity' => (int) $line->quantity,
+                'unit_price' => (float) $line->unit_price,
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function workTotal(): float
+    {
+        $items = $this->relationLoaded('itemLines')
+            ? $this->itemLines->sum(fn (ServiceTicketItem $line) => (float) $line->subtotal)
+            : (float) $this->itemLines()->sum('subtotal');
+        $services = $this->relationLoaded('serviceLines')
+            ? $this->serviceLines->sum(fn (ServiceTicketServiceLine $line) => (float) $line->subtotal)
+            : (float) $this->serviceLines()->sum('subtotal');
+
+        return round($items + $services, 2);
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
