@@ -149,8 +149,12 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="form-hint-sm mb-3"><i class="bi bi-info-circle me-1"></i> Kode barang dibuat otomatis (contoh: <code>BRG-20260701-0001</code>).</p>
                         <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Kode Barang <span class="text-danger">*</span></label>
+                                <input type="text" name="code" class="form-control form-control-clean" maxlength="50" required>
+                                <div class="form-hint-sm">Otomatis terisi saat tambah baru; bisa diubah (mis. <code>KD</code>). Kode harus unik.</div>
+                            </div>
                             @include('layouts.partials.entity-photo-field', ['label' => 'Barang', 'placeholderIcon' => 'bi-box-seam'])
                             <div class="col-md-6">
                                 <label class="form-label">Nama Barang <span class="text-danger">*</span></label>
@@ -307,6 +311,9 @@
             onFormReset: function (mode) {
                 if (mode === 'create') {
                     $('#is_active').prop('checked', true);
+                    $.get('{{ route('entity-codes.suggest') }}', { type: 'item' }, function (res) {
+                        $('input[name="code"]').val(res.code);
+                    });
                 }
             },
             renderShow: function (d) {

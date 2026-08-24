@@ -3,6 +3,7 @@
 use App\Http\Controllers\BankAccountController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EntityCodeController;
 use App\Http\Controllers\FinancialReportController;
 use App\Http\Controllers\ItemCategoryController;
 use App\Http\Controllers\ItemController;
@@ -45,6 +46,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource('users', UserController::class);
     Route::resource('roles', RoleController::class);
+
+    Route::get('entity-codes/suggest', [EntityCodeController::class, 'suggest'])->name('entity-codes.suggest');
 
     // Fase 1 — Master data & inventory
     Route::resource('customers', CustomerController::class)->except(['create', 'edit']);

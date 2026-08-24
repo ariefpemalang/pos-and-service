@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BankAccountController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\EntityCodeController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\FinancialReportController;
@@ -30,6 +31,8 @@ Route::middleware('api.key')->group(function () {
         Route::get('/auth/me', [AuthController::class, 'me']);
         Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+        Route::get('entity-codes/suggest', [EntityCodeController::class, 'suggest'])->name('api.entity-codes.suggest');
 
         // Prefix nama route `api.*` agar tidak menimpa route web (customers.index, dll).
         Route::apiResource('customers', CustomerController::class)->names('api.customers');

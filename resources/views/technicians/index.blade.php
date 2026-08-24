@@ -52,8 +52,12 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="form-hint-sm mb-3"><i class="bi bi-info-circle me-1"></i> Kode teknisi dibuat otomatis (contoh: <code>TKN-20260701-0001</code>).</p>
                         <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Kode Teknisi <span class="text-danger">*</span></label>
+                                <input type="text" name="code" class="form-control form-control-clean" maxlength="30" required>
+                                <div class="form-hint-sm">Otomatis terisi saat tambah baru; bisa diubah. Kode harus unik.</div>
+                            </div>
                             @include('layouts.partials.entity-photo-field', ['label' => 'Teknisi', 'placeholderIcon' => 'bi-person'])
                             <div class="col-md-6">
                                 <label class="form-label">Nama <span class="text-danger">*</span></label>
@@ -147,6 +151,9 @@
                 if (mode === 'create') {
                     $('#is_active').prop('checked', true);
                     $('input[name="commission_percent"]').val({{ (int) config('workshop.default_technician_commission_percent', 20) }});
+                    $.get('{{ route('entity-codes.suggest') }}', { type: 'technician' }, function (res) {
+                        $('input[name="code"]').val(res.code);
+                    });
                 }
             },
             renderShow: function (d) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HandlesEditableEntityCode;
 use App\Http\Controllers\Concerns\RespondsToModal;
 use App\Models\WorkshopService;
 use Illuminate\Http\JsonResponse;
@@ -12,7 +13,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class WorkshopServiceController extends Controller
 {
-    use RespondsToModal;
+    use HandlesEditableEntityCode, RespondsToModal;
 
     public function __construct()
     {
@@ -42,19 +43,19 @@ class WorkshopServiceController extends Controller
 
     public function store(Request $request): JsonResponse|RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
-        ]);
+        ], $this->entityCodeRules('workshop_services', 50)));
 
         $service = WorkshopService::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'price' => $validated['price'],
             'is_active' => $request->boolean('is_active', true),
-            'code' => WorkshopService::generateCode(),
+            'code' => $this->resolveEntityCode($request, WorkshopService::class, $validated['code'] ?? null),
         ]);
 
         return $this->modalSuccess('Jasa servis berhasil ditambahkan.', $service);
@@ -67,18 +68,19 @@ class WorkshopServiceController extends Controller
 
     public function update(Request $request, WorkshopService $workshopService): JsonResponse|RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
-        ]);
+        ], $this->entityCodeRules('workshop_services', 50, $workshopService->id, true)));
 
         $workshopService->update([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'price' => $validated['price'],
             'is_active' => $request->boolean('is_active'),
+            'code' => trim($validated['code']),
         ]);
 
         return $this->modalSuccess('Jasa servis berhasil diperbarui.', $workshopService);

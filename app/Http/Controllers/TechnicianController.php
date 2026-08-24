@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HandlesEditableEntityCode;
 use App\Http\Controllers\Concerns\HandlesEntityPhoto;
 use App\Http\Controllers\Concerns\RespondsToModal;
 use App\Models\Technician;
@@ -13,7 +14,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class TechnicianController extends Controller
 {
-    use HandlesEntityPhoto, RespondsToModal;
+    use HandlesEditableEntityCode, HandlesEntityPhoto, RespondsToModal;
 
     public function __construct()
     {
@@ -59,11 +60,11 @@ class TechnicianController extends Controller
             'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_active' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string'],
-        ], $this->photoRules()));
+        ], $this->entityCodeRules('technicians', 30), $this->photoRules()));
 
         $technician = Technician::create([
-            ...collect($validated)->except(['photo', 'remove_photo'])->all(),
-            'code' => Technician::generateCode(),
+            ...collect($validated)->except(['photo', 'remove_photo', 'code'])->all(),
+            'code' => $this->resolveEntityCode($request, Technician::class, $validated['code'] ?? null),
             'photo' => $this->resolvePhotoPath($request, 'photos/technicians'),
             'commission_percent' => $validated['commission_percent'] ?? config('workshop.default_technician_commission_percent', 20),
             'is_active' => $request->boolean('is_active', true),
@@ -87,10 +88,11 @@ class TechnicianController extends Controller
             'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'is_active' => ['nullable', 'boolean'],
             'notes' => ['nullable', 'string'],
-        ], $this->photoRules()));
+        ], $this->entityCodeRules('technicians', 30, $technician->id, true), $this->photoRules()));
 
         $technician->update([
-            ...collect($validated)->except(['photo', 'remove_photo'])->all(),
+            ...collect($validated)->except(['photo', 'remove_photo', 'code'])->all(),
+            'code' => trim($validated['code']),
             'photo' => $this->resolvePhotoPath($request, 'photos/technicians', $technician->photo),
             'commission_percent' => $validated['commission_percent'] ?? config('workshop.default_technician_commission_percent', 20),
             'is_active' => $request->boolean('is_active'),

@@ -50,8 +50,12 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="form-hint-sm mb-3"><i class="bi bi-info-circle me-1"></i> Kode jasa dibuat otomatis (contoh: <code>JSV-20260701-0001</code>).</p>
                         <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Kode Jasa <span class="text-danger">*</span></label>
+                                <input type="text" name="code" class="form-control form-control-clean" maxlength="50" required>
+                                <div class="form-hint-sm">Otomatis terisi saat tambah baru; bisa diubah. Kode harus unik.</div>
+                            </div>
                             <div class="col-12">
                                 <label class="form-label">Nama Jasa <span class="text-danger">*</span></label>
                                 <input type="text" name="name" class="form-control form-control-clean" required>
@@ -125,6 +129,14 @@
             showUrlTemplate: '{{ route('workshop-services.show', '__ID__') }}',
             destroyUrlTemplate: '{{ route('workshop-services.destroy', '__ID__') }}',
             entityName: 'Jasa',
+            onFormReset: function (mode) {
+                if (mode === 'create') {
+                    $('#is_active').prop('checked', true);
+                    $.get('{{ route('entity-codes.suggest') }}', { type: 'workshop_service' }, function (res) {
+                        $('input[name="code"]').val(res.code);
+                    });
+                }
+            },
             renderShow: function (d) {
                 const price = Number(d.price || 0).toLocaleString('id-ID');
                 const status = d.is_active ? 'Aktif' : 'Nonaktif';

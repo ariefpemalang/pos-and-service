@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Concerns\PaginatesApiQuery;
 use App\Http\Controllers\Api\Concerns\RespondsWithApi;
+use App\Http\Controllers\Concerns\HandlesEditableEntityCode;
 use App\Http\Controllers\Concerns\HandlesEntityPhoto;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\ItemResource;
@@ -13,7 +14,7 @@ use Illuminate\Http\Request;
 
 class ItemController extends Controller
 {
-    use HandlesEntityPhoto;
+    use HandlesEditableEntityCode, HandlesEntityPhoto;
     use PaginatesApiQuery;
     use RespondsWithApi;
 
@@ -71,11 +72,11 @@ class ItemController extends Controller
             'selling_price' => ['nullable', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
-        ], $this->photoRules()));
+        ], $this->entityCodeRules('items', 50), $this->photoRules()));
 
         $item = Item::create([
-            ...collect($validated)->except(['photo', 'remove_photo'])->all(),
-            'code' => Item::generateCode(),
+            ...collect($validated)->except(['photo', 'remove_photo', 'code'])->all(),
+            'code' => $this->resolveEntityCode($request, Item::class, $validated['code'] ?? null),
             'photo' => $this->resolvePhotoPath($request, 'photos/items'),
             'stock' => 0,
             'stock_opname' => $validated['stock_opname'] ?? 0,
@@ -111,10 +112,11 @@ class ItemController extends Controller
             'selling_price' => ['nullable', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
-        ], $this->photoRules()));
+        ], $this->entityCodeRules('items', 50, $item->id, true), $this->photoRules()));
 
         $item->update([
-            ...collect($validated)->except(['photo', 'remove_photo'])->all(),
+            ...collect($validated)->except(['photo', 'remove_photo', 'code'])->all(),
+            'code' => trim($validated['code']),
             'photo' => $this->resolvePhotoPath($request, 'photos/items', $item->photo),
             'stock_opname' => $validated['stock_opname'] ?? 0,
             'purchase_price' => $validated['purchase_price'] ?? 0,

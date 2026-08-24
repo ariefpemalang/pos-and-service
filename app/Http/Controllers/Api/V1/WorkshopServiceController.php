@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Api\Concerns\PaginatesApiQuery;
 use App\Http\Controllers\Api\Concerns\RespondsWithApi;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Concerns\HandlesEditableEntityCode;
 use App\Http\Resources\Api\WorkshopServiceResource;
 use App\Models\WorkshopService;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 
 class WorkshopServiceController extends Controller
 {
+    use HandlesEditableEntityCode;
     use PaginatesApiQuery;
     use RespondsWithApi;
 
@@ -45,19 +47,19 @@ class WorkshopServiceController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
-        ]);
+        ], $this->entityCodeRules('workshop_services', 50)));
 
         $service = WorkshopService::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'price' => $validated['price'],
             'is_active' => $request->boolean('is_active', true),
-            'code' => WorkshopService::generateCode(),
+            'code' => $this->resolveEntityCode($request, WorkshopService::class, $validated['code'] ?? null),
         ]);
 
         return $this->apiSuccess('Jasa servis berhasil ditambahkan.', [
@@ -74,12 +76,12 @@ class WorkshopServiceController extends Controller
 
     public function update(Request $request, WorkshopService $workshopService): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
-        ]);
+        ], $this->entityCodeRules('workshop_services', 50, $workshopService->id, true)));
 
         $workshopService->update([
             'name' => $validated['name'],
@@ -88,6 +90,7 @@ class WorkshopServiceController extends Controller
             'is_active' => array_key_exists('is_active', $validated)
                 ? $request->boolean('is_active')
                 : $workshopService->is_active,
+            'code' => trim($validated['code']),
         ]);
 
         return $this->apiSuccess('Jasa servis berhasil diperbarui.', [

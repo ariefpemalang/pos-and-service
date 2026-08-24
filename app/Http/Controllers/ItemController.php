@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HandlesEditableEntityCode;
 use App\Http\Controllers\Concerns\HandlesEntityPhoto;
 use App\Http\Controllers\Concerns\RespondsToModal;
 use App\Models\Item;
@@ -15,7 +16,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class ItemController extends Controller
 {
-    use HandlesEntityPhoto, RespondsToModal;
+    use HandlesEditableEntityCode, HandlesEntityPhoto, RespondsToModal;
 
     public function __construct()
     {
@@ -106,11 +107,11 @@ class ItemController extends Controller
             'selling_price' => ['nullable', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
-        ], $this->photoRules()));
+        ], $this->entityCodeRules('items', 50), $this->photoRules()));
 
         $item = Item::create([
-            ...collect($validated)->except(['photo', 'remove_photo'])->all(),
-            'code' => Item::generateCode(),
+            ...collect($validated)->except(['photo', 'remove_photo', 'code'])->all(),
+            'code' => $this->resolveEntityCode($request, Item::class, $validated['code'] ?? null),
             'photo' => $this->resolvePhotoPath($request, 'photos/items'),
             'stock' => 0,
             'stock_opname' => $validated['stock_opname'] ?? 0,
@@ -142,10 +143,11 @@ class ItemController extends Controller
             'selling_price' => ['nullable', 'numeric', 'min:0'],
             'description' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
-        ], $this->photoRules()));
+        ], $this->entityCodeRules('items', 50, $item->id, true), $this->photoRules()));
 
         $item->update([
-            ...collect($validated)->except(['photo', 'remove_photo'])->all(),
+            ...collect($validated)->except(['photo', 'remove_photo', 'code'])->all(),
+            'code' => trim($validated['code']),
             'photo' => $this->resolvePhotoPath($request, 'photos/items', $item->photo),
             'stock_opname' => $validated['stock_opname'] ?? 0,
             'purchase_price' => $validated['purchase_price'] ?? 0,
