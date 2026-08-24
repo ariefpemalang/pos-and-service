@@ -343,12 +343,22 @@
 @push('js')
     @php
         $itemsCatalogPayload = ($catalogItems ?? collect())->map(function ($item) {
+            $unitLabel = $item->unit
+                ? ($item->unit->abbreviation
+                    ? $item->unit->name.' ('.$item->unit->abbreviation.')'
+                    : $item->unit->name)
+                : '';
+
             return [
                 'id' => $item->id,
                 'code' => $item->code,
                 'name' => $item->name,
                 'stock' => (int) $item->stock,
                 'selling_price' => (float) $item->selling_price,
+                'purchase_price' => (float) ($item->purchase_price ?? 0),
+                'category' => $item->category?->name ?? '',
+                'unit' => $unitLabel,
+                'photo' => $item->photo_url ?? '',
             ];
         })->values();
         $servicesCatalogPayload = ($catalogServices ?? collect())->map(function ($service) {
@@ -372,6 +382,11 @@
 
             function setWorkLinesEnabled($container, enabled) {
                 $container.find('input, select, button, textarea').prop('disabled', !enabled);
+                $container.find('select.atha-searchable-select').each(function () {
+                    if ($(this).data('select2')) {
+                        $(this).trigger('change.select2');
+                    }
+                });
             }
 
             if ($('#ticket-work-lines').length && window.AthaTicketWorkLines) {

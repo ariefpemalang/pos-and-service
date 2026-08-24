@@ -65,17 +65,58 @@
                 return Math.round((parseFloat(line.unit_price) || 0) * (parseInt(line.quantity, 10) || 0));
             }
 
-            function catalogOptions(rows, emptyLabel) {
+            function serviceOptions(rows, emptyLabel) {
                 let html = '<option value="">' + escapeHtml(emptyLabel) + '</option>';
                 (rows || []).forEach(function (row) {
-                    const price = row.selling_price != null ? row.selling_price : row.price;
-                    const stock = row.stock != null ? ' · Stok ' + Number(row.stock).toLocaleString('id-ID') : '';
-                    html += '<option value="' + escapeHtml(row.id) + '">'
+                    const price = row.price != null ? row.price : 0;
+                    html += '<option value="' + escapeHtml(row.id) + '"'
+                        + ' data-code="' + escapeHtml(row.code || '') + '"'
+                        + ' data-name="' + escapeHtml(row.name || '') + '"'
+                        + ' data-price="' + escapeHtml(price) + '">'
                         + escapeHtml((row.code ? row.code + ' — ' : '') + row.name)
-                        + ' (' + formatRp(price) + stock + ')'
+                        + ' (' + formatRp(price) + ')'
                         + '</option>';
                 });
                 return html;
+            }
+
+            function itemOptions(rows, emptyLabel) {
+                let html = '<option value="">' + escapeHtml(emptyLabel) + '</option>';
+                (rows || []).forEach(function (row) {
+                    const price = row.selling_price != null ? row.selling_price : (row.price || 0);
+                    const stock = row.stock != null ? Number(row.stock) : 0;
+                    const category = row.category || '';
+                    html += '<option value="' + escapeHtml(row.id) + '"'
+                        + ' data-code="' + escapeHtml(row.code || '') + '"'
+                        + ' data-name="' + escapeHtml(row.name || '') + '"'
+                        + ' data-stock="' + escapeHtml(stock) + '"'
+                        + ' data-price="' + escapeHtml(price) + '"'
+                        + ' data-purchase-price="' + escapeHtml(row.purchase_price || 0) + '"'
+                        + ' data-category="' + escapeHtml(category) + '"'
+                        + ' data-unit="' + escapeHtml(row.unit || '') + '"'
+                        + ' data-photo="' + escapeHtml(row.photo || '') + '">'
+                        + escapeHtml((row.code ? row.code + ' — ' : '') + row.name)
+                        + (category ? ' · ' + escapeHtml(category) : '')
+                        + ' (Stok: ' + stock.toLocaleString('id-ID') + ')'
+                        + '</option>';
+                });
+                return html;
+            }
+
+            function initSearchableSelects() {
+                if (!window.AthaSearchableSelect) {
+                    return;
+                }
+                AthaSearchableSelect.destroy($root.find('.js-work-service-select, .js-work-item-select'));
+                AthaSearchableSelect.init($root.find('.js-work-service-select, .js-work-item-select'));
+            }
+
+            function clearSelect($select) {
+                if (window.AthaSearchableSelect) {
+                    AthaSearchableSelect.clear($select);
+                } else {
+                    $select.val('').trigger('change');
+                }
             }
 
             function buildShell() {
@@ -85,7 +126,7 @@
                     + '<div class="mb-3">'
                     +   '<label class="form-label mb-1">Jasa servis</label>'
                     +   '<div class="row g-2 align-items-end mb-2">'
-                    +     '<div class="col-12"><select class="form-control form-control-clean js-work-service-select"></select></div>'
+                    +     '<div class="col-12"><select class="form-control form-control-clean atha-searchable-select js-work-service-select"></select></div>'
                     +     '<div class="col-4"><label class="form-label small mb-0">Qty</label>'
                     +       '<input type="number" class="form-control form-control-clean js-work-service-qty" min="1" step="1" value="1"></div>'
                     +     '<div class="col-5"><label class="form-label small mb-0">Harga</label>'
@@ -97,7 +138,7 @@
                     + '<div class="mb-2">'
                     +   '<label class="form-label mb-1">Barang / sparepart</label>'
                     +   '<div class="row g-2 align-items-end mb-2">'
-                    +     '<div class="col-12"><select class="form-control form-control-clean js-work-item-select"></select></div>'
+                    +     '<div class="col-12"><select class="form-control form-control-clean atha-searchable-select atha-select2-item js-work-item-select"></select></div>'
                     +     '<div class="col-4"><label class="form-label small mb-0">Qty</label>'
                     +       '<input type="number" class="form-control form-control-clean js-work-item-qty" min="1" step="1" value="1"></div>'
                     +     '<div class="col-5"><label class="form-label small mb-0">Harga</label>'
@@ -114,8 +155,9 @@
                     + '<div class="js-work-hidden"></div>'
                 );
 
-                $root.find('.js-work-service-select').html(catalogOptions(settings.servicesCatalog, '-- Pilih jasa --'));
-                $root.find('.js-work-item-select').html(catalogOptions(settings.itemsCatalog, '-- Pilih barang --'));
+                $root.find('.js-work-service-select').html(serviceOptions(settings.servicesCatalog, '-- Pilih jasa --'));
+                $root.find('.js-work-item-select').html(itemOptions(settings.itemsCatalog, '-- Pilih barang --'));
+                initSearchableSelects();
             }
 
             function renderHidden() {
@@ -230,7 +272,7 @@
                     });
                 }
 
-                $select.val('');
+                clearSelect($select);
                 $root.find('.js-work-service-qty').val('1');
                 $root.find('.js-work-service-price').val('0');
                 render();
@@ -281,7 +323,7 @@
                     });
                 }
 
-                $select.val('');
+                clearSelect($select);
                 $root.find('.js-work-item-qty').val('1');
                 $root.find('.js-work-item-price').val('0');
                 render();

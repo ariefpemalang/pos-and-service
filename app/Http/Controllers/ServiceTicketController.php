@@ -111,9 +111,13 @@ class ServiceTicketController extends Controller
             'ticket'   => $serviceTicket,
             'statuses' => array_intersect_key(config('service-tickets.statuses', []), $selectable),
             'catalogItems' => \App\Models\Item::query()
+                ->with(['category:id,name', 'unit:id,name,abbreviation'])
                 ->where('is_active', true)
                 ->orderBy('name')
-                ->get(['id', 'code', 'name', 'stock', 'selling_price']),
+                ->get([
+                    'id', 'code', 'name', 'photo', 'category_id', 'unit_id', 'stock',
+                    'purchase_price', 'selling_price',
+                ]),
             'catalogServices' => \App\Models\WorkshopService::query()
                 ->where('is_active', true)
                 ->orderBy('name')
