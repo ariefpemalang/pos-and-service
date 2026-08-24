@@ -341,24 +341,34 @@
 @endsection
 
 @push('js')
-    <script src="{{ asset('js/ticket-work-lines.js') }}?v={{ filemtime(public_path('js/ticket-work-lines.js')) }}"></script>
-    <script>
-        (function ($) {
-            const itemsCatalog = @json(($catalogItems ?? collect())->map(fn ($item) => [
+    @php
+        $itemsCatalogPayload = ($catalogItems ?? collect())->map(function ($item) {
+            return [
                 'id' => $item->id,
                 'code' => $item->code,
                 'name' => $item->name,
                 'stock' => (int) $item->stock,
                 'selling_price' => (float) $item->selling_price,
-            ])->values());
-            const servicesCatalog = @json(($catalogServices ?? collect())->map(fn ($service) => [
+            ];
+        })->values();
+        $servicesCatalogPayload = ($catalogServices ?? collect())->map(function ($service) {
+            return [
                 'id' => $service->id,
                 'code' => $service->code,
                 'name' => $service->name,
                 'price' => (float) $service->price,
-            ])->values());
-            const initialItems = @json($ticket->relationLoaded('itemLines') ? $ticket->workItemsPayload() : []);
-            const initialServices = @json($ticket->relationLoaded('serviceLines') ? $ticket->workServicesPayload() : []);
+            ];
+        })->values();
+        $initialItemsPayload = $ticket->relationLoaded('itemLines') ? $ticket->workItemsPayload() : [];
+        $initialServicesPayload = $ticket->relationLoaded('serviceLines') ? $ticket->workServicesPayload() : [];
+    @endphp
+    <script src="{{ asset('js/ticket-work-lines.js') }}?v={{ filemtime(public_path('js/ticket-work-lines.js')) }}"></script>
+    <script>
+        (function ($) {
+            const itemsCatalog = @json($itemsCatalogPayload);
+            const servicesCatalog = @json($servicesCatalogPayload);
+            const initialItems = @json($initialItemsPayload);
+            const initialServices = @json($initialServicesPayload);
 
             function setWorkLinesEnabled($container, enabled) {
                 $container.find('input, select, button, textarea').prop('disabled', !enabled);
