@@ -427,7 +427,6 @@ class ServiceTicketController extends Controller
     {
         $items = [
             ['key' => '', 'label' => 'Semua', 'color' => 'accent'],
-            ['key' => 'open', 'label' => 'Belum selesai', 'color' => 'primary'],
         ];
 
         $selectable = (array) config('service-tickets.selectable_statuses', []);

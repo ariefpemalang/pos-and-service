@@ -166,7 +166,6 @@ class ServiceTicketTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('service-tickets.index'))
             ->assertOk()
-            ->assertSee('Belum selesai')
             ->assertSee('Sudah diambil')
             ->assertSee('Bisa diambil');
 

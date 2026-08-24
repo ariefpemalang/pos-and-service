@@ -28,7 +28,7 @@
                         @php
                             $count = $item['key'] === ''
                                 ? $summary['all']
-                                : ($item['key'] === 'open' ? $summary['open'] : ($summary['statuses'][$item['key']] ?? 0));
+                                : ($summary['statuses'][$item['key']] ?? 0);
                             $isActive = ($filters['status'] ?? '') === $item['key'];
                         @endphp
                         <button type="button"
