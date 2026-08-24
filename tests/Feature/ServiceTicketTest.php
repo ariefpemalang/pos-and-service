@@ -316,7 +316,7 @@ class ServiceTicketTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('service-tickets.claim-slip', $ticket))
             ->assertOk()
-            ->assertSee('BUKTI PENGAMBILAN')
+            ->assertSee('NOTA SERVICE')
             ->assertSee('Tunjukkan struk ini saat ambil barang')
             ->assertSee('Uang muka')
             ->assertSee('50.000')

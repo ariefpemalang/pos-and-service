@@ -1,6 +1,6 @@
 @extends('layouts.print')
 
-@section('title', 'Bukti ambil '.$ticket->ticket_no)
+@section('title', 'Nota Service '.$ticket->ticket_no)
 
 @section('content')
     @php
@@ -33,7 +33,7 @@
             </div>
         @endif
         <div class="receipt-center receipt-brand">{{ brand_name() }}</div>
-        <div class="receipt-center receipt-title">BUKTI PENGAMBILAN</div>
+        <div class="receipt-center receipt-title">NOTA SERVICE</div>
         <div class="receipt-center receipt-meta">{{ $ticket->ticket_no }} · {{ $receivedAt }}</div>
 
         <div class="receipt-sep"></div>

@@ -140,8 +140,8 @@ class ServiceTicket extends Model
 
     public function canCreateInvoice(): bool
     {
-        // Nota service hanya boleh dibuat saat status "Bisa diambil"
-        // dan tiket belum punya nota pelunasan.
+        // Nota bayar hanya boleh dibuat saat status "Bisa diambil"
+        // dan tiket belum punya nota pelunasan. Setelah bayar, status jadi "Sudah diambil".
         return $this->status === 'ready' && ! $this->hasFinalInvoice();
     }
 

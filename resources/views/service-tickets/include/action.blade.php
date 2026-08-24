@@ -13,7 +13,7 @@
     @endcan
     @can('transaction create')
         @if ($ticket->canCreateInvoice())
-            <a href="{{ route('transactions.create', ['ticket' => $ticket->id]) }}" class="btn btn-action btn-action-edit" title="Buat NOTA SERVICE">
+            <a href="{{ route('transactions.create', ['ticket' => $ticket->id]) }}" class="btn btn-action btn-action-edit" title="Buat Nota Bayar">
                 <i class="fa fa-receipt"></i>
             </a>
         @endif
