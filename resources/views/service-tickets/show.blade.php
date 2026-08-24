@@ -217,13 +217,13 @@
                 @can('transaction create')
                     @if ($ticket->canCreateInvoice())
                         <a href="{{ route('transactions.create', ['ticket' => $ticket->id]) }}" class="btn btn-primary w-100">
-                            <i class="bi bi-receipt me-1"></i> Buat Nota Pembayaran
+                            <i class="bi bi-receipt me-1"></i> Buat NOTA SERVICE
                         </a>
                     @endif
                 @endcan
                 @can('service ticket view')
                     <a href="{{ route('service-tickets.claim-slip', $ticket) }}" class="btn btn-outline-secondary w-100" target="_blank" rel="noopener">
-                        <i class="bi bi-printer me-1"></i> Cetak bukti ambil barang
+                        <i class="bi bi-printer me-1"></i> Nota Pengambilan barang
                     </a>
                 @endcan
                 @if ($ticket->paidTransaction)

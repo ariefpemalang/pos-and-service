@@ -82,7 +82,7 @@ class TransactionController extends Controller
         if ($ticket && ! $ticket->canCreateInvoice()) {
             return redirect()
                 ->route('service-tickets.show', $ticket)
-                ->with('error', 'Tiket ini sudah punya nota pembayaran atau sudah dibatalkan.');
+                ->with('error', 'Nota service hanya bisa dibuat jika status tiket Bisa diambil dan belum ada nota pelunasan.');
         }
 
         return view('transactions.create', [

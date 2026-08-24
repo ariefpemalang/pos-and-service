@@ -29,7 +29,7 @@ class ServiceTicketResource extends JsonResource
             'is_closed' => $this->isClosed(),
             'can_edit' => ! $this->isClosed(),
             'can_delete' => in_array($this->status, ['received', 'cancelled'], true) && ! $dpTx,
-            'can_create_invoice' => $this->status !== 'cancelled' && ! $paid,
+            'can_create_invoice' => $this->canCreateInvoice(),
             'device_type' => $this->device_type,
             'device_type_label' => $this->deviceTypeLabel(),
             'brand' => $this->brand,

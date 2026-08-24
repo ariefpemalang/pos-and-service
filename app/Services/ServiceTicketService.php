@@ -81,7 +81,7 @@ class ServiceTicketService
                 }
             }
 
-            if (! $locked->canCreateInvoice()) {
+            if ($locked->hasFinalInvoice()) {
                 $incomingDp = round((float) ($data['down_payment'] ?? 0), 2);
                 if (abs($incomingDp - $locked->downPaymentAmount()) > 0.009
                     || ($data['down_payment_payment_method'] ?? null) !== $locked->down_payment_payment_method

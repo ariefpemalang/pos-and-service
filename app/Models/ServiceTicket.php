@@ -130,16 +130,19 @@ class ServiceTicket extends Model
         return round(max(0, (float) $this->estimated_cost - $this->downPaymentAmount()), 2);
     }
 
-    public function canCreateInvoice(): bool
+    public function hasFinalInvoice(): bool
     {
-        if ($this->status === 'cancelled') {
-            return false;
-        }
-
-        return ! $this->transactions()
+        return $this->transactions()
             ->where('status', 'completed')
             ->where('is_down_payment', false)
             ->exists();
+    }
+
+    public function canCreateInvoice(): bool
+    {
+        // Nota service hanya boleh dibuat saat status "Bisa diambil"
+        // dan tiket belum punya nota pelunasan.
+        return $this->status === 'ready' && ! $this->hasFinalInvoice();
     }
 
     public function invoiceNotes(): string

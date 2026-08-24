@@ -98,7 +98,7 @@ class CoreFlowIntegrityTest extends TestCase
         ]);
 
         $this->assertSame('received', $ticket->status);
-        $this->assertTrue($ticket->canCreateInvoice());
+        $this->assertFalse($ticket->canCreateInvoice());
         $this->assertSame(50000.0, $ticket->downPaymentAmount());
         $this->assertStringStartsWith('UMK-', $ticket->downPaymentTransaction->transaction_no);
 
@@ -109,6 +109,8 @@ class CoreFlowIntegrityTest extends TestCase
             $this->admin->id,
             false,
         );
+
+        $this->assertTrue($ticket->fresh()->canCreateInvoice());
 
         $tx = $this->billTicket($ticket->fresh(), 100000);
 
@@ -533,6 +535,14 @@ class CoreFlowIntegrityTest extends TestCase
 
     private function billTicket(ServiceTicket $ticket, float $amountPaid = 150000): Transaction
     {
+        if ($ticket->status !== 'ready' && ! $ticket->isClosed()) {
+            $ticket->update([
+                'status' => 'ready',
+                'ready_at' => now(),
+            ]);
+            $ticket->refresh();
+        }
+
         return app(TransactionService::class)->create([
             'customer_mode' => 'existing',
             'customer_id' => $this->customer->id,

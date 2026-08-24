@@ -358,7 +358,7 @@ class TransactionService
         }
 
         if (! $ticket->canCreateInvoice()) {
-            throw new InvalidArgumentException('Tiket ini sudah punya nota pembayaran atau sudah dibatalkan.');
+            throw new InvalidArgumentException('Nota service hanya bisa dibuat jika status tiket Bisa diambil dan belum ada nota pelunasan.');
         }
 
         $payload['service_ticket_id'] = $ticket->id;

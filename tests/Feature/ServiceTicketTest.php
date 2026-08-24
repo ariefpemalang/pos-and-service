@@ -238,6 +238,7 @@ class ServiceTicketTest extends TestCase
 
         $technician = $this->makeTechnician();
         $service = $this->makeWorkshopService();
+        $this->markReadyForInvoice($ticket);
 
         app(\App\Services\TransactionService::class)->create([
             'customer_mode' => 'existing',
@@ -298,7 +299,9 @@ class ServiceTicketTest extends TestCase
 
         $ticket = ServiceTicket::query()->firstOrFail();
         $this->assertSame(50000.0, $ticket->downPaymentAmount());
-        $this->assertTrue($ticket->canCreateInvoice());
+        $this->assertFalse($ticket->canCreateInvoice());
+        $this->markReadyForInvoice($ticket);
+        $this->assertTrue($ticket->fresh()->canCreateInvoice());
 
         $dpTx = $ticket->downPaymentTransaction;
         $this->assertNotNull($dpTx);
@@ -324,6 +327,7 @@ class ServiceTicketTest extends TestCase
 
         $technician = $this->makeTechnician();
         $service = $this->makeWorkshopService();
+        $this->markReadyForInvoice($ticket);
 
         $tx = app(\App\Services\TransactionService::class)->create([
             'customer_mode' => 'existing',
@@ -393,7 +397,9 @@ class ServiceTicketTest extends TestCase
         $this->assertNotNull($dpTx->refund_entry_id);
         $this->assertSame(25000.0, (float) $dpTx->refundEntry->amount);
         $this->assertSame('expense', $dpTx->refundEntry->type);
-        $this->assertTrue($ticket->canCreateInvoice());
+        $this->assertFalse($ticket->canCreateInvoice());
+        $this->markReadyForInvoice($ticket);
+        $this->assertTrue($ticket->fresh()->canCreateInvoice());
         $this->assertNull($ticket->downPaymentTransaction);
 
         $report = app(\App\Services\FinancialReportService::class)->build(now()->startOfDay(), now()->endOfDay());
@@ -444,6 +450,7 @@ class ServiceTicketTest extends TestCase
         $ticket = $this->makeTicket();
         $technician = $this->makeTechnician();
         $service = $this->makeWorkshopService();
+        $this->markReadyForInvoice($ticket);
 
         $tx = app(\App\Services\TransactionService::class)->create([
             'customer_mode' => 'existing',
@@ -468,6 +475,7 @@ class ServiceTicketTest extends TestCase
         $technician = $this->makeTechnician();
         $service = $this->makeWorkshopService();
         $item = $this->makeItem();
+        $this->markReadyForInvoice($ticket);
 
         $tx = app(\App\Services\TransactionService::class)->create([
             'customer_mode' => 'existing',
@@ -493,6 +501,7 @@ class ServiceTicketTest extends TestCase
         $ticket = $this->makeTicket();
         $technician = $this->makeTechnician();
         $service = $this->makeWorkshopService();
+        $this->markReadyForInvoice($ticket);
 
         app(\App\Services\TransactionService::class)->create([
             'customer_mode' => 'existing',
@@ -523,6 +532,7 @@ class ServiceTicketTest extends TestCase
         $ticket = $this->makeTicket();
         $technician = $this->makeTechnician();
         $service = $this->makeWorkshopService();
+        $this->markReadyForInvoice($ticket);
 
         $tx = app(\App\Services\TransactionService::class)->create([
             'customer_mode' => 'existing',
@@ -539,6 +549,15 @@ class ServiceTicketTest extends TestCase
         $ticket->refresh();
         $this->assertSame('ready', $ticket->status);
         $this->assertTrue($ticket->canCreateInvoice());
+    }
+
+    private function markReadyForInvoice(ServiceTicket $ticket): void
+    {
+        $ticket->update([
+            'status' => 'ready',
+            'ready_at' => now(),
+        ]);
+        $ticket->refresh();
     }
 
     private function makeTicket(): ServiceTicket
