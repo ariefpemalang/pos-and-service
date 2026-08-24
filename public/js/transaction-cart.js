@@ -429,6 +429,10 @@
                 renderServiceCart();
             }
 
+            function hasWarrantyFields() {
+                return $('#transaction_warranty_preset').length > 0;
+            }
+
             function buildPayload() {
                 const customerMode = getCustomerMode();
                 const payload = {
@@ -459,6 +463,13 @@
                     payload.service_ticket_id = settings.ticket.id;
                     payload.customer_mode = 'existing';
                     payload.customer_id = settings.ticket.customer_id;
+                    if (hasWarrantyFields()) {
+                        payload.warranty_preset = $('#transaction_warranty_preset').val();
+                        if (payload.warranty_preset === 'custom') {
+                            payload.warranty_days = $('#transaction_warranty_days').val() || null;
+                        }
+                        payload.warranty_notes = $('#transaction_warranty_notes').val().trim() || null;
+                    }
                 }
 
                 return payload;
@@ -511,6 +522,14 @@
                             title: 'Uang diterima kurang',
                             text: 'Sisa bayar ' + formatRp(due) + '. Masukkan uang dari pelanggan minimal sebesar sisa.',
                         });
+                        return false;
+                    }
+                }
+
+                if (settings.ticket?.id && hasWarrantyFields() && $('#transaction_warranty_preset').val() === 'custom') {
+                    const days = parseInt($('#transaction_warranty_days').val(), 10);
+                    if (!days || days < 1) {
+                        Swal.fire({ icon: 'warning', title: 'Isi jumlah hari garansi custom.' });
                         return false;
                     }
                 }

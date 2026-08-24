@@ -100,9 +100,14 @@ class ServiceTicketController extends Controller
             'statusLogs' => fn ($q) => $q->latest()->with('user'),
         ]);
 
+        $selectable = array_fill_keys(
+            (array) config('service-tickets.selectable_statuses', []),
+            null
+        );
+
         return view('service-tickets.show', [
-            'ticket' => $serviceTicket,
-            'statuses' => config('service-tickets.statuses'),
+            'ticket'   => $serviceTicket,
+            'statuses' => array_intersect_key(config('service-tickets.statuses', []), $selectable),
         ]);
     }
 
@@ -254,13 +259,11 @@ class ServiceTicketController extends Controller
                 'exists:bank_accounts,id',
             ],
             'internal_notes' => ['nullable', 'string', 'max:2000'],
-            ...$this->warrantyRules($request),
         ]);
 
         $validated['technician_id'] = $validated['technician_id'] ?? null;
         $validated['estimated_cost'] = $validated['estimated_cost'] ?? null;
         $validated['down_payment'] = round((float) ($validated['down_payment'] ?? 0), 2);
-        $validated = $this->applyWarrantyToValidated($validated, $request);
 
         if ($validated['down_payment'] <= 0) {
             $validated['down_payment'] = 0;
@@ -297,7 +300,7 @@ class ServiceTicketController extends Controller
     {
         $validated = $request->validate($this->warrantyRules($request));
 
-        return $this->applyWarrantyToValidated($validated, $request);
+        return $this->applyWarrantyToValidated($validated);
     }
 
     /**
@@ -324,7 +327,7 @@ class ServiceTicketController extends Controller
      * @param  array<string, mixed>  $validated
      * @return array<string, mixed>
      */
-    private function applyWarrantyToValidated(array $validated, Request $request): array
+    private function applyWarrantyToValidated(array $validated): array
     {
         $preset = $validated['warranty_preset'] ?? (string) config('service-tickets.warranty_default_days', 30);
 
@@ -427,10 +430,13 @@ class ServiceTicketController extends Controller
             ['key' => 'open', 'label' => 'Belum selesai', 'color' => 'primary'],
         ];
 
-        foreach (config('service-tickets.statuses', []) as $key => $label) {
+        $selectable = (array) config('service-tickets.selectable_statuses', []);
+        $allLabels  = config('service-tickets.statuses', []);
+
+        foreach ($selectable as $key) {
             $items[] = [
-                'key' => $key,
-                'label' => $label,
+                'key'   => $key,
+                'label' => (string) ($allLabels[$key] ?? $key),
                 'color' => (string) config("service-tickets.status_colors.{$key}", 'secondary'),
             ];
         }

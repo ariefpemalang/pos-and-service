@@ -2,9 +2,11 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Customer;
 use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemUnit;
+use App\Models\Supplier;
 use App\Models\Technician;
 use App\Models\User;
 use App\Models\WorkshopService;
@@ -14,6 +16,8 @@ use Tests\TestCase;
 
 class EntityCodeApiTest extends TestCase
 {
+    private const ENTITY_CODE_SUGGEST_URI = '/api/entity-codes/suggest';
+
     private User $admin;
 
     private string $token;
@@ -73,6 +77,8 @@ class EntityCodeApiTest extends TestCase
     #[Test]
     public function can_update_item_code_and_reject_duplicate(): void
     {
+        $itemName = 'Item B';
+
         $first = Item::create([
             'code' => 'BRG-CODE-01',
             'name' => 'Item A',
@@ -92,7 +98,7 @@ class EntityCodeApiTest extends TestCase
         ]);
 
         $this->api('PUT', '/api/items/'.$second->id, [
-            'name' => 'Item B',
+            'name' => $itemName,
             'code' => 'KD-NEW',
             'category_id' => $this->category->id,
             'unit_id' => $this->unit->id,
@@ -101,7 +107,7 @@ class EntityCodeApiTest extends TestCase
             ->assertJsonPath('data.item.code', 'KD-NEW');
 
         $this->api('PUT', '/api/items/'.$second->id, [
-            'name' => 'Item B',
+            'name' => $itemName,
             'code' => 'BRG-CODE-01',
             'category_id' => $this->category->id,
             'unit_id' => $this->unit->id,
@@ -132,15 +138,106 @@ class EntityCodeApiTest extends TestCase
     }
 
     #[Test]
+    public function can_create_customer_and_supplier_with_custom_code_and_reject_duplicate(): void
+    {
+        $this->api('POST', '/api/customers', [
+            'name' => 'Pelanggan A',
+            'code' => 'PLG-A',
+        ])->assertCreated()
+            ->assertJsonPath('data.customer.code', 'PLG-A');
+
+        $this->api('POST', '/api/customers', [
+            'name' => 'Pelanggan B',
+            'code' => 'PLG-A',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['code']);
+
+        $this->api('POST', '/api/suppliers', [
+            'name' => 'Supplier A',
+            'code' => 'SUP-A',
+        ])->assertCreated()
+            ->assertJsonPath('data.supplier.code', 'SUP-A');
+
+        $this->api('POST', '/api/suppliers', [
+            'name' => 'Supplier B',
+            'code' => 'SUP-A',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['code']);
+    }
+
+    #[Test]
+    public function can_update_customer_and_supplier_code_without_allowing_duplicates(): void
+    {
+        $customerName = 'Customer 2';
+        $supplierName = 'Supplier 2';
+
+        $firstCustomer = Customer::create([
+            'code' => 'PLG-01',
+            'name' => 'Customer 1',
+        ]);
+
+        $secondCustomer = Customer::create([
+            'code' => 'PLG-02',
+            'name' => 'Customer 2',
+        ]);
+
+        $this->api('PUT', '/api/customers/'.$secondCustomer->id, [
+            'name' => $customerName,
+            'code' => 'PLG-NEW',
+        ])->assertOk()
+            ->assertJsonPath('data.customer.code', 'PLG-NEW');
+
+        $this->api('PUT', '/api/customers/'.$secondCustomer->id, [
+            'name' => $customerName,
+            'code' => 'PLG-01',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['code']);
+
+        $firstSupplier = Supplier::create([
+            'code' => 'SUP-01',
+            'name' => 'Supplier 1',
+        ]);
+
+        $secondSupplier = Supplier::create([
+            'code' => 'SUP-02',
+            'name' => 'Supplier 2',
+        ]);
+
+        $this->api('PUT', '/api/suppliers/'.$secondSupplier->id, [
+            'name' => $supplierName,
+            'code' => 'SUP-NEW',
+        ])->assertOk()
+            ->assertJsonPath('data.supplier.code', 'SUP-NEW');
+
+        $this->api('PUT', '/api/suppliers/'.$secondSupplier->id, [
+            'name' => $supplierName,
+            'code' => 'SUP-01',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['code']);
+
+        $this->assertSame('PLG-01', $firstCustomer->fresh()->code);
+        $this->assertSame('SUP-01', $firstSupplier->fresh()->code);
+    }
+
+    #[Test]
     public function suggest_code_endpoint_returns_generated_code(): void
     {
-        $this->api('GET', '/api/entity-codes/suggest', ['type' => 'item'])
+        $this->api('GET', self::ENTITY_CODE_SUGGEST_URI, ['type' => 'item'])
             ->assertOk()
             ->assertJsonStructure(['data' => ['code']]);
 
-        $code = (string) $this->api('GET', '/api/entity-codes/suggest', ['type' => 'technician'])
+        $code = (string) $this->api('GET', self::ENTITY_CODE_SUGGEST_URI, ['type' => 'technician'])
             ->json('data.code');
 
         $this->assertStringStartsWith('TKN-', $code);
+
+        $customerCode = (string) $this->api('GET', self::ENTITY_CODE_SUGGEST_URI, ['type' => 'customer'])
+            ->json('data.code');
+
+        $supplierCode = (string) $this->api('GET', self::ENTITY_CODE_SUGGEST_URI, ['type' => 'supplier'])
+            ->json('data.code');
+
+        $this->assertStringStartsWith('PLG-', $customerCode);
+        $this->assertStringStartsWith('SUP-', $supplierCode);
     }
 }

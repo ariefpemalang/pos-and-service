@@ -69,11 +69,11 @@ class ServiceTicketController extends Controller
     public function options(): JsonResponse
     {
         return $this->apiSuccess('Opsi tiket servis berhasil diambil.', [
-            'statuses' => collect(config('service-tickets.statuses', []))
-                ->map(fn ($label, $key) => [
-                    'key' => (string) $key,
-                    'label' => (string) $label,
-                    'color' => (string) config("service-tickets.status_colors.{$key}", 'secondary'),
+            'statuses' => collect(config('service-tickets.selectable_statuses', []))
+                ->map(fn ($key) => [
+                    'key'    => (string) $key,
+                    'label'  => (string) (config('service-tickets.statuses', [])[$key] ?? $key),
+                    'color'  => (string) config("service-tickets.status_colors.{$key}", 'secondary'),
                     'closed' => in_array($key, config('service-tickets.closed_statuses', []), true),
                 ])
                 ->values(),
@@ -303,13 +303,11 @@ class ServiceTicketController extends Controller
                 'exists:bank_accounts,id',
             ],
             'internal_notes' => ['nullable', 'string', 'max:2000'],
-            ...$this->warrantyRules($request),
         ]);
 
         $validated['technician_id'] = $validated['technician_id'] ?? null;
         $validated['estimated_cost'] = isset($validated['estimated_cost']) ? round((float) $validated['estimated_cost'], 2) : null;
         $validated['down_payment'] = round((float) ($validated['down_payment'] ?? 0), 2);
-        $validated = $this->applyWarrantyToValidated($validated, $request);
 
         if ($validated['down_payment'] <= 0) {
             $validated['down_payment'] = 0;
@@ -344,7 +342,7 @@ class ServiceTicketController extends Controller
      */
     private function validatedWarranty(Request $request): array
     {
-        return $this->applyWarrantyToValidated($request->validate($this->warrantyRules($request)), $request);
+        return $this->applyWarrantyToValidated($request->validate($this->warrantyRules($request)));
     }
 
     /**
@@ -371,7 +369,7 @@ class ServiceTicketController extends Controller
      * @param  array<string, mixed>  $validated
      * @return array<string, mixed>
      */
-    private function applyWarrantyToValidated(array $validated, Request $request): array
+    private function applyWarrantyToValidated(array $validated): array
     {
         $preset = $validated['warranty_preset'] ?? (string) config('service-tickets.warranty_default_days', 30);
 

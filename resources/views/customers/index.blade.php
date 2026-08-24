@@ -50,8 +50,12 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="form-hint-sm mb-3"><i class="bi bi-info-circle me-1"></i> Kode pelanggan dibuat otomatis (contoh: <code>PLG-20260701-0001</code>).</p>
                         <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Kode Pelanggan <span class="text-danger">*</span></label>
+                                <input type="text" name="code" class="form-control form-control-clean" maxlength="30" required>
+                                <div class="form-hint-sm">Otomatis terisi saat tambah baru; bisa diubah. Kode harus unik.</div>
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nama <span class="text-danger">*</span></label>
                                 <input type="text" name="name" class="form-control form-control-clean" required>
@@ -127,6 +131,13 @@
             showUrlTemplate: '{{ route('customers.show', '__ID__') }}',
             destroyUrlTemplate: '{{ route('customers.destroy', '__ID__') }}',
             entityName: 'Pelanggan',
+            onFormReset: function (mode) {
+                if (mode === 'create') {
+                    $.get('{{ route('entity-codes.suggest') }}', { type: 'customer' }, function (res) {
+                        $('input[name="code"]').val(res.code);
+                    });
+                }
+            },
             renderShow: function (d) {
                 return `
                     <dl class="detail-list mb-0">

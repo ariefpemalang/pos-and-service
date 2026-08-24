@@ -23,7 +23,17 @@
             </div>
             <div class="col-lg-4">
                 <div class="ticket-form-aside-wrap sticky-top">
-                    @include('service-tickets.partials.form-sidebar', ['ticket' => $ticket])
+                    <div class="data-panel">
+                        <div class="data-panel-head">
+                            <h2 class="data-panel-title"><i class="bi bi-shield-check me-1"></i> Garansi</h2>
+                        </div>
+                        <div class="data-panel-body">
+                            <div class="alert alert-light border mb-0 small">
+                                Garansi tidak diatur di tahap terima perangkat. Ubah garansi saat
+                                <strong>buat nota / transaksi pelunasan</strong> atau dari detail tiket setelahnya.
+                            </div>
+                        </div>
+                    </div>
                     <div class="mt-3">
                         @include('layouts.partials.form-actions', ['submitLabel' => 'Simpan Perubahan'])
                     </div>

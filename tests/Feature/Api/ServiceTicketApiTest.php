@@ -53,7 +53,6 @@ class ServiceTicketApiTest extends TestCase
             'brand' => 'Samsung',
             'model' => 'A54',
             'complaint' => 'LCD pecah',
-            'warranty_preset' => '30',
         ])
             ->assertCreated()
             ->assertJsonPath('success', true)
@@ -86,12 +85,12 @@ class ServiceTicketApiTest extends TestCase
         ]);
 
         $this->api('POST', '/api/service-tickets/'.$ticket->id.'/status', [
-            'status' => 'diagnosing',
+            'status' => 'ready',
             'notify_customer' => false,
-        ])->assertOk()->assertJsonPath('data.ticket.status', 'diagnosing');
+        ])->assertOk()->assertJsonPath('data.ticket.status', 'ready');
 
         $this->api('POST', '/api/service-tickets/'.$ticket->id.'/status', [
-            'status' => 'diagnosing',
+            'status' => 'ready',
             'notify_customer' => false,
         ])->assertStatus(422);
     }

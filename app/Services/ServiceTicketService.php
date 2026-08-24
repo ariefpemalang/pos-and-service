@@ -10,6 +10,7 @@ use App\Models\ServiceTicketStatusLog;
 use App\Models\Transaction;
 use App\Support\CodeGenerator;
 use App\Support\PaymentMethodResolver;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -31,6 +32,8 @@ class ServiceTicketService
 
             $ticket = ServiceTicket::create([
                 ...$data,
+                'warranty_days' => isset($data['warranty_days']) ? (int) $data['warranty_days'] : 0,
+                'warranty_notes' => $data['warranty_notes'] ?? null,
                 'ticket_no' => ServiceTicket::generateTicketNo(),
                 'tracking_token' => ServiceTicket::generateTrackingToken(),
                 'user_id' => $userId,
@@ -159,7 +162,7 @@ class ServiceTicketService
             'from_status' => $ticket->status,
             'to_status' => $ticket->status,
             'note' => 'Kirim ulang notifikasi WhatsApp.',
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'notified' => $notify['notified'],
             'hiwa_job_id' => $notify['hiwa_job_id'],
             'notify_error' => $notify['error'],

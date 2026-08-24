@@ -69,6 +69,7 @@ class TransactionService
 
             $this->deductStockForLines($prepared['resolved_items'], $userId, $transactionNo);
             $this->persistLines($transaction, $prepared['resolved_items'], $prepared['resolved_services']);
+            $this->applyLinkedTicketWarranty($payload);
             $this->completeLinkedTicket($transaction, $payload, $userId);
 
             return $transaction->load(['customer', 'technician', 'user', 'items', 'serviceLines', 'bankAccount', 'serviceTicket']);
@@ -153,6 +154,11 @@ class TransactionService
             $locked->items()->delete();
             $locked->serviceLines()->delete();
             $this->persistLines($locked, $prepared['resolved_items'], $prepared['resolved_services']);
+            $this->applyLinkedTicketWarranty([
+                'service_ticket_id' => $locked->service_ticket_id,
+                'warranty_days' => $payload['warranty_days'] ?? null,
+                'warranty_notes' => $payload['warranty_notes'] ?? null,
+            ]);
 
             return $locked->fresh(['customer', 'technician', 'user', 'items', 'serviceLines', 'bankAccount']);
         });
@@ -394,7 +400,52 @@ class TransactionService
             return;
         }
 
+        if (array_key_exists('warranty_days', $payload) || array_key_exists('warranty_notes', $payload)) {
+            $ticket->update([
+                'warranty_days' => (int) ($payload['warranty_days'] ?? 0),
+                'warranty_notes' => $payload['warranty_notes'] ?? null,
+            ]);
+        }
+
         $this->ticketService->markPaid($ticket, $transaction, $userId);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function applyLinkedTicketWarranty(array $payload): void
+    {
+        $ticketId = trim((string) ($payload['service_ticket_id'] ?? ''));
+        if ($ticketId === '') {
+            return;
+        }
+
+        $ticket = ServiceTicket::query()->lockForUpdate()->find($ticketId);
+        if (! $ticket) {
+            throw new InvalidArgumentException('Tiket servis tidak ditemukan.');
+        }
+
+        $hasWarrantyDays = array_key_exists('warranty_days', $payload) && $payload['warranty_days'] !== null;
+        $hasWarrantyNotes = array_key_exists('warranty_notes', $payload);
+
+        if (! $hasWarrantyDays && ! $hasWarrantyNotes && $ticket->hasWarranty()) {
+            return;
+        }
+
+        $days = $hasWarrantyDays
+            ? max(0, (int) $payload['warranty_days'])
+            : ($ticket->hasWarranty()
+                ? $ticket->warrantyDays()
+                : (int) config('service-tickets.warranty_default_days', 30));
+
+        $this->ticketService->updateWarranty($ticket, [
+            'warranty_days' => $days,
+            'warranty_notes' => $hasWarrantyNotes
+                ? (filled($payload['warranty_notes'] ?? null)
+                    ? trim((string) $payload['warranty_notes'])
+                    : null)
+                : $ticket->warranty_notes,
+        ]);
     }
 
     private function nextTransactionNo(string $type): string

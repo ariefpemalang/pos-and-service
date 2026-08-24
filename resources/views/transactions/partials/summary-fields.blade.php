@@ -3,6 +3,8 @@
     $showTechHint = $showTechHint ?? true;
     $submitDisabled = $submitDisabled ?? true;
     $showDownPayment = $showDownPayment ?? (($ticket ?? null)?->hasDownPayment() ?? false);
+    $ticket = $ticket ?? null;
+    $showWarrantyFields = $showWarrantyFields ?? (bool) $ticket;
 @endphp
 
 <div class="mb-3">
@@ -53,6 +55,19 @@
     <label class="form-label" for="notes">Catatan</label>
     <textarea name="notes" id="notes" class="form-control form-control-clean" rows="4">{{ $notesValue ?? '' }}</textarea>
 </div>
+
+@if ($showWarrantyFields)
+    <div class="mb-3">
+        <div class="alert alert-light border small mb-3">
+            Garansi diisi saat nota dibuat agar mengikuti hasil servis akhir yang benar.
+        </div>
+        @include('service-tickets.partials.warranty-fields', [
+            'ticket' => $ticket,
+            'fieldId' => 'transaction_warranty',
+            'stack' => true,
+        ])
+    </div>
+@endif
 
 <hr class="my-2">
 

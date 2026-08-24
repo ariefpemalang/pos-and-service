@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HandlesEditableEntityCode;
 use App\Http\Controllers\Concerns\RespondsToModal;
 use App\Models\Supplier;
 use Illuminate\Http\JsonResponse;
@@ -12,7 +13,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class SupplierController extends Controller
 {
-    use RespondsToModal;
+    use HandlesEditableEntityCode, RespondsToModal;
 
     public function __construct()
     {
@@ -39,17 +40,17 @@ class SupplierController extends Controller
 
     public function store(Request $request): JsonResponse|RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ], $this->entityCodeRules('suppliers', 30)));
 
         $supplier = Supplier::create([
-            ...$validated,
-            'code' => Supplier::generateCode(),
+            ...collect($validated)->except(['code'])->all(),
+            'code' => $this->resolveEntityCode($request, Supplier::class, $validated['code'] ?? null),
         ]);
 
         return $this->modalSuccess('Supplier berhasil ditambahkan.', $supplier);
@@ -62,15 +63,18 @@ class SupplierController extends Controller
 
     public function update(Request $request, Supplier $supplier): JsonResponse|RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ], $this->entityCodeRules('suppliers', 30, $supplier->id, true)));
 
-        $supplier->update($validated);
+        $supplier->update([
+            ...collect($validated)->except(['code'])->all(),
+            'code' => trim($validated['code']),
+        ]);
 
         return $this->modalSuccess('Supplier berhasil diperbarui.', $supplier);
     }

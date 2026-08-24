@@ -147,6 +147,7 @@
                     </div>
                     <div class="data-panel-body">
                         @include('transactions.partials.summary-fields', [
+                            'ticket' => $transaction->serviceTicket,
                             'technicians' => $technicians,
                             'bankAccounts' => $bankAccounts,
                             'submitLabel' => 'Simpan Perubahan',
@@ -182,6 +183,8 @@
                 payment_method: @json($transaction->payment_method),
                 bank_account_id: @json($transaction->bank_account_id),
                 amount_paid: @json($transaction->cash_received),
+                warranty_days: @json($transaction->serviceTicket?->warranty_days),
+                warranty_notes: @json($transaction->serviceTicket?->warranty_notes),
                 items: @json($initialItems),
                 services: @json($initialServices),
             },

@@ -7,6 +7,8 @@
         'technician_id' => $ticket->technician_id,
         'notes' => $ticket->invoiceNotes(),
         'down_payment' => $ticket->downPaymentAmount(),
+        'warranty_days' => $ticket->warranty_days,
+        'warranty_notes' => $ticket->warranty_notes,
         'redirectUrl' => route('service-tickets.show', $ticket),
     ] : null;
 @endphp
@@ -213,6 +215,7 @@
                     </div>
                     <div class="data-panel-body">
                         @include('transactions.partials.summary-fields', [
+                            'ticket' => $ticket,
                             'technicians' => $technicians,
                             'bankAccounts' => $bankAccounts,
                             'submitLabel' => 'Bayar & Selesai',

@@ -13,6 +13,7 @@ use App\Services\TransactionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use InvalidArgumentException;
 use Yajra\DataTables\Facades\DataTables;
@@ -204,7 +205,7 @@ class TransactionController extends Controller
             abort(403, 'Transaksi uang muka tidak bisa diubah. Ubah dari tiket servis.');
         }
 
-        $transaction->load(['items', 'serviceLines', 'customer', 'technician', 'bankAccount']);
+        $transaction->load(['items', 'serviceLines', 'customer', 'technician', 'bankAccount', 'serviceTicket']);
 
         return view('transactions.edit', [
             'transaction' => $transaction,
@@ -319,7 +320,10 @@ class TransactionController extends Controller
             $rules['amount_paid'] = ['nullable', 'numeric', 'min:0', 'required_if:payment_method,cash'];
         }
 
-        return $request->validate($rules);
+        return $this->applyTransactionWarranty($request->validate(array_merge(
+            $rules,
+            $this->transactionWarrantyRules($request)
+        )));
     }
 
     private function validateTransactionUpdatePayload(Request $request): array
@@ -341,7 +345,10 @@ class TransactionController extends Controller
             'amount_paid' => ['nullable', 'numeric', 'min:0', 'required_if:payment_method,cash'],
         ];
 
-        return $request->validate($rules);
+        return $this->applyTransactionWarranty($request->validate(array_merge(
+            $rules,
+            $this->transactionWarrantyRules($request)
+        )));
     }
 
     private function paymentBadge(Transaction $t): string
@@ -363,5 +370,54 @@ class TransactionController extends Controller
         }
 
         return ServiceTicket::query()->with(['customer', 'technician', 'paidTransaction'])->find($ticketId);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function transactionWarrantyRules(Request $request): array
+    {
+        $hasTicket = $request->filled('service_ticket_id')
+            || $request->route('transaction')?->service_ticket_id;
+
+        if (! $hasTicket) {
+            return [];
+        }
+
+        $presetKeys = array_map(strval(...), array_keys(config('service-tickets.warranty_presets', [])));
+
+        return [
+            'warranty_preset' => ['nullable', Rule::in([...$presetKeys, 'custom'])],
+            'warranty_days' => [
+                Rule::requiredIf(fn () => $request->input('warranty_preset') === 'custom'),
+                'nullable',
+                'integer',
+                'min:1',
+                'max:'.(int) config('service-tickets.warranty_max_days', 365),
+            ],
+            'warranty_notes' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function applyTransactionWarranty(array $validated): array
+    {
+        if (! array_key_exists('warranty_preset', $validated) && ! array_key_exists('warranty_days', $validated)) {
+            return $validated;
+        }
+
+        $preset = $validated['warranty_preset'] ?? (string) config('service-tickets.warranty_default_days', 30);
+        $validated['warranty_days'] = $preset === 'custom'
+            ? (int) ($validated['warranty_days'] ?? 0)
+            : (int) $preset;
+        $validated['warranty_notes'] = filled($validated['warranty_notes'] ?? null)
+            ? trim((string) $validated['warranty_notes'])
+            : null;
+        unset($validated['warranty_preset']);
+
+        return $validated;
     }
 }

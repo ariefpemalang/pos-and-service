@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Concerns\PaginatesApiQuery;
 use App\Http\Controllers\Api\Concerns\RespondsWithApi;
+use App\Http\Controllers\Concerns\HandlesEditableEntityCode;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\SupplierResource;
 use App\Models\Supplier;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
+    use HandlesEditableEntityCode;
     use PaginatesApiQuery;
     use RespondsWithApi;
 
@@ -40,17 +42,17 @@ class SupplierController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ], $this->entityCodeRules('suppliers', 30)));
 
         $supplier = Supplier::create([
-            ...$validated,
-            'code' => Supplier::generateCode(),
+            ...collect($validated)->except(['code'])->all(),
+            'code' => $this->resolveEntityCode($request, Supplier::class, $validated['code'] ?? null),
         ]);
 
         return $this->apiSuccess('Supplier berhasil ditambahkan.', [
@@ -67,15 +69,18 @@ class SupplierController extends Controller
 
     public function update(Request $request, Supplier $supplier): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ], $this->entityCodeRules('suppliers', 30, $supplier->id, true)));
 
-        $supplier->update($validated);
+        $supplier->update([
+            ...collect($validated)->except(['code'])->all(),
+            'code' => trim($validated['code']),
+        ]);
 
         return $this->apiSuccess('Supplier berhasil diperbarui.', [
             'supplier' => new SupplierResource($supplier->fresh()),

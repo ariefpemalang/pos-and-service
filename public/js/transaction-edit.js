@@ -31,6 +31,10 @@
             const $servicesEmpty = $('#services-cart-empty');
             const $submit = $('#btn-submit');
 
+            function hasWarrantyFields() {
+                return $('#transaction_warranty_preset').length > 0;
+            }
+
             function getDefaultItemPrice(item) {
                 if (!item) {
                     return 0;
@@ -261,6 +265,14 @@
                     }
                 }
 
+                if (hasWarrantyFields() && $('#transaction_warranty_preset').val() === 'custom') {
+                    const days = parseInt($('#transaction_warranty_days').val(), 10);
+                    if (!days || days < 1) {
+                        Swal.fire({ icon: 'warning', title: 'Isi jumlah hari garansi custom.' });
+                        return false;
+                    }
+                }
+
                 return true;
             }
 
@@ -283,6 +295,14 @@
 
                 if ($('#payment_method').val() === 'cash') {
                     payload.amount_paid = $('#amount_paid').val();
+                }
+
+                if (hasWarrantyFields()) {
+                    payload.warranty_preset = $('#transaction_warranty_preset').val();
+                    if (payload.warranty_preset === 'custom') {
+                        payload.warranty_days = $('#transaction_warranty_days').val() || null;
+                    }
+                    payload.warranty_notes = $('#transaction_warranty_notes').val().trim() || null;
                 }
 
                 return payload;
@@ -337,6 +357,16 @@
 
                 if (initial.amount_paid) {
                     $('#amount_paid').val(initial.amount_paid);
+                }
+
+                if (hasWarrantyFields()) {
+                    const preset = String(initial.warranty_days || 30);
+                    const hasPreset = $('#transaction_warranty_preset option[value="' + preset + '"]').length > 0;
+                    $('#transaction_warranty_preset').val(hasPreset ? preset : (initial.warranty_days > 0 ? 'custom' : '0')).trigger('change');
+                    if (!hasPreset && initial.warranty_days > 0) {
+                        $('#transaction_warranty_days').val(initial.warranty_days);
+                    }
+                    $('#transaction_warranty_notes').val(initial.warranty_notes || '');
                 }
 
                 renderItemCart();

@@ -13,6 +13,7 @@ use App\Services\TransactionService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use InvalidArgumentException;
 
 class TransactionController extends Controller
@@ -40,6 +41,11 @@ class TransactionController extends Controller
             'payment_methods' => collect($methods)
                 ->map(fn ($label, $key) => ['key' => (string) $key, 'label' => (string) $label])
                 ->values(),
+            'warranty_presets' => collect(config('service-tickets.warranty_presets', []))
+                ->map(fn ($label, $days) => ['days' => (int) $days, 'label' => (string) $label])
+                ->values(),
+            'warranty_default_days' => (int) config('service-tickets.warranty_default_days', 30),
+            'warranty_max_days' => (int) config('service-tickets.warranty_max_days', 365),
             'technicians' => Technician::query()
                 ->where('is_active', true)
                 ->orderBy('name')
@@ -198,7 +204,7 @@ class TransactionController extends Controller
      */
     private function validateStore(Request $request): array
     {
-        return $request->validate([
+        return $this->applyTransactionWarranty($request->validate(array_merge([
             'customer_mode' => ['required', 'in:existing,umum,new'],
             'customer_id' => ['nullable', 'required_if:customer_mode,existing', 'exists:customers,id'],
             'new_customer' => ['nullable', 'array'],
@@ -220,7 +226,7 @@ class TransactionController extends Controller
             'payment_method' => ['required', 'in:'.implode(',', array_keys(config('workshop.payment_methods', [])))],
             'bank_account_id' => ['nullable', 'required_if:payment_method,transfer', 'exists:bank_accounts,id'],
             'amount_paid' => ['nullable', 'numeric', 'min:0', 'required_if:payment_method,cash'],
-        ]);
+        ], $this->transactionWarrantyRules($request))));
     }
 
     /**
@@ -228,7 +234,7 @@ class TransactionController extends Controller
      */
     private function validateUpdate(Request $request): array
     {
-        return $request->validate([
+        return $this->applyTransactionWarranty($request->validate(array_merge([
             'technician_id' => ['nullable', 'required_with:services.0', 'exists:technicians,id'],
             'discount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
@@ -243,7 +249,7 @@ class TransactionController extends Controller
             'payment_method' => ['required', 'in:'.implode(',', array_keys(config('workshop.payment_methods', [])))],
             'bank_account_id' => ['nullable', 'required_if:payment_method,transfer', 'exists:bank_accounts,id'],
             'amount_paid' => ['nullable', 'numeric', 'min:0', 'required_if:payment_method,cash'],
-        ]);
+        ], $this->transactionWarrantyRules($request))));
     }
 
     /**
@@ -263,5 +269,54 @@ class TransactionController extends Controller
                 'account_number' => $a->account_number,
             ])
             ->values();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function transactionWarrantyRules(Request $request): array
+    {
+        $hasTicket = $request->filled('service_ticket_id')
+            || $request->route('transaction')?->service_ticket_id;
+
+        if (! $hasTicket) {
+            return [];
+        }
+
+        $presetKeys = array_map(strval(...), array_keys(config('service-tickets.warranty_presets', [])));
+
+        return [
+            'warranty_preset' => ['nullable', Rule::in([...$presetKeys, 'custom'])],
+            'warranty_days' => [
+                Rule::requiredIf(fn () => $request->input('warranty_preset') === 'custom'),
+                'nullable',
+                'integer',
+                'min:1',
+                'max:'.(int) config('service-tickets.warranty_max_days', 365),
+            ],
+            'warranty_notes' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function applyTransactionWarranty(array $validated): array
+    {
+        if (! array_key_exists('warranty_preset', $validated) && ! array_key_exists('warranty_days', $validated)) {
+            return $validated;
+        }
+
+        $preset = $validated['warranty_preset'] ?? (string) config('service-tickets.warranty_default_days', 30);
+        $validated['warranty_days'] = $preset === 'custom'
+            ? (int) ($validated['warranty_days'] ?? 0)
+            : (int) $preset;
+        $validated['warranty_notes'] = filled($validated['warranty_notes'] ?? null)
+            ? trim((string) $validated['warranty_notes'])
+            : null;
+        unset($validated['warranty_preset']);
+
+        return $validated;
     }
 }

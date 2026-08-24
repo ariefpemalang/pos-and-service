@@ -21,7 +21,17 @@
             </div>
             <div class="col-lg-4">
                 <div class="ticket-form-aside-wrap sticky-top">
-                    @include('service-tickets.partials.form-sidebar')
+                    <div class="data-panel">
+                        <div class="data-panel-head">
+                            <h2 class="data-panel-title"><i class="bi bi-shield-check me-1"></i> Garansi</h2>
+                        </div>
+                        <div class="data-panel-body">
+                            <div class="alert alert-light border mb-0 small">
+                                Garansi tidak diisi saat terima perangkat. Atur nanti saat
+                                <strong>buat nota / transaksi pelunasan</strong> ketika perangkat siap diambil.
+                            </div>
+                        </div>
+                    </div>
                     <div class="form-actions justify-content-between flex-wrap gap-2 mt-3">
                         <div class="form-check mb-0">
                             <input type="hidden" name="notify_customer" value="0">

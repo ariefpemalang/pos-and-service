@@ -67,7 +67,7 @@ class ServiceTicketTest extends TestCase
         $this->assertNotNull($ticket);
         $this->assertSame('received', $ticket->status);
         $this->assertSame('Samsung', $ticket->brand);
-        $this->assertSame(30, $ticket->warrantyDays());
+        $this->assertSame(0, $ticket->warrantyDays());
         $this->assertTrue($ticket->statusLogs()->where('notified', true)->exists());
 
         $this->get(route('service-tickets.track', $ticket->tracking_token))
@@ -135,18 +135,18 @@ class ServiceTicketTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post(route('service-tickets.status', $ticket), [
-                'status' => 'in_progress',
-                'note' => 'Sedang ganti thermal paste',
+                'status' => 'ready',
+                'note' => 'Siap diambil',
                 'notify_customer' => 1,
             ])
             ->assertRedirect(route('service-tickets.show', $ticket));
 
         $ticket->refresh();
-        $this->assertSame('in_progress', $ticket->status);
+        $this->assertSame('ready', $ticket->status);
 
         $this->get(route('service-tickets.track', $ticket->tracking_token))
-            ->assertSee('Sedang dikerjakan')
-            ->assertSee('Sedang ganti thermal paste');
+            ->assertSee('Bisa diambil')
+            ->assertSee('Siap diambil');
     }
 
     #[Test]
@@ -167,8 +167,8 @@ class ServiceTicketTest extends TestCase
             ->get(route('service-tickets.index'))
             ->assertOk()
             ->assertSee('Belum selesai')
-            ->assertSee('Selesai')
-            ->assertSee('Sedang dikerjakan');
+            ->assertSee('Sudah diambil')
+            ->assertSee('Bisa diambil');
 
         $response = $this->actingAs($this->admin)
             ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
@@ -230,22 +230,12 @@ class ServiceTicketTest extends TestCase
                 'brand' => 'Samsung',
                 'model' => 'A54',
                 'complaint' => 'LCD pecah',
-                'warranty_preset' => 'custom',
-                'warranty_days' => 14,
-                'warranty_notes' => 'Hanya kerusakan yang sama, tidak termasuk jatuh.',
             ])
             ->assertRedirect();
 
         $ticket = ServiceTicket::query()->firstOrFail();
-        $this->assertSame(14, $ticket->warrantyDays());
-        $this->assertSame('pending', $ticket->warrantyStatus());
-        $this->assertNull($ticket->warrantyEndsAt());
-
-        $this->get(route('service-tickets.track', $ticket->tracking_token))
-            ->assertOk()
-            ->assertSee('14 hari')
-            ->assertSee('Hanya kerusakan yang sama')
-            ->assertSee('Menunggu selesai');
+        $this->assertSame(0, $ticket->warrantyDays());
+        $this->assertSame('none', $ticket->warrantyStatus());
 
         $technician = $this->makeTechnician();
         $service = $this->makeWorkshopService();
@@ -257,6 +247,9 @@ class ServiceTicketTest extends TestCase
             'service_ticket_id' => $ticket->id,
             'payment_method' => 'cash',
             'amount_paid' => 150000,
+            'warranty_preset' => 'custom',
+            'warranty_days' => 14,
+            'warranty_notes' => 'Hanya kerusakan yang sama, tidak termasuk jatuh.',
             'services' => [['workshop_service_id' => $service->id, 'quantity' => 1]],
         ], $this->admin->id);
 
@@ -264,10 +257,17 @@ class ServiceTicketTest extends TestCase
         $this->assertSame('completed', $ticket->status);
         $this->assertSame('active', $ticket->warrantyStatus());
         $this->assertNotNull($ticket->warrantyEndsAt());
+        $this->assertSame('Hanya kerusakan yang sama, tidak termasuk jatuh.', $ticket->warranty_notes);
         $this->assertSame(
             $ticket->completed_at->copy()->addDays(14)->toDateString(),
             $ticket->warrantyEndsAt()->toDateString(),
         );
+
+        $this->get(route('service-tickets.track', $ticket->tracking_token))
+            ->assertOk()
+            ->assertSee('14 hari')
+            ->assertSee('Hanya kerusakan yang sama')
+            ->assertSee('Aktif');
 
         $this->actingAs($this->admin)
             ->post(route('service-tickets.warranty', $ticket), [

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Concerns\PaginatesApiQuery;
 use App\Http\Controllers\Api\Concerns\RespondsWithApi;
+use App\Http\Controllers\Concerns\HandlesEditableEntityCode;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\CustomerResource;
 use App\Models\Customer;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
+    use HandlesEditableEntityCode;
     use PaginatesApiQuery;
     use RespondsWithApi;
 
@@ -40,17 +42,17 @@ class CustomerController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ], $this->entityCodeRules('customers', 30)));
 
         $customer = Customer::create([
-            ...$validated,
-            'code' => Customer::generateCode(),
+            ...collect($validated)->except(['code'])->all(),
+            'code' => $this->resolveEntityCode($request, Customer::class, $validated['code'] ?? null),
         ]);
 
         return $this->apiSuccess('Pelanggan berhasil ditambahkan.', [
@@ -67,15 +69,18 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ], $this->entityCodeRules('customers', 30, $customer->id, true)));
 
-        $customer->update($validated);
+        $customer->update([
+            ...collect($validated)->except(['code'])->all(),
+            'code' => trim($validated['code']),
+        ]);
 
         return $this->apiSuccess('Pelanggan berhasil diperbarui.', [
             'customer' => new CustomerResource($customer->fresh()),

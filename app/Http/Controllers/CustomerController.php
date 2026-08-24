@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\HandlesEditableEntityCode;
 use App\Http\Controllers\Concerns\RespondsToModal;
 use App\Models\Customer;
 use Illuminate\Http\JsonResponse;
@@ -12,7 +13,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class CustomerController extends Controller
 {
-    use RespondsToModal;
+    use HandlesEditableEntityCode, RespondsToModal;
 
     public function __construct()
     {
@@ -39,17 +40,17 @@ class CustomerController extends Controller
 
     public function store(Request $request): JsonResponse|RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ], $this->entityCodeRules('customers', 30)));
 
         $customer = Customer::create([
-            ...$validated,
-            'code' => Customer::generateCode(),
+            ...collect($validated)->except(['code'])->all(),
+            'code' => $this->resolveEntityCode($request, Customer::class, $validated['code'] ?? null),
         ]);
 
         return $this->modalSuccess('Pelanggan berhasil ditambahkan.', $customer);
@@ -62,15 +63,18 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer): JsonResponse|RedirectResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ], $this->entityCodeRules('customers', 30, $customer->id, true)));
 
-        $customer->update($validated);
+        $customer->update([
+            ...collect($validated)->except(['code'])->all(),
+            'code' => trim($validated['code']),
+        ]);
 
         return $this->modalSuccess('Pelanggan berhasil diperbarui.', $customer);
     }

@@ -104,8 +104,8 @@ class CoreFlowIntegrityTest extends TestCase
 
         app(ServiceTicketService::class)->updateStatus(
             $ticket,
-            'in_progress',
-            'Sedang dikerjakan',
+            'ready',
+            'Bisa diambil',
             $this->admin->id,
             false,
         );
