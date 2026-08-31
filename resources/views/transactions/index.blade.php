@@ -22,6 +22,34 @@
             @endcan
         </div>
         <div class="data-panel-body">
+            <div class="list-filter mb-3">
+                <div class="ticket-filter-extras">
+                    <div>
+                        <label class="form-label small mb-1" for="filter-from">Dari tanggal</label>
+                        <input type="date" id="filter-from" class="form-control form-control-clean"
+                            value="{{ $filters['from'] }}">
+                    </div>
+                    <div>
+                        <label class="form-label small mb-1" for="filter-to">Sampai tanggal</label>
+                        <input type="date" id="filter-to" class="form-control form-control-clean"
+                            value="{{ $filters['to'] }}">
+                    </div>
+                    <div>
+                        <label class="form-label small mb-1" for="filter-technician">Teknisi</label>
+                        <select id="filter-technician" class="form-select form-control-clean">
+                            <option value="">Semua teknisi</option>
+                            @foreach ($technicians as $technician)
+                                <option value="{{ $technician->id }}">{{ $technician->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="ticket-filter-reset-wrap">
+                        <button type="button" class="btn btn-light-action w-100" id="btn-reset-list-filter">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle" id="data-table" width="100%">
                     <thead>
@@ -74,10 +102,20 @@
 @push('js')
     <script src="{{ asset('js/transaction-detail.js') }}?v={{ filemtime(public_path('js/transaction-detail.js')) }}"></script>
     <script>
-        $('#data-table').DataTable({
+        const txDefaultFrom = @json($filters['from']);
+        const txDefaultTo = @json($filters['to']);
+
+        const txTable = $('#data-table').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '{{ route('transactions.index') }}',
+            ajax: {
+                url: '{{ route('transactions.index') }}',
+                data: function (d) {
+                    d.from = $('#filter-from').val();
+                    d.to = $('#filter-to').val();
+                    d.technician_id = $('#filter-technician').val();
+                },
+            },
             order: [[10, 'desc']],
             columns: [
                 { data: 'DT_RowIndex', orderable: false, searchable: false },
@@ -93,6 +131,17 @@
                 { data: 'created_at', name: 'created_at' },
                 { data: 'action', orderable: false, searchable: false, className: 'text-end' },
             ],
+        });
+
+        $('#filter-from, #filter-to, #filter-technician').on('change', function () {
+            txTable.ajax.reload();
+        });
+
+        $('#btn-reset-list-filter').on('click', function () {
+            $('#filter-from').val(txDefaultFrom);
+            $('#filter-to').val(txDefaultTo);
+            $('#filter-technician').val('');
+            txTable.ajax.reload();
         });
 
         AthaTransactionDetail.init({

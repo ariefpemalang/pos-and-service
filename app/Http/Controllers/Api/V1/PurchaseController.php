@@ -8,7 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\PurchaseResource;
 use App\Models\BankAccount;
 use App\Models\Purchase;
+use App\Models\Supplier;
 use App\Services\PurchaseService;
+use App\Support\DateRangeFilter;
 use App\Support\PaymentMethodResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -48,6 +50,15 @@ class PurchaseController extends Controller
                     'account_number' => $a->account_number,
                 ])
                 ->values(),
+            'suppliers' => Supplier::query()
+                ->orderBy('name')
+                ->get(['id', 'code', 'name'])
+                ->map(fn (Supplier $s) => [
+                    'id' => $s->id,
+                    'code' => $s->code,
+                    'name' => $s->name,
+                ])
+                ->values(),
         ]);
     }
 
@@ -58,6 +69,14 @@ class PurchaseController extends Controller
             'user:id,name',
             'bankAccount',
         ]);
+
+        [$from, $to] = DateRangeFilter::resolve($request);
+        DateRangeFilter::apply($query, $from, $to);
+
+        $supplierId = $request->integer('supplier_id');
+        if ($supplierId > 0) {
+            $query->where('supplier_id', $supplierId);
+        }
 
         $status = trim((string) $request->query('status', ''));
         if (in_array($status, ['completed', 'cancelled'], true)) {

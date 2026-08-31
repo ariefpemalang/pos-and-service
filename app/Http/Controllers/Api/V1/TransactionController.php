@@ -7,9 +7,11 @@ use App\Http\Controllers\Api\Concerns\RespondsWithApi;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\TransactionResource;
 use App\Models\BankAccount;
+use App\Models\Supplier;
 use App\Models\Technician;
 use App\Models\Transaction;
 use App\Services\TransactionService;
+use App\Support\DateRangeFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -72,6 +74,14 @@ class TransactionController extends Controller
             'bankAccount',
             'serviceTicket:id,ticket_no,brand,model,device_type',
         ]);
+
+        [$from, $to] = DateRangeFilter::resolve($request);
+        DateRangeFilter::apply($query, $from, $to);
+
+        $technicianId = $request->integer('technician_id');
+        if ($technicianId > 0) {
+            $query->where('technician_id', $technicianId);
+        }
 
         $status = trim((string) $request->query('status', ''));
         if (in_array($status, ['completed', 'cancelled'], true)) {

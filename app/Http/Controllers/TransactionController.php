@@ -10,6 +10,7 @@ use App\Models\Technician;
 use App\Models\Transaction;
 use App\Models\WorkshopService;
 use App\Services\TransactionService;
+use App\Support\DateRangeFilter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,11 +35,19 @@ class TransactionController extends Controller
     public function index(): View|JsonResponse
     {
         if (request()->ajax()) {
-            return DataTables::of(
-                Transaction::query()
-                    ->with(['customer:id,code,name', 'technician:id,code,name', 'user:id,name', 'bankAccount'])
-                    ->latest()
-            )
+            [$from, $to] = DateRangeFilter::resolve(request());
+            $query = Transaction::query()
+                ->with(['customer:id,code,name', 'technician:id,code,name', 'user:id,name', 'bankAccount'])
+                ->latest();
+
+            DateRangeFilter::apply($query, $from, $to);
+
+            $technicianId = request()->integer('technician_id');
+            if ($technicianId > 0) {
+                $query->where('technician_id', $technicianId);
+            }
+
+            return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('type_label', fn (Transaction $t) => match (true) {
                     $t->isDownPayment() && $t->isRefunded() => '<span class="badge bg-warning-subtle text-warning">UMK dikembalikan</span>',
@@ -66,7 +75,13 @@ class TransactionController extends Controller
                 ->toJson();
         }
 
-        return view('transactions.index');
+        return view('transactions.index', [
+            'filters' => DateRangeFilter::forView(request()),
+            'technicians' => Technician::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name']),
+        ]);
     }
 
     public function create(Request $request): View|RedirectResponse

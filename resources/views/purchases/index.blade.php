@@ -22,6 +22,34 @@
             @endcan
         </div>
         <div class="data-panel-body">
+            <div class="list-filter mb-3">
+                <div class="ticket-filter-extras">
+                    <div>
+                        <label class="form-label small mb-1" for="filter-from">Dari tanggal</label>
+                        <input type="date" id="filter-from" class="form-control form-control-clean"
+                            value="{{ $filters['from'] }}">
+                    </div>
+                    <div>
+                        <label class="form-label small mb-1" for="filter-to">Sampai tanggal</label>
+                        <input type="date" id="filter-to" class="form-control form-control-clean"
+                            value="{{ $filters['to'] }}">
+                    </div>
+                    <div>
+                        <label class="form-label small mb-1" for="filter-supplier">Supplier</label>
+                        <select id="filter-supplier" class="form-select form-control-clean">
+                            <option value="">Semua supplier</option>
+                            @foreach ($suppliers as $supplier)
+                                <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="ticket-filter-reset-wrap">
+                        <button type="button" class="btn btn-light-action w-100" id="btn-reset-list-filter">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle" id="data-table" width="100%">
                     <thead>
@@ -65,10 +93,20 @@
 @push('js')
     <script src="{{ asset('js/purchase-detail.js') }}"></script>
     <script>
-        $('#data-table').DataTable({
+        const purchaseDefaultFrom = @json($filters['from']);
+        const purchaseDefaultTo = @json($filters['to']);
+
+        const purchaseTable = $('#data-table').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '{{ route('purchases.index') }}',
+            ajax: {
+                url: '{{ route('purchases.index') }}',
+                data: function (d) {
+                    d.from = $('#filter-from').val();
+                    d.to = $('#filter-to').val();
+                    d.supplier_id = $('#filter-supplier').val();
+                },
+            },
             order: [[7, 'desc']],
             columns: [
                 { data: 'DT_RowIndex', orderable: false, searchable: false },
@@ -81,6 +119,17 @@
                 { data: 'created_at', name: 'created_at' },
                 { data: 'action', orderable: false, searchable: false, className: 'text-end' },
             ],
+        });
+
+        $('#filter-from, #filter-to, #filter-supplier').on('change', function () {
+            purchaseTable.ajax.reload();
+        });
+
+        $('#btn-reset-list-filter').on('click', function () {
+            $('#filter-from').val(purchaseDefaultFrom);
+            $('#filter-to').val(purchaseDefaultTo);
+            $('#filter-supplier').val('');
+            purchaseTable.ajax.reload();
         });
 
         AthaPurchaseDetail.init({

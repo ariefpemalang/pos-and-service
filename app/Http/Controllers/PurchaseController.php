@@ -7,6 +7,7 @@ use App\Models\Item;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Services\PurchaseService;
+use App\Support\DateRangeFilter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,7 +30,19 @@ class PurchaseController extends Controller
     public function index(): View|JsonResponse
     {
         if (request()->ajax()) {
-            return DataTables::of(Purchase::query()->with(['user:id,name', 'bankAccount', 'supplier:id,code,name'])->latest())
+            [$from, $to] = DateRangeFilter::resolve(request());
+            $query = Purchase::query()
+                ->with(['user:id,name', 'bankAccount', 'supplier:id,code,name'])
+                ->latest();
+
+            DateRangeFilter::apply($query, $from, $to);
+
+            $supplierId = request()->integer('supplier_id');
+            if ($supplierId > 0) {
+                $query->where('supplier_id', $supplierId);
+            }
+
+            return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('status_label', fn (Purchase $p) => match ($p->status) {
                     'cancelled' => '<span class="badge bg-danger-subtle text-danger">Batal</span>',
@@ -45,7 +58,10 @@ class PurchaseController extends Controller
                 ->toJson();
         }
 
-        return view('purchases.index');
+        return view('purchases.index', [
+            'filters' => DateRangeFilter::forView(request()),
+            'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
     public function create(): View
