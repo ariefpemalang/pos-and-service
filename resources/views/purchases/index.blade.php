@@ -22,34 +22,14 @@
             @endcan
         </div>
         <div class="data-panel-body">
-            <div class="list-filter mb-3">
-                <div class="ticket-filter-extras">
-                    <div>
-                        <label class="form-label small mb-1" for="filter-from">Dari tanggal</label>
-                        <input type="date" id="filter-from" class="form-control form-control-clean"
-                            value="{{ $filters['from'] }}">
-                    </div>
-                    <div>
-                        <label class="form-label small mb-1" for="filter-to">Sampai tanggal</label>
-                        <input type="date" id="filter-to" class="form-control form-control-clean"
-                            value="{{ $filters['to'] }}">
-                    </div>
-                    <div>
-                        <label class="form-label small mb-1" for="filter-supplier">Supplier</label>
-                        <select id="filter-supplier" class="form-select form-control-clean">
-                            <option value="">Semua supplier</option>
-                            @foreach ($suppliers as $supplier)
-                                <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="ticket-filter-reset-wrap">
-                        <button type="button" class="btn btn-light-action w-100" id="btn-reset-list-filter">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
-                        </button>
-                    </div>
-                </div>
-            </div>
+            @include('layouts.partials.history-list-filter', [
+                'filters' => $filters,
+                'entityFieldId' => 'filter-supplier',
+                'entityLabel' => 'Supplier',
+                'entityEmpty' => 'Semua supplier',
+                'entityIcon' => 'bi-truck',
+                'entities' => $suppliers,
+            ])
             <div class="table-responsive">
                 <table class="table table-hover align-middle" id="data-table" width="100%">
                     <thead>
