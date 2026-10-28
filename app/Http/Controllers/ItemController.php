@@ -162,12 +162,19 @@ class ItemController extends Controller
 
     public function destroy(Item $item): JsonResponse|RedirectResponse
     {
-        if ($item->stock > 0) {
-            return $this->modalError('Barang masih memiliki stok. Kosongkan stok terlebih dahulu.');
-        }
+        $user = auth()->user();
+        $isSuperAdmin = $user && $user->hasRole('Super Admin');
 
-        if ($item->stockMovements()->exists()) {
-            return $this->modalError('Barang memiliki riwayat stok dan tidak dapat dihapus.');
+        if ($item->stockMovements()->exists() || $item->stock > 0) {
+            if (! $isSuperAdmin) {
+                return $this->modalError('Barang memiliki riwayat stok/masih memiliki stok. Hanya Super Admin yang berhak menghapusnya.');
+            }
+
+            // Super Admin menghapus barang: gunakan Soft Delete agar data nota transaksi lama tetap utuh
+            $item->deletePhotoFile();
+            $item->delete();
+
+            return $this->modalSuccess('Barang berhasil dihapus oleh Super Admin.');
         }
 
         $item->deletePhotoFile();

@@ -710,7 +710,56 @@
             $('#customer_id, #technician_id, #discount, #payment_method, #bank_account_id, #amount_paid').on('change input', updateSummary);
             $(document).on('atha:payment-fields-changed', updateSummary);
 
-            $('#item_select').on('change', updateItemHint);
+            $('#item_select').on('change', function () {
+                updateItemHint();
+
+                const itemId = $(this).val();
+                if (!itemId) {
+                    return;
+                }
+
+                if (!hasCustomerSelected()) {
+                    Swal.fire({ icon: 'warning', title: 'Pilih pelanggan terlebih dahulu sebelum menambah barang.' });
+                    if (window.AthaSearchableSelect) {
+                        AthaSearchableSelect.clear('#item_select');
+                    } else {
+                        $('#item_select').val(null);
+                    }
+                    return;
+                }
+
+                const item = findItem(itemId);
+                if (!item) {
+                    return;
+                }
+
+                const qty = parseInt($('#item_qty').val(), 10) || 1;
+                const existing = itemCart.find(function (l) { return String(l.item_id) === String(itemId); });
+                const newQty = (existing ? existing.quantity : 0) + qty;
+                const unitPrice = getDefaultItemPrice(item);
+
+                if (existing) {
+                    existing.quantity = newQty;
+                    recalcLine(existing);
+                } else {
+                    itemCart.push({
+                        item_id: item.id,
+                        code: item.code,
+                        name: item.name,
+                        quantity: qty,
+                        unit_price: unitPrice,
+                        subtotal: unitPrice * qty,
+                    });
+                }
+
+                renderItemCart();
+                $('#item_qty').val('');
+                if (window.AthaSearchableSelect) {
+                    AthaSearchableSelect.clear('#item_select');
+                } else {
+                    $('#item_select').val(null);
+                }
+            });
 
             $('#btn-add-item').on('click', function () {
                 if (!hasCustomerSelected()) {
@@ -755,6 +804,45 @@
                     AthaSearchableSelect.clear('#item_select');
                 } else {
                     $('#item_select').val(null).trigger('change');
+                }
+            });
+
+            $('#service_select').on('change', function () {
+                const serviceId = $(this).val();
+                if (!serviceId) {
+                    return;
+                }
+
+                const service = findService(serviceId);
+                if (!service) {
+                    return;
+                }
+
+                const qty = parseInt($('#service_qty').val(), 10) || 1;
+                const existing = serviceCart.find(function (l) { return String(l.workshop_service_id) === String(serviceId); });
+                const unitPrice = parseFloat(service.price);
+                const newQty = (existing ? existing.quantity : 0) + qty;
+
+                if (existing) {
+                    existing.quantity = newQty;
+                    recalcLine(existing);
+                } else {
+                    serviceCart.push({
+                        workshop_service_id: service.id,
+                        code: service.code,
+                        name: service.name,
+                        quantity: qty,
+                        unit_price: unitPrice,
+                        subtotal: unitPrice * qty,
+                    });
+                }
+
+                renderServiceCart();
+                $('#service_qty').val('1');
+                if (window.AthaSearchableSelect) {
+                    AthaSearchableSelect.clear('#service_select');
+                } else {
+                    $('#service_select').val(null);
                 }
             });
 
