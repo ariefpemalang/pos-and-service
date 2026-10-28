@@ -11,29 +11,29 @@ return [
      * Legacy statuses are kept so old DB rows still resolve labels and colours.
      */
     'statuses' => [
-        'received'      => 'Diterima',
+        'received'      => 'Proses Servis',
         'ready'         => 'Bisa diambil',
         'completed'     => 'Sudah diambil',
+        'cancelled'     => 'Dibatalkan dan bisa diambil',
         // legacy — kept for label resolution; no longer selectable via UI
         'diagnosing'    => 'Sedang dicek',
         'waiting_parts' => 'Menunggu sparepart',
         'in_progress'   => 'Sedang dikerjakan',
-        'cancelled'     => 'Dibatalkan',
     ],
 
     /*
      * Statuses technician/kasir can set manually from ticket UI.
      * "completed" (Sudah diambil) hanya lewat Nota Bayar — jangan di sini.
      */
-    'selectable_statuses' => ['received', 'ready'],
+    'selectable_statuses' => ['received', 'ready', 'cancelled'],
 
     /*
      * Status chips on ticket index / mobile list filters.
      */
-    'filter_statuses' => ['received', 'ready', 'completed'],
+    'filter_statuses' => ['received', 'ready', 'completed', 'cancelled'],
 
     'status_colors' => [
-        'received'      => 'secondary',
+        'received'      => 'primary',
         'ready'         => 'success',
         'completed'     => 'success',
         'diagnosing'    => 'info',

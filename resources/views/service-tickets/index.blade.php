@@ -156,7 +156,7 @@
                 if ($chip.length) {
                     $chip.addClass('is-active').attr('aria-pressed', 'true');
                 } else {
-                    $('.ticket-chip[data-status=""]').addClass('is-active').attr('aria-pressed', 'true');
+                    $('.ticket-chip').first().addClass('is-active').attr('aria-pressed', 'true');
                 }
             }
 
@@ -170,7 +170,7 @@
             });
 
             $('#btn-reset-ticket-filter').on('click', function () {
-                setActiveChip('');
+                setActiveChip('received');
                 $('#filter-technician, #filter-device, #filter-warranty').val('');
                 table.ajax.reload();
             });

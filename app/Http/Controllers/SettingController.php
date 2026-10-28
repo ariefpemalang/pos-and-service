@@ -37,6 +37,8 @@ class SettingController extends Controller
             'company_whatsapp' => ['nullable', 'string', 'max:30'],
             'hiwa_enabled' => ['nullable', 'boolean'],
             'hiwa_token_device' => ['nullable', 'string', 'max:500'],
+            'fonnte_enabled' => ['nullable', 'boolean'],
+            'fonnte_token' => ['nullable', 'string', 'max:500'],
         ], $this->photoRules()));
 
         $currentLogo = $this->settings->getString('company_logo') ?: null;
@@ -50,10 +52,15 @@ class SettingController extends Controller
             'company_whatsapp' => trim((string) ($validated['company_whatsapp'] ?? '')),
             'company_logo' => $logoPath ?? '',
             'hiwa_enabled' => $request->boolean('hiwa_enabled'),
+            'fonnte_enabled' => $request->boolean('fonnte_enabled'),
         ];
 
         if ($request->exists('hiwa_token_device')) {
             $payload['hiwa_token_device'] = trim((string) ($validated['hiwa_token_device'] ?? ''));
+        }
+
+        if ($request->exists('fonnte_token')) {
+            $payload['fonnte_token'] = trim((string) ($validated['fonnte_token'] ?? ''));
         }
 
         $this->settings->setMany($payload);

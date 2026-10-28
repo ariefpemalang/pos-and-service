@@ -101,6 +101,34 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="data-panel mt-4">
+                    <div class="data-panel-head">
+                        <h2 class="data-panel-title"><i class="bi bi-whatsapp me-1 text-success"></i> Gateway WhatsApp (Fonnte)</h2>
+                    </div>
+                    <div class="data-panel-body">
+                        <div class="form-check form-switch mb-3">
+                            <input type="checkbox" name="fonnte_enabled" value="1" class="form-check-input" id="fonnte_enabled"
+                                @checked(old('fonnte_enabled', $settings['fonnte_enabled'] ?? false))>
+                            <label class="form-check-label" for="fonnte_enabled">Aktifkan integrasi Fonnte</label>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label" for="fonnte_token">Token Fonnte (API Key)</label>
+                            <div class="secret-input-wrap">
+                                <input type="password" name="fonnte_token" id="fonnte_token"
+                                    class="form-control form-control-clean"
+                                    value="{{ old('fonnte_token', $settings['fonnte_token'] ?? '') }}"
+                                    placeholder="Contoh: aBcDeFgHiJkLmNoPqRsTuVwXyZ"
+                                    autocomplete="new-password" spellcheck="false">
+                                <button type="button" class="secret-input-toggle" data-toggle-secret="fonnte_token"
+                                    aria-label="Tampilkan token">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="form-hint-sm">Dapatkan token dari dashboard <strong>fonnte.com</strong> (Menu Device / API).</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

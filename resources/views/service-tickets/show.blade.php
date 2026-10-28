@@ -249,7 +249,24 @@
             </div>
 
             @can('service ticket edit')
-                @if (! $ticket->isClosed())
+                @if ($ticket->status === 'ready' && $ticket->canCreateInvoice())
+                    <div class="data-panel">
+                        <div class="data-panel-head">
+                            <h2 class="data-panel-title"><i class="bi bi-cash-coin me-1"></i> Rincian & Pembayaran</h2>
+                        </div>
+                        <div class="data-panel-body">
+                            <form method="POST" action="{{ route('service-tickets.work-lines', $ticket) }}" id="form-work-lines-edit">
+                                @csrf
+                                <div id="ticket-work-lines-edit"></div>
+                                <div class="d-grid gap-2 mt-3">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-wallet2 me-1"></i> Bayar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                @elseif (! $ticket->isClosed() && $ticket->status !== 'ready')
                     <div class="data-panel">
                         <div class="data-panel-head">
                             <h2 class="data-panel-title"><i class="bi bi-arrow-repeat me-1"></i> Ubah status</h2>
@@ -285,31 +302,7 @@
                 @endif
             @endcan
 
-            @can('service ticket edit')
-                @if ($ticket->canCreateInvoice())
-                    <div class="data-panel">
-                        <div class="data-panel-head">
-                            <h2 class="data-panel-title"><i class="bi bi-cart3 me-1"></i> Ubah jasa & barang</h2>
-                        </div>
-                        <div class="data-panel-body">
-                            <form method="POST" action="{{ route('service-tickets.work-lines', $ticket) }}">
-                                @csrf
-                                <div id="ticket-work-lines-edit"></div>
-                                <button type="submit" class="btn btn-primary w-100 mt-3">Simpan rincian</button>
-                            </form>
-                        </div>
-                    </div>
-                @endif
-            @endcan
-
             <div class="ticket-show-actions">
-                @can('transaction create')
-                    @if ($ticket->canCreateInvoice())
-                        <a href="{{ route('transactions.create', ['ticket' => $ticket->id]) }}" class="btn btn-primary w-100">
-                            <i class="bi bi-receipt me-1"></i> Buat Nota Bayar
-                        </a>
-                    @endif
-                @endcan
                 @can('service ticket view')
                     <a href="{{ route('service-tickets.claim-slip', $ticket) }}" class="btn btn-outline-secondary w-100" target="_blank" rel="noopener">
                         <i class="bi bi-printer me-1"></i> Nota Service
@@ -323,6 +316,17 @@
                 @can('service ticket edit')
                     @if (! $ticket->isClosed())
                         <a href="{{ route('service-tickets.edit', $ticket) }}" class="btn btn-outline-secondary w-100">Ubah data perangkat</a>
+                    @endif
+                @endcan
+                @can('service ticket edit')
+                    @if ($ticket->status === 'cancelled')
+                        <form method="POST" action="{{ route('service-tickets.pickup-cancelled', $ticket) }}"
+                            onsubmit="return confirm('Serahkan perangkat kepada pelanggan dan ubah status ke Sudah diambil?')">
+                            @csrf
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-box-arrow-right me-1"></i> Sudah Diambil
+                            </button>
+                        </form>
                     @endif
                 @endcan
                 @can('service ticket delete')

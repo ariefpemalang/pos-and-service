@@ -609,7 +609,7 @@ class ServiceTicketService
 
     private function paidNotificationNote(ServiceTicket $ticket, Transaction $transaction): string
     {
-        $note = 'Perangkat sudah dibayar dan bisa diambil. Nota: '.$transaction->transaction_no.'.';
+        $note = 'Perangkat sudah dibayar dan Sudah diambil. Nota: '.$transaction->transaction_no.'.';
 
         if ($ticket->hasWarranty()) {
             $note .= ' Garansi '.$ticket->warrantySummary().'.';
@@ -687,6 +687,30 @@ class ServiceTicketService
             'cash_received' => $cashReceived,
             'cash_change' => $payment['payment_method'] === 'cash' ? 0 : null,
         ]);
+    }
+
+    public function markCancelledAsPickedUp(ServiceTicket $ticket, int $userId): ServiceTicket
+    {
+        return DB::transaction(function () use ($ticket, $userId) {
+            $locked = ServiceTicket::query()->whereKey($ticket->id)->lockForUpdate()->first();
+            if (! $locked) {
+                throw new InvalidArgumentException('Tiket servis tidak ditemukan.');
+            }
+
+            if ($locked->status !== 'cancelled') {
+                throw new InvalidArgumentException('Hanya tiket yang berstatus dibatalkan yang dapat diserahkan lewat menu ini.');
+            }
+
+            $from = $locked->status;
+            $locked->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+
+            $this->logStatus($locked, $from, 'completed', 'Perangkat yang dibatalkan telah diserahkan kembali kepada pelanggan.', $userId);
+
+            return $locked->fresh(['customer', 'technician', 'statusLogs']);
+        });
     }
 
     private function logStatus(

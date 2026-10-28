@@ -21,7 +21,7 @@ class ServiceTicketController extends Controller
     {
         $this->middleware('permission:service ticket view')->only(['index', 'show', 'claimSlip']);
         $this->middleware('permission:service ticket create')->only(['create', 'store']);
-        $this->middleware('permission:service ticket edit')->only(['edit', 'update', 'updateStatus', 'updateWorkLines', 'updateWarranty', 'resendNotification']);
+        $this->middleware('permission:service ticket edit')->only(['edit', 'update', 'updateStatus', 'updateWorkLines', 'updateWarranty', 'resendNotification', 'pickupCancelled']);
         $this->middleware('permission:service ticket delete')->only('destroy');
     }
 
@@ -48,13 +48,15 @@ class ServiceTicketController extends Controller
                 ->toJson();
         }
 
+        $defaultStatus = request()->has('status') ? request()->string('status')->toString() : 'received';
+
         return view('service-tickets.index', [
             'summary' => $this->ticketSummary(),
             'statusFilters' => $this->statusFilterItems(),
             'technicians' => Technician::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'deviceTypes' => config('service-tickets.device_types'),
             'filters' => [
-                'status' => request()->string('status')->toString(),
+                'status' => $defaultStatus,
                 'warranty' => request()->string('warranty')->toString(),
                 'technician_id' => request()->integer('technician_id') ?: '',
                 'device_type' => request()->string('device_type')->toString(),
@@ -240,9 +242,24 @@ class ServiceTicketController extends Controller
             return back()->with('error', $e->getMessage())->withInput();
         }
 
+        return redirect()->route('transactions.create', ['ticket' => $ticket->id]);
+    }
+
+    public function pickupCancelled(Request $request, ServiceTicket $serviceTicket): RedirectResponse
+    {
+        if ($serviceTicket->status !== 'cancelled') {
+            return back()->with('error', 'Hanya perangkat yang berstatus dibatalkan yang dapat diambil tanpa pembayaran.');
+        }
+
+        try {
+            $this->tickets->markCancelledAsPickedUp($serviceTicket, (int) $request->user()->id);
+        } catch (InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
         return redirect()
-            ->route('service-tickets.show', $ticket)
-            ->with('success', 'Rincian jasa & barang diperbarui.');
+            ->route('service-tickets.show', $serviceTicket)
+            ->with('success', 'Perangkat berhasil diserahkan kepada pelanggan (Status: Sudah diambil).');
     }
 
     public function resendNotification(ServiceTicket $serviceTicket): RedirectResponse
@@ -477,9 +494,7 @@ class ServiceTicketController extends Controller
      */
     private function statusFilterItems(): array
     {
-        $items = [
-            ['key' => '', 'label' => 'Semua', 'color' => 'accent'],
-        ];
+        $items = [];
 
         $selectable = (array) config('service-tickets.filter_statuses', config('service-tickets.selectable_statuses', []));
         $allLabels  = config('service-tickets.statuses', []);
