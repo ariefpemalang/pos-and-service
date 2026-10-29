@@ -50,7 +50,7 @@ class ServiceTicketNotifier
 
             $message .= "Status sekarang: *Sudah Jadi* dan *Bisa Diambil* dengan biaya *{$costFmt}*.\n";
         } elseif ($ticket->status === 'cancelled') {
-            $message .= "Status sekarang: *Dibatalkan dan Bisa Diambil*.\n";
+            $message .= "Status sekarang: *Dibatalkan*.\n";
         } else {
             $message .= "Status sekarang: {$ticket->statusLabel()}\n";
         }

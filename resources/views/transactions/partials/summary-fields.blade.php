@@ -5,6 +5,8 @@
     $showDownPayment = $showDownPayment ?? (($ticket ?? null)?->hasDownPayment() ?? false);
     $ticket = $ticket ?? null;
     $showWarrantyFields = $showWarrantyFields ?? (bool) $ticket;
+    $loggedInTechnician = auth()->user()?->resolveTechnician();
+    $activeTechnicianId = $ticket?->technician_id ?: $loggedInTechnician?->id;
 @endphp
 
 <div class="mb-3">
@@ -12,7 +14,7 @@
     <select name="technician_id" id="technician_id" class="form-control-clean atha-searchable-select">
         <option value="">-- Pilih Teknisi --</option>
         @foreach ($technicians as $technician)
-            <option value="{{ $technician->id }}" data-commission-percent="{{ (float) $technician->commission_percent }}">{{ $technician->code }} — {{ $technician->name }} ({{ number_format((float) $technician->commission_percent, 0) }}%)</option>
+            <option value="{{ $technician->id }}" data-commission-percent="{{ (float) $technician->commission_percent }}" @selected((string) $activeTechnicianId === (string) $technician->id)>{{ $technician->code }} — {{ $technician->name }} ({{ number_format((float) $technician->commission_percent, 0) }}%)</option>
         @endforeach
     </select>
     @if ($showTechHint)

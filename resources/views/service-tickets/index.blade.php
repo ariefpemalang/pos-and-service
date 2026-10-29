@@ -90,7 +90,6 @@
                             <th>Pelanggan</th>
                             <th>Perangkat</th>
                             <th>Status</th>
-                            <th>Garansi</th>
                             <th>Teknisi</th>
                             <th>Masuk</th>
                             <th class="text-end">Aksi</th>
@@ -128,14 +127,13 @@
                         return json.data;
                     },
                 },
-                order: [[7, 'desc']],
+                order: [[6, 'desc']],
                 columns: [
                     { data: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'ticket_no', name: 'ticket_no' },
                     { data: 'customer_name', name: 'customer.name', orderable: false },
                     { data: 'device', orderable: false, searchable: false },
                     { data: 'status_label', name: 'status', orderable: false, searchable: false },
-                    { data: 'warranty_label', orderable: false, searchable: false },
                     { data: 'technician_name', name: 'technician.name', orderable: false },
                     { data: 'created_at', name: 'created_at' },
                     { data: 'action', orderable: false, searchable: false, className: 'text-end' },

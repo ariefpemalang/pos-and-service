@@ -213,18 +213,63 @@
         </div>
 
         <div class="col-lg-4 d-flex flex-column gap-3">
-            <div class="data-panel">
-                <div class="data-panel-head">
-                    <h2 class="data-panel-title"><i class="bi bi-shield-check me-1"></i> Garansi</h2>
+            @if ($ticket->status === 'completed')
+                <div class="data-panel">
+                    <div class="data-panel-head">
+                        <h2 class="data-panel-title"><i class="bi bi-shield-check me-1"></i> Garansi</h2>
+                    </div>
+                    <div class="data-panel-body">
+                        @include('service-tickets.partials.warranty-card', [
+                            'ticket' => $ticket,
+                            'canEditWarranty' => auth()->user()?->can('service ticket edit'),
+                            'warrantyPresets' => config('service-tickets.warranty_presets'),
+                        ])
+                    </div>
                 </div>
-                <div class="data-panel-body">
-                    @include('service-tickets.partials.warranty-card', [
-                        'ticket' => $ticket,
-                        'canEditWarranty' => auth()->user()?->can('service ticket edit') && $ticket->status !== 'cancelled',
-                        'warrantyPresets' => config('service-tickets.warranty_presets'),
-                    ])
+            @else
+                <div class="data-panel">
+                    <div class="data-panel-head data-panel-head-row">
+                        <h2 class="data-panel-title"><i class="bi bi-person-gear me-1"></i> Pilih Teknisi</h2>
+                        @if ($ticket->technician)
+                            <span class="badge text-bg-success">{{ $ticket->technician->name }}</span>
+                        @else
+                            <span class="badge text-bg-secondary">Belum ada</span>
+                        @endif
+                    </div>
+                    <div class="data-panel-body">
+                        @can('service ticket edit')
+                            <form method="POST" action="{{ route('service-tickets.technician', $ticket) }}">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="form-label">Teknisi</label>
+                                    <select name="technician_id" class="form-control form-control-clean atha-searchable-select">
+                                        <option value="">-- Belum ditugaskan --</option>
+                                        @foreach ($technicians as $tech)
+                                            @php
+                                                $isSelected = old('technician_id', $ticket->technician_id) == $tech->id
+                                                    || (! $ticket->technician_id && ($loggedInTechnician?->id == $tech->id));
+                                            @endphp
+                                            <option value="{{ $tech->id }}" @selected($isSelected)>
+                                                {{ $tech->name }} {{ $tech->specialty ? '('.$tech->specialty.')' : '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @if ($loggedInTechnician)
+                                        <div class="form-hint-sm mt-1 text-primary">
+                                            <i class="bi bi-person-check me-1"></i> Akun Anda: <strong>{{ $loggedInTechnician->name }}</strong>
+                                        </div>
+                                    @endif
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary w-100">
+                                    <i class="bi bi-check-lg me-1"></i> Simpan Teknisi
+                                </button>
+                            </form>
+                        @else
+                            <div class="fw-medium">{{ $ticket->technician?->name ?? 'Belum ada teknisi ditugaskan.' }}</div>
+                        @endcan
+                    </div>
                 </div>
-            </div>
+            @endif
 
             <div class="data-panel">
                 <div class="data-panel-head">
@@ -257,6 +302,11 @@
                         <div class="data-panel-body">
                             <form method="POST" action="{{ route('service-tickets.work-lines', $ticket) }}" id="form-work-lines-edit">
                                 @csrf
+                                @if ($ticket->technician_id)
+                                    <input type="hidden" name="technician_id" value="{{ $ticket->technician_id }}">
+                                @elseif ($loggedInTechnician)
+                                    <input type="hidden" name="technician_id" value="{{ $loggedInTechnician->id }}">
+                                @endif
                                 <div id="ticket-work-lines-edit"></div>
                                 <div class="d-grid gap-2 mt-3">
                                     <button type="submit" class="btn btn-primary">
@@ -274,6 +324,11 @@
                         <div class="data-panel-body">
                             <form method="POST" action="{{ route('service-tickets.status', $ticket) }}">
                                 @csrf
+                                @if ($ticket->technician_id)
+                                    <input type="hidden" name="technician_id" value="{{ $ticket->technician_id }}">
+                                @elseif ($loggedInTechnician)
+                                    <input type="hidden" name="technician_id" value="{{ $loggedInTechnician->id }}">
+                                @endif
                                 <div class="mb-2">
                                     <label class="form-label">Status baru</label>
                                     <select name="status" id="ticket-status-select" class="form-control form-control-clean" required>

@@ -1,10 +1,12 @@
 @php
     $ticket = $ticket ?? null;
+    $loggedInTechnician = auth()->user()?->resolveTechnician();
+    $activeTechnicianId = $ticket?->technician_id ?: $loggedInTechnician?->id;
     $ticketPrefill = $ticket ? [
         'id' => $ticket->id,
         'ticket_no' => $ticket->ticket_no,
         'customer_id' => $ticket->customer_id,
-        'technician_id' => $ticket->technician_id,
+        'technician_id' => $activeTechnicianId,
         'notes' => $ticket->invoiceNotes(),
         'down_payment' => $ticket->downPaymentAmount(),
         'warranty_days' => $ticket->warranty_days,

@@ -101,6 +101,7 @@
                     </ol>
                 </div>
 
+                @if ($ticket->status === 'completed')
                 <aside class="track-aside">
                     <div class="track-warranty track-warranty--{{ $ticket->warrantyStatus() }}">
                         <div class="track-warranty-head">
@@ -111,9 +112,7 @@
                             </div>
                         </div>
                         <span class="badge text-bg-{{ $ticket->warrantyStatusColor() }}">{{ $ticket->warrantyStatusLabel() }}</span>
-                        @if ($ticket->warrantyStatus() === 'pending')
-                            <p class="track-warranty-copy">Berlaku setelah servis selesai dan lunas.</p>
-                        @elseif ($ticket->warrantyStatus() === 'active')
+                        @if ($ticket->warrantyStatus() === 'active')
                             <p class="track-warranty-copy">Berlaku s/d {{ $ticket->warrantyEndsAt()?->timezone(config('app.timezone'))->format('d/m/Y') }} · sisa {{ $ticket->warrantyDaysRemaining() }} hari.</p>
                         @elseif ($ticket->warrantyStatus() === 'expired')
                             <p class="track-warranty-copy">Berakhir {{ $ticket->warrantyEndsAt()?->timezone(config('app.timezone'))->format('d/m/Y') }}.</p>
@@ -125,6 +124,7 @@
                         @endif
                     </div>
                 </aside>
+                @endif
             </div>
         </div>
         <p class="auth-footer">&copy; {{ date('Y') }} {{ brand_name() }}</p>

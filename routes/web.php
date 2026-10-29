@@ -77,6 +77,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('service-tickets/{serviceTicket}/claim-slip', [ServiceTicketController::class, 'claimSlip'])->name('service-tickets.claim-slip');
     Route::post('service-tickets/{serviceTicket}/status', [ServiceTicketController::class, 'updateStatus'])->name('service-tickets.status');
     Route::post('service-tickets/{serviceTicket}/work-lines', [ServiceTicketController::class, 'updateWorkLines'])->name('service-tickets.work-lines');
+    Route::post('service-tickets/{serviceTicket}/technician', [ServiceTicketController::class, 'updateTechnician'])->name('service-tickets.technician');
     Route::post('service-tickets/{serviceTicket}/warranty', [ServiceTicketController::class, 'updateWarranty'])->name('service-tickets.warranty');
     Route::post('service-tickets/{serviceTicket}/resend', [ServiceTicketController::class, 'resendNotification'])->name('service-tickets.resend');
     Route::get('transactions/items/availability', [TransactionController::class, 'itemAvailability'])->name('transactions.items.availability');

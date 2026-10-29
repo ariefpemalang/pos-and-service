@@ -31,4 +31,20 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function technician(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Technician::class);
+    }
+
+    public function resolveTechnician(): ?Technician
+    {
+        if ($this->relationLoaded('technician') && $this->technician) {
+            return $this->technician;
+        }
+
+        return Technician::where('user_id', $this->id)->first()
+            ?? Technician::where('name', $this->name)->first()
+            ?? (filled($this->email) ? Technician::where('email', $this->email)->first() : null);
+    }
 }

@@ -14,7 +14,7 @@ return [
         'received'      => 'Proses Servis',
         'ready'         => 'Bisa diambil',
         'completed'     => 'Sudah diambil',
-        'cancelled'     => 'Dibatalkan dan bisa diambil',
+        'cancelled'     => 'Dibatalkan',
         // legacy — kept for label resolution; no longer selectable via UI
         'diagnosing'    => 'Sedang dicek',
         'waiting_parts' => 'Menunggu sparepart',

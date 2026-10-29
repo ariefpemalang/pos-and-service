@@ -21,7 +21,7 @@ class ServiceTicketController extends Controller
     {
         $this->middleware('permission:service ticket view')->only(['index', 'show', 'claimSlip']);
         $this->middleware('permission:service ticket create')->only(['create', 'store']);
-        $this->middleware('permission:service ticket edit')->only(['edit', 'update', 'updateStatus', 'updateWorkLines', 'updateWarranty', 'resendNotification', 'pickupCancelled']);
+        $this->middleware('permission:service ticket edit')->only(['edit', 'update', 'updateStatus', 'updateWorkLines', 'updateWarranty', 'resendNotification', 'pickupCancelled', 'updateTechnician']);
         $this->middleware('permission:service ticket delete')->only('destroy');
     }
 
@@ -39,11 +39,10 @@ class ServiceTicketController extends Controller
                 ->addColumn('customer_name', fn (ServiceTicket $t) => $t->customer?->name ?? '-')
                 ->addColumn('device', fn (ServiceTicket $t) => $t->deviceSummary())
                 ->addColumn('status_label', fn (ServiceTicket $t) => '<span class="badge text-bg-'.$t->statusColor().'">'.$t->statusLabel().'</span>')
-                ->addColumn('warranty_label', fn (ServiceTicket $t) => '<span class="badge text-bg-'.$t->warrantyStatusColor().'">'.e($t->warrantyIndexLabel()).'</span>')
                 ->addColumn('technician_name', fn (ServiceTicket $t) => $t->technician?->name ?? '-')
                 ->addColumn('created_at', fn (ServiceTicket $t) => $t->created_at?->format('d/m/Y H:i'))
                 ->addColumn('action', fn (ServiceTicket $t) => view('service-tickets.include.action', ['ticket' => $t])->render())
-                ->rawColumns(['status_label', 'warranty_label', 'action'])
+                ->rawColumns(['status_label', 'action'])
                 ->with('summary', $this->ticketSummary())
                 ->toJson();
         }
@@ -109,9 +108,17 @@ class ServiceTicketController extends Controller
             null
         );
 
+        $loggedInTechnician = request()->user()?->resolveTechnician();
+        if (! $serviceTicket->technician_id && $loggedInTechnician) {
+            $serviceTicket->update(['technician_id' => $loggedInTechnician->id]);
+            $serviceTicket->load('technician');
+        }
+
         return view('service-tickets.show', [
             'ticket'   => $serviceTicket,
             'statuses' => array_intersect_key(config('service-tickets.statuses', []), $selectable),
+            'technicians' => Technician::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'specialty']),
+            'loggedInTechnician' => $loggedInTechnician,
             'catalogItems' => \App\Models\Item::query()
                 ->with(['category:id,name', 'unit:id,name,abbreviation'])
                 ->where('is_active', true)
@@ -205,6 +212,9 @@ class ServiceTicketController extends Controller
                 $validated['items'] ?? [],
                 $validated['services'] ?? [],
             );
+            if ($request->filled('technician_id')) {
+                $result['ticket']->update(['technician_id' => $request->integer('technician_id')]);
+            }
         } catch (InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
@@ -238,6 +248,9 @@ class ServiceTicketController extends Controller
                 $validated['items'] ?? [],
                 $validated['services'] ?? [],
             );
+            if ($request->filled('technician_id')) {
+                $ticket->update(['technician_id' => $request->integer('technician_id')]);
+            }
         } catch (InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage())->withInput();
         }
@@ -260,6 +273,19 @@ class ServiceTicketController extends Controller
         return redirect()
             ->route('service-tickets.show', $serviceTicket)
             ->with('success', 'Perangkat berhasil diserahkan kepada pelanggan (Status: Sudah diambil).');
+    }
+
+    public function updateTechnician(Request $request, ServiceTicket $serviceTicket): RedirectResponse
+    {
+        $validated = $request->validate([
+            'technician_id' => ['nullable', 'integer', 'exists:technicians,id'],
+        ]);
+
+        $serviceTicket->update([
+            'technician_id' => $validated['technician_id'] ?: null,
+        ]);
+
+        return back()->with('success', 'Teknisi servis berhasil diperbarui.');
     }
 
     public function resendNotification(ServiceTicket $serviceTicket): RedirectResponse

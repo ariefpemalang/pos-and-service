@@ -337,14 +337,28 @@
             seedInitial();
             render();
 
+            // Saat memilih jasa: isi harga lalu langsung tambahkan ke daftar
             $root.on('change', '.js-work-service-select', function () {
                 const service = findService($(this).val());
-                $root.find('.js-work-service-price').val(service ? servicePrice(service) : 0);
+                if (!service) {
+                    return;
+                }
+                $root.find('.js-work-service-price').val(servicePrice(service));
+                // Trigger qty = 1 lalu auto-add
+                $root.find('.js-work-service-qty').val('1');
+                addService();
             });
 
+            // Saat memilih barang: isi harga lalu langsung tambahkan ke daftar
             $root.on('change', '.js-work-item-select', function () {
                 const item = findItem($(this).val());
-                $root.find('.js-work-item-price').val(item ? itemPrice(item) : 0);
+                if (!item) {
+                    return;
+                }
+                $root.find('.js-work-item-price').val(itemPrice(item));
+                // Trigger qty = 1 lalu auto-add
+                $root.find('.js-work-item-qty').val('1');
+                addItem();
             });
 
             $root.on('click', '.js-work-add-service', addService);
