@@ -46,7 +46,7 @@
                             <tr>
                                 <th>Barang</th>
                                 <th class="text-center" style="width:90px">Stok</th>
-                                <th class="text-center" style="width:90px">Jumlah</th>
+                                <th class="text-center" style="width:130px">Jumlah</th>
                                 <th class="text-end" style="width:50px"></th>
                             </tr>
                         </thead>

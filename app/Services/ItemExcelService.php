@@ -104,8 +104,9 @@ class ItemExcelService
             ?? $spreadsheet->getActiveSheet();
 
         return $this->processImportRows($sheet, [
-            'create_missing_masters' => false,
+            'create_missing_masters' => true,
             'max_rows' => self::IMPORT_MAX_ROWS,
+            'column_d_as_available_stock' => true,
         ]);
     }
 
@@ -170,10 +171,64 @@ class ItemExcelService
             $highestRow = min($highestRow, $rowLimit + 1);
         }
 
+        // Deteksi mapping kolom secara cerdas berdasarkan teks header di baris 1
+        $highestColumn = $sheet->getHighestDataColumn();
+        $highestColumnIndex = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);
+
+        $headerMap = [
+            'name' => 'A',
+            'category' => 'B',
+            'unit' => 'C',
+            'stock_opname' => 'D',
+            'purchase_price' => 'E',
+            'selling_price' => 'F',
+            'description' => 'G',
+            'is_active' => 'H',
+            'code' => null,
+            'stock' => null,
+        ];
+
+        for ($col = 1; $col <= $highestColumnIndex; $col++) {
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+            $headerVal = mb_strtolower(trim((string) $sheet->getCell("{$colLetter}1")->getValue()));
+            if (str_contains($headerVal, 'nama')) {
+                $headerMap['name'] = $colLetter;
+            } elseif (str_contains($headerVal, 'kategori')) {
+                $headerMap['category'] = $colLetter;
+            } elseif (str_contains($headerVal, 'satuan')) {
+                $headerMap['unit'] = $colLetter;
+            } elseif (str_contains($headerVal, 'kode')) {
+                $headerMap['code'] = $colLetter;
+            } elseif (str_contains($headerVal, 'opname') || str_contains($headerVal, 'minimum')) {
+                $headerMap['stock_opname'] = $colLetter;
+            } elseif ($headerVal === 'stok' || (str_contains($headerVal, 'stok') && !str_contains($headerVal, 'opname'))) {
+                $headerMap['stock'] = $colLetter;
+            } elseif (str_contains($headerVal, 'beli')) {
+                $headerMap['purchase_price'] = $colLetter;
+            } elseif (str_contains($headerVal, 'jual')) {
+                $headerMap['selling_price'] = $colLetter;
+            } elseif (str_contains($headerVal, 'deskripsi')) {
+                $headerMap['description'] = $colLetter;
+            } elseif (str_contains($headerVal, 'aktif')) {
+                $headerMap['is_active'] = $colLetter;
+            }
+        }
+
         for ($row = 2; $row <= $highestRow; $row++) {
-            $name = trim((string) $sheet->getCell("A{$row}")->getValue());
-            $categoryName = trim((string) $sheet->getCell("B{$row}")->getValue());
-            $unitLabel = trim((string) $sheet->getCell("C{$row}")->getValue());
+            $colName = $headerMap['name'];
+            $colCat = $headerMap['category'];
+            $colUnit = $headerMap['unit'];
+            $colCode = $headerMap['code'];
+            $colOpname = $headerMap['stock_opname'];
+            $colStock = $headerMap['stock'] ?? $colOpname;
+            $colBuy = $headerMap['purchase_price'];
+            $colSell = $headerMap['selling_price'];
+            $colDesc = $headerMap['description'];
+            $colActive = $headerMap['is_active'];
+
+            $name = trim((string) $sheet->getCell("{$colName}{$row}")->getValue());
+            $categoryName = trim((string) $sheet->getCell("{$colCat}{$row}")->getValue());
+            $unitLabel = trim((string) $sheet->getCell("{$colUnit}{$row}")->getValue());
 
             if ($name === '' && $categoryName === '' && $unitLabel === '') {
                 continue;
@@ -232,26 +287,48 @@ class ItemExcelService
                 continue;
             }
 
-            if (Item::withTrashed()->where('name', $name)->exists()) {
-                $errors[] = "Baris {$row}: Barang \"{$name}\" sudah ada, dilewati.";
-                $skipped++;
+            $rawStockVal = max(0, (int) $sheet->getCell("{$colStock}{$row}")->getValue());
+            $rawOpnameVal = max(0, (int) $sheet->getCell("{$colOpname}{$row}")->getValue());
+            $rawBuyPrice = max(0, (float) $sheet->getCell("{$colBuy}{$row}")->getValue());
+            $rawSellPrice = max(0, (float) $sheet->getCell("{$colSell}{$row}")->getValue());
+            $rawDesc = trim((string) $sheet->getCell("{$colDesc}{$row}")->getValue()) ?: null;
+            $rawActive = $this->parseYesNo($sheet->getCell("{$colActive}{$row}")->getValue(), true);
 
-                continue;
+            $customCode = $colCode ? trim((string) $sheet->getCell("{$colCode}{$row}")->getValue()) : null;
+            if ($customCode && Item::where('code', $customCode)->where('name', '!=', $name)->exists()) {
+                $customCode = null;
             }
 
-            $columnDValue = max(0, (int) $sheet->getCell("D{$row}")->getValue());
+            if (Item::withTrashed()->where('name', $name)->exists()) {
+                $existingItem = Item::withTrashed()->where('name', $name)->first();
+                if ($existingItem) {
+                    $newStock = $rawStockVal > 0 ? $rawStockVal : $existingItem->stock;
+                    $existingItem->update([
+                        'category_id' => $category->id,
+                        'unit_id' => $unit->id,
+                        'stock' => $newStock,
+                        'stock_opname' => $rawOpnameVal > 0 ? $rawOpnameVal : ($columnDAsAvailableStock ? 0 : $rawStockVal),
+                        'purchase_price' => $rawBuyPrice ?: $existingItem->purchase_price,
+                        'selling_price' => $rawSellPrice ?: $existingItem->selling_price,
+                        'is_active' => true,
+                        'deleted_at' => null,
+                    ]);
+                    $created++;
+                    continue;
+                }
+            }
 
             $item = Item::create([
-                'code' => Item::generateCode(),
+                'code' => $customCode ?: Item::generateCode(),
                 'name' => $name,
                 'category_id' => $category->id,
                 'unit_id' => $unit->id,
-                'stock' => 0,
-                'stock_opname' => $columnDAsAvailableStock ? 0 : $columnDValue,
-                'purchase_price' => max(0, (float) $sheet->getCell("E{$row}")->getValue()),
-                'selling_price' => max(0, (float) $sheet->getCell("F{$row}")->getValue()),
-                'description' => trim((string) $sheet->getCell("G{$row}")->getValue()) ?: null,
-                'is_active' => $this->parseYesNo($sheet->getCell("H{$row}")->getValue(), true),
+                'stock' => $columnDAsAvailableStock ? $rawStockVal : 0,
+                'stock_opname' => $rawOpnameVal,
+                'purchase_price' => $rawBuyPrice,
+                'selling_price' => $rawSellPrice,
+                'description' => $rawDesc,
+                'is_active' => $rawActive,
             ]);
 
             if ($columnDAsAvailableStock && $columnDValue > 0 && $stockService && $seedUserId > 0) {

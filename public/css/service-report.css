@@ -1,0 +1,169 @@
+/* ==========================================================================
+   STYLING KHUSUS LAPORAN SERVIS & LAPORAN TEKNISI (NATIVE THEME COMPATIBLE)
+   ========================================================================== */
+
+/* Modern Report Table */
+.ar-report-panel {
+  background: var(--admin-surface);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+}
+
+.ar-report-table {
+  width: 100%;
+  margin-bottom: 0;
+  font-size: 0.85rem;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.ar-report-table thead th {
+  background: var(--admin-surface-2);
+  color: var(--admin-text-muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--admin-border);
+  white-space: nowrap;
+}
+
+.ar-report-table tbody td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--admin-border);
+  color: var(--admin-text-silver);
+  vertical-align: middle;
+}
+
+.ar-report-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ar-report-table tbody tr:hover {
+  background: var(--accent-muted);
+}
+
+/* Row Sunday (Hari Minggu) - Subtle Red/Pink Tint */
+.ar-report-table tr.table-row-sunday td {
+  background: rgba(239, 68, 68, 0.04) !important;
+}
+.ar-report-table tr.table-row-sunday:hover td {
+  background: rgba(239, 68, 68, 0.09) !important;
+}
+
+/* Row Current Month - Subtle Accent Tint */
+.ar-report-table tr.table-row-current td {
+  background: var(--accent-muted) !important;
+}
+.ar-report-table tr.table-row-current:hover td {
+  background: var(--accent-soft) !important;
+}
+
+/* Table Footer */
+.ar-report-table tfoot td {
+  padding: 0.85rem 1rem;
+  font-weight: 700;
+  background: var(--admin-surface-2);
+  border-top: 2px solid var(--admin-border);
+  border-bottom: 1px solid var(--admin-border);
+  color: var(--admin-text-heading);
+}
+
+.ar-report-table tfoot tr.tfoot-profit td {
+  background: rgba(34, 197, 94, 0.06);
+  border-top: 1px dashed var(--admin-border);
+  border-bottom: 2px solid var(--admin-border);
+}
+
+/* Filter controls and segmented buttons */
+.report-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.report-mode-btn:hover {
+  background: var(--admin-surface);
+  color: var(--admin-text-heading);
+  border-color: var(--accent);
+}
+
+.report-mode-btn.active {
+  background: var(--accent);
+  color: #1a1a1a;
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+/* Summary Pills */
+.ar-summary-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-heading);
+}
+
+.ar-summary-pill-primary {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
+}
+
+.ar-summary-pill-success {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.ar-summary-pill-info {
+  background: rgba(6, 182, 212, 0.08);
+  border-color: rgba(6, 182, 212, 0.2);
+  color: #06b6d4;
+}
+
+.ar-summary-pill-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+/* Print Styling */
+@media print {
+  .no-print,
+  .admin-topbar,
+  .admin-sidebar,
+  .btn-sidebar-toggle {
+    display: none !important;
+  }
+  .admin-main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+  .data-panel, .ar-report-panel {
+    border: none !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+  .ar-report-table th, .ar-report-table td {
+    border: 1px solid #ccc !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+}

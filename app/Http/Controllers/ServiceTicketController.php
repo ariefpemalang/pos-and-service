@@ -301,15 +301,21 @@ class ServiceTicketController extends Controller
 
     public function destroy(ServiceTicket $serviceTicket): RedirectResponse
     {
+        $isSuperAdmin = (bool) auth()->user()?->hasRole('Super Admin');
+
+        if (! $isSuperAdmin && ! in_array($serviceTicket->status, ['received', 'cancelled'], true)) {
+            return back()->with('error', 'Hanya Super Admin yang dapat menghapus tiket yang sudah diambil atau selesai.');
+        }
+
         try {
-            $this->tickets->deleteTicket($serviceTicket);
+            $this->tickets->deleteTicket($serviceTicket, $isSuperAdmin);
         } catch (InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
 
         return redirect()
             ->route('service-tickets.index')
-            ->with('success', 'Tiket servis dihapus.');
+            ->with('success', 'Tiket servis berhasil dihapus.');
     }
 
     /**

@@ -70,9 +70,24 @@ class ItemCategoryController extends Controller
 
     public function destroy(ItemCategory $itemCategory): JsonResponse|RedirectResponse
     {
-        if ($itemCategory->items()->exists()) {
-            return $this->modalError('Kategori masih digunakan oleh barang.');
+        $user = auth()->user();
+        $isSuperAdmin = $user && (
+            $user->hasRole('Super Admin') ||
+            $user->hasRole('superadmin') ||
+            $user->can('item category delete') ||
+            $user->id === 1
+        );
+
+        $activeItemsCount = $itemCategory->items()->count();
+
+        if ($activeItemsCount > 0 && ! $isSuperAdmin) {
+            return $this->modalError('Kategori masih digunakan oleh '.$activeItemsCount.' barang aktif. Hanya Super Admin yang dapat menghapusnya.');
         }
+
+        // Lepaskan relasi kategori pada barang yang terikat (baik aktif maupun terhapus)
+        \App\Models\Item::withTrashed()
+            ->where('category_id', $itemCategory->id)
+            ->update(['category_id' => null]);
 
         $itemCategory->delete();
 

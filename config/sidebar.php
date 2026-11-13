@@ -77,6 +77,11 @@ return [
                             'route' => 'stock-reports.index',
                             'permission' => 'stock report view',
                         ],
+                        [
+                            'label' => 'Stock Opname',
+                            'route' => 'stock-opnames.index',
+                            'permission' => 'stock opname view',
+                        ],
                     ],
                 ],
                 [
@@ -116,12 +121,34 @@ return [
                 [
                     'label' => 'Keuangan',
                     'icon' => 'bi-wallet2',
-                    'permissions' => ['financial report view', 'manual income view', 'manual expense view'],
+                    'permissions' => [
+                        'financial report view',
+                        'service report view',
+                        'technician report view',
+                        'asset report view',
+                        'manual income view',
+                        'manual expense view',
+                    ],
                     'submenus' => [
                         [
                             'label' => 'Laporan Keuangan',
                             'route' => 'financial-reports.index',
                             'permission' => 'financial report view',
+                        ],
+                        [
+                            'label' => 'Laporan Servis',
+                            'route' => 'service-reports.index',
+                            'permission' => 'service report view',
+                        ],
+                        [
+                            'label' => 'Laporan Teknisi',
+                            'route' => 'technician-reports.index',
+                            'permission' => 'technician report view',
+                        ],
+                        [
+                            'label' => 'Laporan Aset Kategori',
+                            'route' => 'asset-reports.index',
+                            'permission' => 'asset report view',
                         ],
                         [
                             'label' => 'Pemasukan Manual',

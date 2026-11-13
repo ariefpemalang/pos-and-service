@@ -13,6 +13,8 @@ class ItemSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(UserItemsSeeder::class);
+
         $pcs = ItemUnit::firstOrCreate(
             ['name' => 'Pieces'],
             ['abbreviation' => 'pcs']

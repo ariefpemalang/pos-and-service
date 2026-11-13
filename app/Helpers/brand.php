@@ -37,9 +37,10 @@ if (! function_exists('brand_address')) {
     function brand_address(): string
     {
         try {
-            return trim(app(\App\Services\SettingService::class)->getString('company_address'));
+            $addr = trim(app(\App\Services\SettingService::class)->getString('company_address'));
+            return $addr !== '' ? $addr : 'jl. Perwira no.8 kapangsari Petarukan';
         } catch (\Throwable) {
-            return '';
+            return 'jl. Perwira no.8 kapangsari Petarukan';
         }
     }
 }
@@ -48,9 +49,10 @@ if (! function_exists('brand_whatsapp')) {
     function brand_whatsapp(): string
     {
         try {
-            return trim(app(\App\Services\SettingService::class)->getString('company_whatsapp'));
+            $wa = trim(app(\App\Services\SettingService::class)->getString('company_whatsapp'));
+            return $wa !== '' ? $wa : '082322872201 / 087733300186';
         } catch (\Throwable) {
-            return '';
+            return '082322872201 / 087733300186';
         }
     }
 }
@@ -127,5 +129,36 @@ if (! function_exists('is_active_submenu')) {
         $routes = collect($submenus)->pluck('route')->filter()->all();
 
         return is_active_menu($routes);
+    }
+}
+
+if (! function_exists('terbilang')) {
+    function terbilang($number): string
+    {
+        $number = abs((float) $number);
+        $words = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
+        $result = '';
+
+        if ($number < 12) {
+            $result = ' '.$words[(int) $number];
+        } elseif ($number < 20) {
+            $result = terbilang($number - 10).' Belas ';
+        } elseif ($number < 100) {
+            $result = terbilang((int) ($number / 10)).' Puluh '.terbilang($number % 10);
+        } elseif ($number < 200) {
+            $result = ' Seratus '.terbilang($number - 100);
+        } elseif ($number < 1000) {
+            $result = terbilang((int) ($number / 100)).' Ratus '.terbilang($number % 100);
+        } elseif ($number < 2000) {
+            $result = ' Seribu '.terbilang($number - 1000);
+        } elseif ($number < 1000000) {
+            $result = terbilang((int) ($number / 1000)).' Ribu '.terbilang($number % 1000);
+        } elseif ($number < 1000000000) {
+            $result = terbilang((int) ($number / 1000000)).' Juta '.terbilang($number % 1000000);
+        } elseif ($number < 1000000000000) {
+            $result = terbilang((int) ($number / 1000000000)).' Miliar '.terbilang(fmod($number, 1000000000));
+        }
+
+        return preg_replace('/\s+/', ' ', trim($result));
     }
 }

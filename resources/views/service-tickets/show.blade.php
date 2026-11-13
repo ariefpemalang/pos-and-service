@@ -385,9 +385,13 @@
                     @endif
                 @endcan
                 @can('service ticket delete')
-                    @if (in_array($ticket->status, ['received', 'cancelled'], true))
+                    @php
+                        $canDeleteTicket = in_array($ticket->status, ['received', 'cancelled'], true)
+                            || ($ticket->status === 'completed' && auth()->user()?->hasRole('Super Admin'));
+                    @endphp
+                    @if ($canDeleteTicket)
                         <form method="POST" action="{{ route('service-tickets.destroy', $ticket) }}"
-                            onsubmit="return confirm('Hapus tiket ini?')">
+                            onsubmit="return confirm('Hapus tiket ini? Data tiket yang dihapus tidak dapat dikembalikan.')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-outline-danger w-100">Hapus tiket</button>

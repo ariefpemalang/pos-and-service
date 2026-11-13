@@ -26,14 +26,18 @@
                             <div class="cart-add-row row g-2">
                                 <div class="col-md-8">
                                     <label class="form-label small mb-0" for="item_select">Pilih Barang</label>
-                                    <select id="item_select" class="form-control-clean cart-add-control atha-searchable-select">
+                                    <select id="item_select" class="form-control-clean cart-add-control atha-searchable-select atha-select2-item">
                                         <option value="">-- Pilih Barang --</option>
                                         @foreach ($items as $item)
                                             <option value="{{ $item->id }}"
                                                 data-code="{{ $item->code }}"
                                                 data-name="{{ $item->name }}"
                                                 data-stock="{{ $item->stock }}"
-                                                data-price="{{ $item->purchase_price }}">
+                                                data-price="{{ $item->selling_price }}"
+                                                data-purchase-price="{{ $item->purchase_price }}"
+                                                data-category="{{ $item->category?->name }}"
+                                                data-unit="{{ $item->unit?->abbreviation ?: $item->unit?->name }}"
+                                                data-photo="{{ $item->photo_url }}">
                                                 {{ $item->code }} — {{ $item->name }} (Stok: {{ number_format($item->stock) }})
                                             </option>
                                         @endforeach
@@ -41,7 +45,7 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label small mb-0" for="item_qty">Qty</label>
-                                    <input type="number" id="item_qty" class="form-control form-control-clean cart-add-control" min="1" placeholder="0">
+                                    <input type="number" id="item_qty" class="form-control form-control-clean cart-add-control" min="1" placeholder="1" value="1">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label small mb-0 cart-add-action-label" aria-hidden="true">Aksi</label>
@@ -162,7 +166,7 @@
 
 @push('js')
     <script src="{{ asset('js/payment-fields.js') }}"></script>
-    <script src="{{ asset('js/purchase-cart.js') }}"></script>
+    <script src="{{ asset('js/purchase-cart.js') }}?v={{ time() }}"></script>
     <script>
         AthaPaymentFields.init();
         AthaPurchaseCart.init({

@@ -99,7 +99,10 @@
 <div class="row g-2 mb-3 d-none tx-cash-payment" id="cash-payment-wrap">
     <div class="col-md-6">
         <label class="form-label" for="amount_paid">Uang Diterima (Rp) <span class="text-danger">*</span></label>
-        <input type="number" id="amount_paid" class="form-control form-control-clean" min="0" step="1" placeholder="0" inputmode="numeric">
+        <input type="number" id="amount_paid" class="form-control form-control-clean mb-2" min="0" step="1" placeholder="0" inputmode="numeric">
+        <button type="button" class="btn btn-sm btn-outline-primary w-100" id="btn-exact-cash">
+            <i class="bi bi-wallet2 me-1"></i> Uang Pas
+        </button>
     </div>
     <div class="col-md-6">
         <label class="form-label">Kembalian</label>

@@ -586,22 +586,30 @@ class ServiceTicketService
         });
     }
 
-    public function deleteTicket(ServiceTicket $ticket): void
+    public function deleteTicket(ServiceTicket $ticket, bool $isSuperAdmin = false): void
     {
-        DB::transaction(function () use ($ticket) {
+        DB::transaction(function () use ($ticket, $isSuperAdmin) {
             /** @var ServiceTicket|null $locked */
             $locked = ServiceTicket::query()->whereKey($ticket->id)->lockForUpdate()->first();
             if (! $locked) {
                 throw new InvalidArgumentException('Tiket servis tidak ditemukan.');
             }
 
-            if ($locked->downPaymentTransaction) {
+            if (! $isSuperAdmin && ! in_array($locked->status, ['received', 'cancelled'], true)) {
+                throw new InvalidArgumentException('Hanya tiket berstatus diterima atau dibatalkan yang bisa dihapus.');
+            }
+
+            if (! $isSuperAdmin && $locked->downPaymentTransaction) {
                 throw new InvalidArgumentException('Tiket sudah ada uang muka. Batalkan transaksi uang muka di menu Transaksi terlebih dahulu.');
             }
 
-            if (! in_array($locked->status, ['received', 'cancelled'], true)) {
-                throw new InvalidArgumentException('Hanya tiket berstatus diterima atau dibatalkan yang bisa dihapus.');
-            }
+            // Lepaskan relasi pada transaksi terkait agar riwayat keuangan dan transaksi kasir tetap terjaga
+            Transaction::where('service_ticket_id', $locked->id)->update(['service_ticket_id' => null]);
+
+            // Hapus rincian dan riwayat status
+            $locked->itemLines()->delete();
+            $locked->serviceLines()->delete();
+            $locked->statusLogs()->delete();
 
             $locked->delete();
         });

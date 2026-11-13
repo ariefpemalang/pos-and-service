@@ -179,9 +179,9 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Stock Opname</label>
+                                <label class="form-label">Batas Minimum Stok (Peringatan)</label>
                                 <input type="number" name="stock_opname" class="form-control form-control-clean" min="0" value="0">
-                                <div class="form-hint-sm">Batas minimum stok — jika stok ≤ nilai ini, muncul peringatan di dashboard.</div>
+                                <div class="form-hint-sm">Batas minimum stok untuk peringatan menipis di dashboard.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Harga Beli</label>
@@ -202,7 +202,7 @@
                                 </div>
                             </div>
                             <div class="col-12">
-                                <div class="form-hint-sm">Stok hanya dapat diubah melalui menu Stok Masuk / Stok Keluar.</div>
+                                <div class="form-hint-sm text-muted">Stok barang awal otomatis 0. Penambahan atau penyesuaian stok resmi dilakukan melalui menu Stok Masuk atau Stock Opname.</div>
                             </div>
                         </div>
                     </div>

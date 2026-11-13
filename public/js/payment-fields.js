@@ -5,6 +5,8 @@
         return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
     }
 
+    let currentTotal = 0;
+
     window.AthaPaymentFields = {
         init: function () {
             const $method = $('#payment_method');
@@ -42,6 +44,13 @@
                 $(document).trigger('atha:payment-fields-changed');
             });
 
+            // Klik tombol "Uang Pas": isi otomatis sesuai total / sisa tagihan
+            $(document).on('click', '#btn-exact-cash', function (e) {
+                e.preventDefault();
+                const due = Math.max(0, Math.round(currentTotal));
+                $amountPaid.val(due).trigger('input').trigger('change');
+            });
+
             toggleFields();
         },
 
@@ -50,6 +59,7 @@
          * @returns {{ paid: number, change: number, sufficient: boolean }}
          */
         getCashPayment: function (total) {
+            currentTotal = total;
             const paid = parseFloat($('#amount_paid').val()) || 0;
             const change = Math.max(0, paid - total);
 
@@ -61,6 +71,7 @@
         },
 
         updateCashChange: function (total) {
+            currentTotal = total;
             const $wrap = $('#cash-payment-wrap');
             const $change = $('#cash-change');
 

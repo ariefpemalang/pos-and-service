@@ -59,6 +59,14 @@ return [
         'access' => ['stock report view'],
     ],
     [
+        'group' => 'Stock Opname',
+        'access' => [
+            'stock opname view',
+            'stock opname create',
+            'stock opname adjust',
+        ],
+    ],
+    [
         'group' => 'Master Jasa',
         'access' => ['workshop service view', 'workshop service create', 'workshop service edit', 'workshop service delete'],
     ],
@@ -77,6 +85,18 @@ return [
     [
         'group' => 'Laporan Keuangan',
         'access' => ['financial report view'],
+    ],
+    [
+        'group' => 'Laporan Servis',
+        'access' => ['service report view'],
+    ],
+    [
+        'group' => 'Laporan Teknisi',
+        'access' => ['technician report view'],
+    ],
+    [
+        'group' => 'Laporan Aset Kategori',
+        'access' => ['asset report view'],
     ],
     [
         'group' => 'Pemasukan Manual',

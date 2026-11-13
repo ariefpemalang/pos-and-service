@@ -1,0 +1,620 @@
+/* ==========================================================================
+   FORMAT NOTA PRINT: 1/3 FOLIO (21.5 x 11 cm) & 1/2 FOLIO / NCR (21.5 x 14 cm)
+   ========================================================================== */
+
+:root {
+  --ncr-width: 215mm;
+  --ncr-height: 140mm;
+  --ncr-font: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+  --ncr-mono-font: 'Courier New', Courier, monospace;
+}
+
+/* Toolbar Switcher */
+.ncr-toolbar {
+  max-width: 215mm;
+  margin: 10px auto 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e1e1e;
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12.5px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  border: 1px solid #333;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ncr-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-ncr {
+  border: 1px solid #444;
+  background: #2d2d2d;
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.btn-ncr:hover {
+  background: #3e3e3e;
+  border-color: #666;
+  color: #fff;
+}
+
+.btn-ncr--primary {
+  background: #0284c7;
+  border-color: #0369a1;
+  color: #fff;
+}
+
+.btn-ncr--primary:hover {
+  background: #0369a1;
+}
+
+.btn-ncr--active {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #fff;
+}
+
+.btn-ncr--light {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.btn-ncr--light:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Screen Wrapper: simulates tractor-feed continuous paper */
+.ncr-paper-wrapper {
+  width: 215mm;
+  min-height: 140mm;
+  margin: 0 auto 30px;
+  background: #fff;
+  color: #000;
+  padding: 5mm 8mm;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #bbb;
+  font-family: var(--ncr-font);
+  font-size: 11px;
+  line-height: 1.3;
+  box-sizing: border-box;
+}
+
+/* Watermark / Emboss ARCell di tengah nota */
+.ncr-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-10deg);
+  font-size: 68px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  text-transform: uppercase;
+  color: #000;
+  opacity: 0.055;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.9), -1px -1px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* Perforation simulation on screen */
+.ncr-paper-wrapper::before,
+.ncr-paper-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  background-image: radial-gradient(circle, #ccc 2.5px, transparent 3px);
+  background-size: 12px 12.7mm;
+  background-position: center;
+  opacity: 0.35;
+  pointer-events: none;
+}
+.ncr-paper-wrapper::before { left: 1px; }
+.ncr-paper-wrapper::after { right: 1px; }
+
+/* Content inside NCR Sheet */
+.ncr-sheet {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+.ncr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px double #000;
+  padding-bottom: 3px;
+  margin-bottom: 3px;
+}
+
+.ncr-brand {
+  flex: 1;
+}
+
+.ncr-brand-name {
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ncr-brand-sub {
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.ncr-brand-contact {
+  font-size: 9.5px;
+  margin-top: 1px;
+}
+
+.ncr-title-box {
+  text-align: right;
+  min-width: 220px;
+}
+
+.ncr-title {
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ncr-title-meta {
+  font-size: 10px;
+  margin-top: 1.5px;
+}
+
+/* Two-column info box: Customer & Device */
+.ncr-info-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 3px;
+  margin-bottom: 3px;
+  font-size: 10px;
+}
+
+.ncr-info-col {
+  flex: 1;
+}
+
+.ncr-info-row {
+  display: flex;
+  margin-bottom: 1px;
+}
+
+.ncr-info-label {
+  width: 105px;
+  flex-shrink: 0;
+  font-weight: bold;
+}
+
+.ncr-info-colon {
+  width: 10px;
+  flex-shrink: 0;
+}
+
+.ncr-info-value {
+  flex: 1;
+  font-weight: bold;
+}
+
+/* Items Table */
+.ncr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  margin-bottom: 3px;
+}
+
+.ncr-table th {
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  padding: 2.5px 4px;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 9.5px;
+}
+
+.ncr-table td {
+  padding: 2px 4px;
+  vertical-align: top;
+}
+
+.ncr-table tbody tr {
+  border-bottom: 1px dotted #888;
+}
+
+.ncr-table tbody tr:last-child {
+  border-bottom: 1px solid #000;
+}
+
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+/* Bottom Section */
+.ncr-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 2px;
+  font-size: 10px;
+}
+
+.ncr-bottom-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.ncr-terbilang-box {
+  border: 1px dashed #000;
+  padding: 2px 5px;
+  font-size: 9px;
+  margin-bottom: 4px;
+}
+
+.ncr-terms {
+  font-size: 8.5px;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.ncr-signatures {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 2px;
+  text-align: center;
+  font-size: 9.5px;
+}
+
+.ncr-sign-col {
+  width: 46%;
+}
+
+.ncr-sign-space {
+  height: 30px;
+}
+
+.ncr-sign-name {
+  border-top: 1px dotted #000;
+  padding-top: 2px;
+  font-weight: bold;
+}
+
+.ncr-bottom-right {
+  width: 250px;
+  flex-shrink: 0;
+}
+
+.ncr-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.ncr-summary-table td {
+  padding: 1.5px 3px;
+}
+
+.ncr-summary-total {
+  font-weight: bold;
+  font-size: 11px;
+  border-top: 1px solid #000;
+  border-bottom: 2px double #000;
+}
+
+.ncr-payment-badge {
+  display: inline-block;
+  border: 1px solid #000;
+  padding: 1px 5px;
+  font-weight: bold;
+  font-size: 9.5px;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   KHUSUS MODE 1/3 FOLIO (21.5 cm x 11 cm) - PROPORSI ELEGAN & JELAS TERBACA
+   ========================================================================== */
+body.format-third .ncr-paper-wrapper {
+  width: 215mm;
+  min-height: 110mm;
+  height: 110mm;
+  max-height: 110mm;
+  padding: 3mm 7mm;
+  font-size: 10.5px;
+  line-height: 1.28;
+  font-family: var(--ncr-font);
+}
+
+body.format-third .ncr-header {
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+  border-bottom: 2px solid #000;
+}
+
+body.format-third .ncr-brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #000;
+}
+
+body.format-third .ncr-brand-sub {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #222;
+}
+
+body.format-third .ncr-brand-contact {
+  font-size: 9.5px;
+  line-height: 1.25;
+  color: #333;
+  margin-top: 2px;
+}
+
+body.format-third .ncr-title-box {
+  min-width: 210px;
+  text-align: right;
+}
+
+body.format-third .ncr-title {
+  font-size: 14.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #000;
+}
+
+body.format-third .ncr-title-meta {
+  font-size: 10px;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+body.format-third .ncr-info-grid {
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+  border-bottom: 1.5px solid #000;
+  font-size: 10.5px;
+  gap: 14px;
+}
+
+body.format-third .ncr-info-label {
+  width: 95px;
+  font-weight: 700;
+  color: #111;
+}
+
+body.format-third .ncr-info-colon {
+  margin-right: 4px;
+  font-weight: 700;
+}
+
+body.format-third .ncr-info-value {
+  font-weight: 600;
+  color: #000;
+}
+
+body.format-third .ncr-table {
+  font-size: 10.5px;
+  margin-bottom: 2px;
+  border: 1px solid #000;
+  border-collapse: collapse;
+}
+
+body.format-third .ncr-table th {
+  padding: 2.5px 5px;
+  font-size: 10px;
+  font-weight: 800;
+  background: #f1f5f9;
+  border-bottom: 1.5px solid #000;
+  color: #000;
+}
+
+body.format-third .ncr-table td {
+  padding: 3px 5px;
+  border: 1px solid #ccc;
+  vertical-align: middle;
+}
+
+body.format-third .ncr-bottom {
+  margin-top: 2px;
+  font-size: 10px;
+  gap: 14px;
+}
+
+body.format-third .ncr-terbilang-box {
+  border: 1px dashed #000;
+  padding: 3px 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-bottom: 3px;
+  background: #f8fafc;
+}
+
+body.format-third .ncr-terms {
+  font-size: 9px;
+  line-height: 1.28;
+  margin-bottom: 2px;
+  color: #222;
+}
+
+body.format-third .ncr-signatures {
+  gap: 16px;
+  margin-top: 2px;
+}
+
+body.format-third .ncr-sign-col {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+body.format-third .ncr-sign-space {
+  height: 22px;
+}
+
+body.format-third .ncr-sign-name {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding-top: 2px;
+  border-top: 1px dotted #333;
+  display: inline-block;
+  min-width: 110px;
+}
+
+body.format-third .ncr-bottom-right {
+  width: 225px;
+}
+
+body.format-third .ncr-summary-table {
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+body.format-third .ncr-summary-table td {
+  padding: 1.5px 3px;
+}
+
+body.format-third .ncr-summary-total {
+  font-size: 11.5px;
+  font-weight: 800;
+  border-top: 1.5px solid #000;
+  border-bottom: 1.5px solid #000;
+}
+
+body.format-third .ncr-payment-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  margin-top: 2px;
+  border: 1.5px solid #000;
+  border-radius: 3px;
+}
+
+/* Visibility Control between Formats */
+body.format-dotmatrix .format-thermal-view,
+body.format-third .format-thermal-view {
+  display: none !important;
+}
+
+body.format-dotmatrix .format-dotmatrix-view,
+body.format-third .format-dotmatrix-view {
+  display: block !important;
+}
+
+body.format-thermal .format-dotmatrix-view {
+  display: none !important;
+}
+
+body.format-thermal .format-thermal-view {
+  display: block !important;
+}
+
+/* ==========================================================================
+   PRINT RULES
+   ========================================================================== */
+@media print {
+  @page {
+    size: portrait;
+    margin: 0 !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-family: var(--ncr-font) !important;
+    overflow: hidden !important;
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .ncr-watermark {
+    color: #94a3b8 !important;
+    opacity: 0.22 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Mode 1/3 Folio (21.5 x 11 cm) saat print: Posisi Tegak (Portrait) */
+  body.format-third .ncr-paper-wrapper {
+    width: 215mm !important;
+    max-width: 100% !important;
+    height: 105mm !important;
+    max-height: 105mm !important;
+    margin: 0 !important;
+    padding: 2mm 5mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
+    overflow: hidden !important;
+  }
+
+  /* Mode 1/2 Folio / NCR (215 x 140 mm) saat print */
+  body.format-dotmatrix .ncr-paper-wrapper {
+    width: 215mm !important;
+    max-width: 215mm !important;
+    height: 135mm !important;
+    max-height: 135mm !important;
+    margin: 0 auto !important;
+    padding: 3mm 6mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
+    overflow: hidden !important;
+  }
+
+  .ncr-paper-wrapper::before,
+  .ncr-paper-wrapper::after {
+    display: none !important;
+  }
+}

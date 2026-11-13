@@ -19,6 +19,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('items')) {
+                if (! \App\Models\Item::where('code', 'FLEXI O/F+VOL SAM A217')->exists()) {
+                    (new \Database\Seeders\UserItemsSeeder)->run();
+                }
+            }
+        } catch (\Throwable $e) {
+            // Silently ignore if database not ready
+        }
     }
 }

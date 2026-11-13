@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssetReportController;
 use App\Http\Controllers\BankAccountController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -14,14 +15,17 @@ use App\Http\Controllers\ManualIncomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ServiceReportController;
 use App\Http\Controllers\ServiceTicketController;
 use App\Http\Controllers\ServiceTicketTrackingController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockInController;
+use App\Http\Controllers\StockOpnameController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\StockOutController;
 use App\Http\Controllers\StockReportController;
 use App\Http\Controllers\TechnicianController;
+use App\Http\Controllers\TechnicianReportController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkshopServiceController;
@@ -69,6 +73,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('stock-outs/batch/{batchNo}', [StockOutController::class, 'showBatch'])->name('stock-outs.batch');
 
     Route::get('stock-reports', [StockReportController::class, 'index'])->name('stock-reports.index');
+    Route::get('stock-opnames/export', [StockOpnameController::class, 'export'])->name('stock-opnames.export');
+    Route::get('stock-opnames', [StockOpnameController::class, 'index'])->name('stock-opnames.index');
+    Route::post('stock-opnames/draft', [StockOpnameController::class, 'saveDraft'])->name('stock-opnames.draft');
+    Route::post('stock-opnames/approve', [StockOpnameController::class, 'approve'])->name('stock-opnames.approve');
+    Route::post('stock-opnames/{stockOpname}/reject', [StockOpnameController::class, 'reject'])->name('stock-opnames.reject');
+    Route::get('asset-reports', [AssetReportController::class, 'index'])
+        ->name('asset-reports.index')
+        ->middleware('permission:asset report view');
 
     // Fase 2 — Transaksi & komisi teknisi
     Route::resource('workshop-services', WorkshopServiceController::class)->except(['create', 'edit']);
@@ -88,6 +100,20 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('financial-reports', [FinancialReportController::class, 'index'])->name('financial-reports.index');
     Route::get('financial-reports/export-pdf', [FinancialReportController::class, 'exportPdf'])->name('financial-reports.export-pdf');
+
+    Route::get('service-reports', [ServiceReportController::class, 'index'])
+        ->name('service-reports.index')
+        ->middleware('permission:service report view');
+    Route::get('service-reports/export-excel', [ServiceReportController::class, 'exportExcel'])
+        ->name('service-reports.export-excel')
+        ->middleware('permission:service report view');
+
+    Route::get('technician-reports', [TechnicianReportController::class, 'index'])
+        ->name('technician-reports.index')
+        ->middleware('permission:technician report view');
+    Route::get('technician-reports/export-excel', [TechnicianReportController::class, 'exportExcel'])
+        ->name('technician-reports.export-excel')
+        ->middleware('permission:technician report view');
 
     Route::get('manual-incomes', [ManualIncomeController::class, 'index'])->name('manual-incomes.index');
     Route::post('manual-incomes', [ManualIncomeController::class, 'store'])->name('manual-incomes.store');

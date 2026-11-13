@@ -102,6 +102,7 @@ class ItemController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'category_id' => ['required', 'exists:item_categories,id'],
             'unit_id' => ['required', 'exists:item_units,id'],
+            'stock' => ['nullable', 'integer', 'min:0'],
             'stock_opname' => ['nullable', 'integer', 'min:0'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'selling_price' => ['nullable', 'numeric', 'min:0'],
@@ -109,11 +110,15 @@ class ItemController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ], $this->entityCodeRules('items', 50), $this->photoRules()));
 
+        $user = auth()->user();
+        $isSuperAdmin = $user && $user->hasRole('Super Admin');
+        $stock = ($isSuperAdmin && $request->filled('stock')) ? max(0, (int) $request->input('stock')) : 0;
+
         $item = Item::create([
-            ...collect($validated)->except(['photo', 'remove_photo', 'code'])->all(),
+            ...collect($validated)->except(['photo', 'remove_photo', 'code', 'stock'])->all(),
             'code' => $this->resolveEntityCode($request, Item::class, $validated['code'] ?? null),
             'photo' => $this->resolvePhotoPath($request, 'photos/items'),
-            'stock' => 0,
+            'stock' => $stock,
             'stock_opname' => $validated['stock_opname'] ?? 0,
             'purchase_price' => $validated['purchase_price'] ?? 0,
             'selling_price' => $validated['selling_price'] ?? 0,
@@ -138,6 +143,7 @@ class ItemController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'category_id' => ['required', 'exists:item_categories,id'],
             'unit_id' => ['required', 'exists:item_units,id'],
+            'stock' => ['nullable', 'integer', 'min:0'],
             'stock_opname' => ['nullable', 'integer', 'min:0'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'selling_price' => ['nullable', 'numeric', 'min:0'],
@@ -145,15 +151,22 @@ class ItemController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ], $this->entityCodeRules('items', 50, $item->id, true), $this->photoRules()));
 
-        $item->update([
-            ...collect($validated)->except(['photo', 'remove_photo', 'code'])->all(),
+        $updateData = [
+            ...collect($validated)->except(['photo', 'remove_photo', 'code', 'stock'])->all(),
             'code' => trim($validated['code']),
             'photo' => $this->resolvePhotoPath($request, 'photos/items', $item->photo),
             'stock_opname' => $validated['stock_opname'] ?? 0,
             'purchase_price' => $validated['purchase_price'] ?? 0,
             'selling_price' => $validated['selling_price'] ?? 0,
             'is_active' => $request->boolean('is_active'),
-        ]);
+        ];
+
+        $user = auth()->user();
+        if ($request->has('stock') && $user && $user->hasRole('Super Admin')) {
+            $updateData['stock'] = max(0, (int) $request->input('stock'));
+        }
+
+        $item->update($updateData);
 
         $item->load(['category:id,name', 'unit:id,name,abbreviation']);
 

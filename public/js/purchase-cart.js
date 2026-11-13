@@ -89,33 +89,16 @@
 
             $('#discount, #payment_method, #bank_account_id').on('change input', updateSummary);
 
-            $('#item_select').on('change', function () {
-                const item = findItem($(this).val());
-                $('#item-hint').text(item
-                    ? 'Stok: ' + Number(item.stock).toLocaleString('id-ID') + ' | Harga beli: ' + formatRp(item.purchase_price)
-                    : '');
-            });
+            let isAdding = false;
+            function addItemToCart(item, qty) {
+                if (!item) return;
+                qty = qty && qty > 0 ? qty : 1;
 
-            $('#btn-add-item').on('click', function () {
-                const itemId = $('#item_select').val();
-                const qty = parseInt($('#item_qty').val(), 10);
-                const item = findItem(itemId);
-
-                if (!item) {
-                    Swal.fire({ icon: 'warning', title: 'Pilih barang terlebih dahulu.' });
-                    return;
-                }
-                if (!qty || qty < 1) {
-                    Swal.fire({ icon: 'warning', title: 'Qty harus lebih dari 0.' });
-                    return;
-                }
-
-                const existing = cart.find(function (l) { return String(l.item_id) === String(itemId); });
-                const unitPrice = parseFloat(item.purchase_price);
-                const newQty = (existing ? existing.quantity : 0) + qty;
+                const existing = cart.find(function (l) { return String(l.item_id) === String(item.id); });
+                const unitPrice = parseFloat(item.purchase_price) || 0;
 
                 if (existing) {
-                    existing.quantity = newQty;
+                    existing.quantity += qty;
                     recalcLine(existing);
                 } else {
                     cart.push({
@@ -130,10 +113,64 @@
 
                 renderCart();
                 $('#item_qty').val('');
+                $('#item-hint').text('');
+            }
+
+            function handleItemSelection(itemId) {
+                if (!itemId || isAdding) return;
+                isAdding = true;
+
+                const item = findItem(itemId);
+                if (!item) {
+                    isAdding = false;
+                    return;
+                }
+
+                const qty = parseInt($('#item_qty').val(), 10) || 1;
+                addItemToCart(item, qty);
+
+                setTimeout(function () {
+                    if (window.AthaSearchableSelect) {
+                        AthaSearchableSelect.clear('#item_select');
+                    } else {
+                        $('#item_select').val(null);
+                    }
+                    isAdding = false;
+                }, 100);
+            }
+
+            $('#item_select').on('select2:select', function (e) {
+                const itemId = e.params && e.params.data ? e.params.data.id : $(this).val();
+                handleItemSelection(itemId);
+            });
+
+            $('#item_select').on('change', function () {
+                const itemId = $(this).val();
+                handleItemSelection(itemId);
+            });
+
+            $('#btn-add-item').on('click', function () {
+                const itemId = $('#item_select').val();
+                const qty = parseInt($('#item_qty').val(), 10) || 1;
+                const item = findItem(itemId);
+
+                if (!item) {
+                    Swal.fire({ icon: 'warning', title: 'Pilih barang terlebih dahulu.' });
+                    return;
+                }
+
+                addItemToCart(item, qty);
                 if (window.AthaSearchableSelect) {
                     AthaSearchableSelect.clear('#item_select');
                 } else {
-                    $('#item_select').val(null).trigger('change');
+                    $('#item_select').val(null);
+                }
+            });
+
+            $('#item_qty').on('keypress', function (e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    $('#btn-add-item').click();
                 }
             });
 
