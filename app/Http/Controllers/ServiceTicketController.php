@@ -148,6 +148,25 @@ class ServiceTicketController extends Controller
         ]);
     }
 
+    public function pickupSlip(ServiceTicket $serviceTicket): View
+    {
+        $serviceTicket->load([
+            'customer',
+            'technician',
+            'user',
+            'itemLines.item',
+            'serviceLines',
+            'paidTransaction.items',
+            'downPaymentTransaction.bankAccount',
+            'statusLogs.user',
+        ]);
+
+        return view('service-tickets.pickup-slip', [
+            'ticket' => $serviceTicket,
+            'transaction' => $serviceTicket->paidTransaction ?? $serviceTicket->downPaymentTransaction,
+        ]);
+    }
+
     public function edit(ServiceTicket $serviceTicket): View
     {
         if ($serviceTicket->isClosed()) {

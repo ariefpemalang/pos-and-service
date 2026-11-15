@@ -87,6 +87,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('service-tickets', ServiceTicketController::class);
     Route::post('service-tickets/{serviceTicket}/pickup-cancelled', [ServiceTicketController::class, 'pickupCancelled'])->name('service-tickets.pickup-cancelled');
     Route::get('service-tickets/{serviceTicket}/claim-slip', [ServiceTicketController::class, 'claimSlip'])->name('service-tickets.claim-slip');
+    Route::get('service-tickets/{serviceTicket}/pickup-slip', [ServiceTicketController::class, 'pickupSlip'])->name('service-tickets.pickup-slip');
     Route::post('service-tickets/{serviceTicket}/status', [ServiceTicketController::class, 'updateStatus'])->name('service-tickets.status');
     Route::post('service-tickets/{serviceTicket}/work-lines', [ServiceTicketController::class, 'updateWorkLines'])->name('service-tickets.work-lines');
     Route::post('service-tickets/{serviceTicket}/technician', [ServiceTicketController::class, 'updateTechnician'])->name('service-tickets.technician');

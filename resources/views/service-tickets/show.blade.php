@@ -360,7 +360,10 @@
             <div class="ticket-show-actions">
                 @can('service ticket view')
                     <a href="{{ route('service-tickets.claim-slip', $ticket) }}" class="btn btn-outline-secondary w-100" target="_blank" rel="noopener">
-                        <i class="bi bi-printer me-1"></i> Nota Service
+                        <i class="bi bi-printer me-1"></i> Tanda Terima Service (Masuk)
+                    </a>
+                    <a href="{{ route('service-tickets.pickup-slip', $ticket) }}" class="btn btn-outline-success w-100" target="_blank" rel="noopener">
+                        <i class="bi bi-receipt-cutoff me-1"></i> Cetak Nota Pengambilan (Selesai/Ambil)
                     </a>
                 @endcan
                 @if ($ticket->paidTransaction)
