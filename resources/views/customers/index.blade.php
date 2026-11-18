@@ -22,6 +22,17 @@
             @endcan
         </div>
         <div class="data-panel-body">
+            <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+                <label class="form-label small fw-semibold text-muted mb-0 text-nowrap" for="filter-sort">
+                    <i class="bi bi-sort-down me-1"></i> Urutkan Berdasarkan:
+                </label>
+                <select id="filter-sort" name="sort" class="form-select form-select-sm form-control-clean" style="width: auto; min-width: 190px;">
+                    <option value="nama_asc" @selected(($sort ?? request('sort')) === 'nama_asc')>Nama A-Z</option>
+                    <option value="nama_desc" @selected(($sort ?? request('sort')) === 'nama_desc')>Nama Z-A</option>
+                    <option value="tanggal_desc" @selected(($sort ?? request('sort', 'tanggal_desc')) === 'tanggal_desc')>Tanggal Terbaru</option>
+                    <option value="tanggal_asc" @selected(($sort ?? request('sort')) === 'tanggal_asc')>Tanggal Terlama</option>
+                </select>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle" id="data-table" width="100%">
                     <thead>
@@ -109,11 +120,16 @@
 
 @push('js')
     <script>
-        $('#data-table').DataTable({
+        const customerTable = $('#data-table').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '{{ route('customers.index') }}',
-            order: [[5, 'desc']],
+            ajax: {
+                url: '{{ route('customers.index') }}',
+                data: function (d) {
+                    d.sort = $('#filter-sort').val();
+                }
+            },
+            order: [],
             columns: [
                 { data: 'DT_RowIndex', orderable: false, searchable: false },
                 { data: 'code', name: 'code' },
@@ -123,6 +139,10 @@
                 { data: 'created_at', name: 'created_at' },
                 { data: 'action', orderable: false, searchable: false, className: 'text-end' },
             ],
+        });
+
+        $('#filter-sort').on('change', function () {
+            customerTable.ajax.reload();
         });
 
         AthaModalCrud.init({

@@ -28,14 +28,32 @@ class ItemController extends Controller
 
     public function index(): View|JsonResponse
     {
+        $sort = request('sort', 'nama_asc');
+
         if (request()->ajax()) {
             $query = Item::query()
-                ->with(['category:id,name', 'unit:id,name,abbreviation'])
-                ->latest();
+                ->with(['category:id,name', 'unit:id,name,abbreviation']);
 
             $this->applyListFilters($query);
 
+            match ($sort) {
+                'harga_asc' => $query->orderBy('selling_price', 'asc'),
+                'harga_desc' => $query->orderBy('selling_price', 'desc'),
+                'stok_desc' => $query->orderBy('stock', 'desc'),
+                'stok_asc' => $query->orderBy('stock', 'asc'),
+                default => $query->orderBy('name', 'asc'),
+            };
+
             return DataTables::of($query)
+                ->order(function ($q) use ($sort) {
+                    match ($sort) {
+                        'harga_asc' => $q->orderBy('selling_price', 'asc'),
+                        'harga_desc' => $q->orderBy('selling_price', 'desc'),
+                        'stok_desc' => $q->orderBy('stock', 'desc'),
+                        'stok_asc' => $q->orderBy('stock', 'asc'),
+                        default => $q->orderBy('name', 'asc'),
+                    };
+                })
                 ->addIndexColumn()
                 ->addColumn('photo_thumb', function (Item $i) {
                     if ($i->photo_url) {
@@ -75,6 +93,7 @@ class ItemController extends Controller
                 'category_id' => request()->integer('category_id') ?: '',
                 'unit_id' => request()->integer('unit_id') ?: '',
                 'low_stock' => request()->boolean('low_stock'),
+                'sort' => $sort,
             ],
         ]);
     }

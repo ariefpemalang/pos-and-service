@@ -82,6 +82,18 @@
                     <strong>Stok menipis</strong> = stok saat ini sudah mencapai atau di bawah nilai <em>Stock Opname</em> (batas minimum) barang tersebut.
                 </div>
             </div>
+            <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+                <label class="form-label small fw-semibold text-muted mb-0 text-nowrap" for="filter-sort">
+                    <i class="bi bi-sort-down me-1"></i> Urutkan Berdasarkan:
+                </label>
+                <select id="filter-sort" name="sort" class="form-select form-select-sm form-control-clean" style="width: auto; min-width: 190px;">
+                    <option value="nama_asc" @selected(($filters['sort'] ?? request('sort', 'nama_asc')) === 'nama_asc')>Nama A-Z</option>
+                    <option value="harga_asc" @selected(($filters['sort'] ?? request('sort')) === 'harga_asc')>Harga Termurah</option>
+                    <option value="harga_desc" @selected(($filters['sort'] ?? request('sort')) === 'harga_desc')>Harga Termahal</option>
+                    <option value="stok_desc" @selected(($filters['sort'] ?? request('sort')) === 'stok_desc')>Stok Terbanyak</option>
+                    <option value="stok_asc" @selected(($filters['sort'] ?? request('sort')) === 'stok_asc')>Stok Tersedikit</option>
+                </select>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle" id="data-table" width="100%">
                     <thead>
@@ -249,9 +261,10 @@
                     params.category_id = $('#filter-category').val();
                     params.unit_id = $('#filter-unit').val();
                     params.low_stock = $('#filter-low-stock').val();
+                    params.sort = $('#filter-sort').val();
                 },
             },
-            order: [[10, 'desc']],
+            order: [],
             columns: [
                 { data: 'DT_RowIndex', orderable: false, searchable: false },
                 { data: 'photo_thumb', orderable: false, searchable: false },
@@ -273,6 +286,7 @@
             const categoryId = $('#filter-category').val();
             const unitId = $('#filter-unit').val();
             const lowStock = $('#filter-low-stock').val();
+            const sort = $('#filter-sort').val();
 
             if (categoryId) {
                 params.set('category_id', categoryId);
@@ -282,6 +296,9 @@
             }
             if (lowStock === '1') {
                 params.set('low_stock', '1');
+            }
+            if (sort) {
+                params.set('sort', sort);
             }
 
             const qs = params.toString();
@@ -295,10 +312,11 @@
         }
 
         $('#btn-apply-item-filter').on('click', reloadItemsTable);
-        $('#filter-category, #filter-unit, #filter-low-stock').on('change', reloadItemsTable);
+        $('#filter-category, #filter-unit, #filter-low-stock, #filter-sort').on('change', reloadItemsTable);
 
         $('#btn-reset-item-filter').on('click', function () {
             $('#filter-category, #filter-unit, #filter-low-stock').val('');
+            $('#filter-sort').val('nama_asc');
             reloadItemsTable();
         });
 

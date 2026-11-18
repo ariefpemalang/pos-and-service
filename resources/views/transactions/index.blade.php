@@ -30,6 +30,17 @@
                 'entityIcon' => 'bi-tools',
                 'entities' => $technicians,
             ])
+            <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+                <label class="form-label small fw-semibold text-muted mb-0 text-nowrap" for="filter-sort">
+                    <i class="bi bi-sort-down me-1"></i> Urutkan Berdasarkan:
+                </label>
+                <select id="filter-sort" name="sort" class="form-select form-select-sm form-control-clean" style="width: auto; min-width: 190px;">
+                    <option value="tanggal_desc" @selected(($filters['sort'] ?? request('sort', 'tanggal_desc')) === 'tanggal_desc')>Tanggal Terbaru</option>
+                    <option value="tanggal_asc" @selected(($filters['sort'] ?? request('sort')) === 'tanggal_asc')>Tanggal Terlama</option>
+                    <option value="total_desc" @selected(($filters['sort'] ?? request('sort')) === 'total_desc')>Total Tertinggi</option>
+                    <option value="total_asc" @selected(($filters['sort'] ?? request('sort')) === 'total_asc')>Total Terendah</option>
+                </select>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle" id="data-table" width="100%">
                     <thead>
@@ -94,9 +105,10 @@
                     d.from = $('#filter-from').val();
                     d.to = $('#filter-to').val();
                     d.technician_id = $('#filter-technician').val();
+                    d.sort = $('#filter-sort').val();
                 },
             },
-            order: [[10, 'desc']],
+            order: [],
             columns: [
                 { data: 'DT_RowIndex', orderable: false, searchable: false },
                 { data: 'transaction_no', name: 'transaction_no' },
@@ -113,7 +125,7 @@
             ],
         });
 
-        $('#filter-from, #filter-to, #filter-technician').on('change', function () {
+        $('#filter-from, #filter-to, #filter-technician, #filter-sort').on('change', function () {
             txTable.ajax.reload();
         });
 
@@ -121,6 +133,7 @@
             $('#filter-from').val(txDefaultFrom);
             $('#filter-to').val(txDefaultTo);
             $('#filter-technician').val('');
+            $('#filter-sort').val('tanggal_desc');
             txTable.ajax.reload();
         });
 

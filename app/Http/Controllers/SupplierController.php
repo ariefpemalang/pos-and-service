@@ -25,8 +25,25 @@ class SupplierController extends Controller
 
     public function index(): View|JsonResponse
     {
+        $sort = request('sort', 'tanggal_desc');
+
         if (request()->ajax()) {
-            return DataTables::of(Supplier::query()->latest())
+            $query = Supplier::query();
+
+            match ($sort) {
+                'nama_asc' => $query->orderBy('name', 'asc'),
+                'nama_desc' => $query->orderBy('name', 'desc'),
+                default => $query->orderBy('created_at', 'desc'),
+            };
+
+            return DataTables::of($query)
+                ->order(function ($q) use ($sort) {
+                    match ($sort) {
+                        'nama_asc' => $q->orderBy('name', 'asc'),
+                        'nama_desc' => $q->orderBy('name', 'desc'),
+                        default => $q->orderBy('created_at', 'desc'),
+                    };
+                })
                 ->addIndexColumn()
                 ->addColumn('phone', fn (Supplier $s) => $s->phone ?: '-')
                 ->addColumn('created_at', fn (Supplier $s) => $s->created_at?->format('d/m/Y H:i'))
@@ -35,7 +52,7 @@ class SupplierController extends Controller
                 ->toJson();
         }
 
-        return view('suppliers.index');
+        return view('suppliers.index', compact('sort'));
     }
 
     public function store(Request $request): JsonResponse|RedirectResponse

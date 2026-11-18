@@ -25,8 +25,27 @@ class CustomerController extends Controller
 
     public function index(): View|JsonResponse
     {
+        $sort = request('sort', 'tanggal_desc');
+
         if (request()->ajax()) {
-            return DataTables::of(Customer::query()->latest())
+            $query = Customer::query();
+
+            match ($sort) {
+                'nama_asc' => $query->orderBy('name', 'asc'),
+                'nama_desc' => $query->orderBy('name', 'desc'),
+                'tanggal_asc' => $query->orderBy('created_at', 'asc'),
+                default => $query->orderBy('created_at', 'desc'),
+            };
+
+            return DataTables::of($query)
+                ->order(function ($q) use ($sort) {
+                    match ($sort) {
+                        'nama_asc' => $q->orderBy('name', 'asc'),
+                        'nama_desc' => $q->orderBy('name', 'desc'),
+                        'tanggal_asc' => $q->orderBy('created_at', 'asc'),
+                        default => $q->orderBy('created_at', 'desc'),
+                    };
+                })
                 ->addIndexColumn()
                 ->addColumn('phone', fn (Customer $c) => $c->phone ?: '-')
                 ->addColumn('created_at', fn (Customer $c) => $c->created_at?->format('d/m/Y H:i'))
@@ -35,7 +54,7 @@ class CustomerController extends Controller
                 ->toJson();
         }
 
-        return view('customers.index');
+        return view('customers.index', compact('sort'));
     }
 
     public function store(Request $request): JsonResponse|RedirectResponse

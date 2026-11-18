@@ -81,6 +81,18 @@
                 </div>
             </div>
 
+            <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+                <label class="form-label small fw-semibold text-muted mb-0 text-nowrap" for="filter-sort">
+                    <i class="bi bi-sort-down me-1"></i> Urutkan Berdasarkan:
+                </label>
+                <select id="filter-sort" name="sort" class="form-select form-select-sm form-control-clean" style="width: auto; min-width: 190px;">
+                    <option value="tanggal_desc" @selected(($filters['sort'] ?? request('sort', 'tanggal_desc')) === 'tanggal_desc')>Tanggal Terbaru</option>
+                    <option value="tanggal_asc" @selected(($filters['sort'] ?? request('sort')) === 'tanggal_asc')>Tanggal Terlama</option>
+                    <option value="status" @selected(($filters['sort'] ?? request('sort')) === 'status')>Status</option>
+                    <option value="pelanggan_asc" @selected(($filters['sort'] ?? request('sort')) === 'pelanggan_asc')>Nama Pelanggan A-Z</option>
+                </select>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-hover align-middle" id="data-table" width="100%">
                     <thead>
@@ -119,6 +131,7 @@
                         d.technician_id = $('#filter-technician').val();
                         d.device_type = $('#filter-device').val();
                         d.warranty = $('#filter-warranty').val();
+                        d.sort = $('#filter-sort').val();
                     },
                     dataSrc: function (json) {
                         if (json.summary) {
@@ -127,7 +140,7 @@
                         return json.data;
                     },
                 },
-                order: [[6, 'desc']],
+                order: [],
                 columns: [
                     { data: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'ticket_no', name: 'ticket_no' },
@@ -163,13 +176,14 @@
                 table.ajax.reload();
             });
 
-            $('#filter-technician, #filter-device, #filter-warranty').on('change', function () {
+            $('#filter-technician, #filter-device, #filter-warranty, #filter-sort').on('change', function () {
                 table.ajax.reload();
             });
 
             $('#btn-reset-ticket-filter').on('click', function () {
                 setActiveChip('received');
                 $('#filter-technician, #filter-device, #filter-warranty').val('');
+                $('#filter-sort').val('tanggal_desc');
                 table.ajax.reload();
             });
         })(jQuery);

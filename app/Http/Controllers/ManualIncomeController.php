@@ -77,15 +77,30 @@ class ManualIncomeController extends Controller
     {
         [$from, $to] = $this->resolvePeriod();
         $categoryId = request()->integer('category_id');
+        $sort = request('sort', 'tanggal_desc');
 
         $query = ManualCashEntry::query()
             ->with(['category:id,name', 'user:id,name', 'bankAccount:id,bank_name,account_number'])
             ->where('type', $type)
             ->whereBetween('occurred_at', [$from, $to])
-            ->when($categoryId > 0, fn ($q) => $q->where('category_id', $categoryId))
-            ->latest('occurred_at');
+            ->when($categoryId > 0, fn ($q) => $q->where('category_id', $categoryId));
+
+        match ($sort) {
+            'tanggal_asc' => $query->orderBy('occurred_at', 'asc'),
+            'nominal_desc' => $query->orderBy('amount', 'desc'),
+            'nominal_asc' => $query->orderBy('amount', 'asc'),
+            default => $query->orderBy('occurred_at', 'desc'),
+        };
 
         return DataTables::of($query)
+            ->order(function ($q) use ($sort) {
+                match ($sort) {
+                    'tanggal_asc' => $q->orderBy('occurred_at', 'asc'),
+                    'nominal_desc' => $q->orderBy('amount', 'desc'),
+                    'nominal_asc' => $q->orderBy('amount', 'asc'),
+                    default => $q->orderBy('occurred_at', 'desc'),
+                };
+            })
             ->addIndexColumn()
             ->addColumn('amount_fmt', fn (ManualCashEntry $e) => 'Rp '.number_format((float) $e->amount, 0, ',', '.'))
             ->addColumn('occurred_at_fmt', fn (ManualCashEntry $e) => $e->occurred_at?->format('d/m/Y H:i'))

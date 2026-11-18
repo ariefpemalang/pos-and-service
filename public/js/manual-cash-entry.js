@@ -49,9 +49,10 @@
                         d.from = $('#filter-from').val();
                         d.to = $('#filter-to').val();
                         d.category_id = $('#filter-category').val();
+                        d.sort = $('#filter-sort').val();
                     },
                 },
-                order: [[3, 'desc']],
+                order: [],
                 columns: [
                     { data: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'entry_no', name: 'entry_no' },
@@ -66,6 +67,10 @@
             });
 
             $('#btn-apply-filter').on('click', function () {
+                dt.ajax.reload();
+            });
+
+            $('#filter-sort').on('change', function () {
                 dt.ajax.reload();
             });
 

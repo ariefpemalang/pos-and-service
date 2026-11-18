@@ -22,6 +22,16 @@
             @endcan
         </div>
         <div class="data-panel-body">
+            <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+                <label class="form-label small fw-semibold text-muted mb-0 text-nowrap" for="filter-sort">
+                    <i class="bi bi-sort-down me-1"></i> Urutkan Berdasarkan:
+                </label>
+                <select id="filter-sort" name="sort" class="form-select form-select-sm form-control-clean" style="width: auto; min-width: 190px;">
+                    <option value="nama_asc" @selected(($sort ?? request('sort', 'nama_asc')) === 'nama_asc')>Nama A-Z</option>
+                    <option value="harga_asc" @selected(($sort ?? request('sort')) === 'harga_asc')>Harga Termurah</option>
+                    <option value="harga_desc" @selected(($sort ?? request('sort')) === 'harga_desc')>Harga Termahal</option>
+                </select>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle" id="data-table" width="100%">
                     <thead>
@@ -107,11 +117,16 @@
 
 @push('js')
     <script>
-        $('#data-table').DataTable({
+        const wsTable = $('#data-table').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '{{ route('workshop-services.index') }}',
-            order: [[5, 'desc']],
+            ajax: {
+                url: '{{ route('workshop-services.index') }}',
+                data: function (d) {
+                    d.sort = $('#filter-sort').val();
+                }
+            },
+            order: [],
             columns: [
                 { data: 'DT_RowIndex', orderable: false, searchable: false },
                 { data: 'code', name: 'code' },
@@ -121,6 +136,10 @@
                 { data: 'created_at', name: 'created_at' },
                 { data: 'action', orderable: false, searchable: false, className: 'text-end' },
             ],
+        });
+
+        $('#filter-sort').on('change', function () {
+            wsTable.ajax.reload();
         });
 
         AthaModalCrud.init({
