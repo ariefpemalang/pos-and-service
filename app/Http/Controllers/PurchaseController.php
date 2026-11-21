@@ -188,14 +188,22 @@ class PurchaseController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_id' => ['required', 'exists:items,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'payment_method' => ['required', 'in:cash,transfer'],
             'bank_account_id' => ['nullable', 'required_if:payment_method,transfer', 'exists:bank_accounts,id'],
         ];
 
+        $messages = [
+            'supplier_mode.required' => 'Supplier wajib dipilih.',
+            'supplier_mode.in' => 'Supplier wajib dipilih.',
+            'supplier_id.required_if' => 'Supplier wajib dipilih.',
+            'new_supplier.name.required_if' => 'Nama supplier baru wajib diisi.',
+        ];
+
         if (! $forUpdate) {
             $rules = array_merge($rules, [
-                'supplier_mode' => ['nullable', 'in:none,existing,new'],
-                'supplier_id' => ['nullable', 'required_if:supplier_mode,existing', 'exists:suppliers,id'],
+                'supplier_mode' => ['required', 'in:existing,new'],
+                'supplier_id' => ['required_if:supplier_mode,existing', 'exists:suppliers,id'],
                 'new_supplier' => ['nullable', 'array'],
                 'new_supplier.name' => ['required_if:supplier_mode,new', 'string', 'max:255'],
                 'new_supplier.phone' => ['nullable', 'string', 'max:30'],
@@ -204,7 +212,7 @@ class PurchaseController extends Controller
             ]);
         }
 
-        return $request->validate($rules);
+        return $request->validate($rules, $messages);
     }
 
     private function paymentBadge(Purchase $p): string

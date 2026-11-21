@@ -88,10 +88,10 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Barang</th>
-                                        <th class="text-center">Qty</th>
-                                        <th class="text-end">Harga Beli</th>
+                                        <th class="text-center" style="width: 100px;">Qty</th>
+                                        <th class="text-end" style="width: 150px;">Harga Beli</th>
                                         <th class="text-end">Subtotal</th>
-                                        <th></th>
+                                        <th style="width: 50px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="items-cart-body"></tbody>

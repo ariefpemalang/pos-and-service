@@ -63,10 +63,10 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Barang</th>
-                                        <th class="text-center">Qty</th>
-                                        <th class="text-end">Harga Beli</th>
+                                        <th class="text-center" style="width: 100px;">Qty</th>
+                                        <th class="text-end" style="width: 150px;">Harga Beli</th>
                                         <th class="text-end">Subtotal</th>
-                                        <th></th>
+                                        <th style="width: 50px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="items-cart-body"></tbody>
@@ -84,9 +84,9 @@
                     </div>
                     <div class="data-panel-body">
                         <div class="mb-3">
-                            <label class="form-label" for="supplier_id">Supplier</label>
-                            <select id="supplier_id" class="form-control-clean atha-searchable-select">
-                                <option value="">-- Opsional --</option>
+                            <label class="form-label" for="supplier_id">Supplier <span class="text-danger">*</span></label>
+                            <select id="supplier_id" class="form-control-clean atha-searchable-select" required>
+                                <option value="">-- Pilih Supplier --</option>
                                 <optgroup label="Supplier terdaftar">
                                     @foreach ($suppliers as $supplier)
                                         <option value="{{ $supplier->id }}">
@@ -130,7 +130,7 @@
 
                         <div class="alert alert-light border py-2 px-3 small mb-3">
                             <i class="bi bi-info-circle me-1"></i>
-                            Harga beli diambil dari <strong>master barang</strong>. Setelah simpan:
+                            Harga beli default diambil dari <strong>master barang</strong> (bisa diedit sesuai harga beli riil). Setelah simpan:
                             <ul class="mb-0 ps-3 mt-1">
                                 <li>Stok masuk otomatis (lihat Stok Masuk)</li>
                                 <li>Pengeluaran tercatat di Laporan Keuangan</li>

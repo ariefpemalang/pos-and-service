@@ -101,9 +101,11 @@
                             <th>No. Tiket</th>
                             <th>Pelanggan</th>
                             <th>Perangkat</th>
+                            <th>Keluhan</th>
                             <th>Status</th>
                             <th>Teknisi</th>
                             <th>Masuk</th>
+                            <th>Keluar</th>
                             <th class="text-end">Aksi</th>
                         </tr>
                     </thead>
@@ -146,9 +148,11 @@
                     { data: 'ticket_no', name: 'ticket_no' },
                     { data: 'customer_name', name: 'customer.name', orderable: false },
                     { data: 'device', orderable: false, searchable: false },
+                    { data: 'complaint', name: 'complaint', orderable: false },
                     { data: 'status_label', name: 'status', orderable: false, searchable: false },
                     { data: 'technician_name', name: 'technician.name', orderable: false },
                     { data: 'created_at', name: 'created_at' },
+                    { data: 'completed_at', name: 'completed_at', orderable: false },
                     { data: 'action', orderable: false, searchable: false, className: 'text-end' },
                 ],
             });
@@ -161,6 +165,11 @@
                 });
             }
 
+            function updateKeluarColumn(status) {
+                const isCompleted = (status === 'completed');
+                table.column(8).visible(isCompleted);
+            }
+
             function setActiveChip(status) {
                 $('.ticket-chip').removeClass('is-active').attr('aria-pressed', 'false');
                 const $chip = $('.ticket-chip[data-status="' + status + '"]');
@@ -169,7 +178,10 @@
                 } else {
                     $('.ticket-chip').first().addClass('is-active').attr('aria-pressed', 'true');
                 }
+                updateKeluarColumn(status);
             }
+
+            updateKeluarColumn($('.ticket-chip.is-active').data('status') || '{{ $filters['status'] }}');
 
             $('.ticket-chip').on('click', function () {
                 setActiveChip($(this).data('status') || '');

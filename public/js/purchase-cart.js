@@ -56,11 +56,18 @@
                             <tr>
                                 <td><div class="fw-medium">${line.code}</div><div class="text-muted small">${line.name}</div></td>
                                 <td class="text-center" style="width:90px">
-                                    <input type="number" class="form-control form-control-clean cart-qty-input"
+                                    <input type="number" class="form-control form-control-clean cart-qty-input text-center"
                                         data-index="${index}"
                                         value="${line.quantity}" min="1" step="1">
                                 </td>
-                                <td class="text-end">${formatRp(line.unit_price)}</td>
+                                <td class="text-end" style="width:150px">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">Rp</span>
+                                        <input type="number" class="form-control form-control-clean cart-price-input text-end"
+                                            data-index="${index}"
+                                            value="${line.unit_price}" min="0" step="any">
+                                    </div>
+                                </td>
                                 <td class="text-end fw-medium cart-subtotal">${formatRp(line.subtotal)}</td>
                                 <td class="text-end">
                                     <button type="button" class="btn btn-sm btn-outline-danger btn-remove-item" data-index="${index}">
@@ -213,12 +220,43 @@
                 return true;
             }
 
+            function handlePriceInput($input, showError) {
+                const index = parseInt($input.data('index'), 10);
+                const line = cart[index];
+                if (!line) {
+                    return false;
+                }
+
+                const price = parseFloat($input.val());
+                if (isNaN(price) || price < 0) {
+                    if (showError) {
+                        $input.val(line.unit_price);
+                        Swal.fire({ icon: 'warning', title: 'Harga beli harus minimal 0.' });
+                    }
+                    return false;
+                }
+
+                line.unit_price = price;
+                recalcLine(line);
+                $input.closest('tr').find('.cart-subtotal').text(formatRp(line.subtotal));
+                updateSummary();
+                return true;
+            }
+
             $itemsBody.on('input', '.cart-qty-input', function () {
                 handleQtyInput($(this), false);
             });
 
             $itemsBody.on('blur', '.cart-qty-input', function () {
                 handleQtyInput($(this), true);
+            });
+
+            $itemsBody.on('input', '.cart-price-input', function () {
+                handlePriceInput($(this), false);
+            });
+
+            $itemsBody.on('blur', '.cart-price-input', function () {
+                handlePriceInput($(this), true);
             });
 
             $('#discount').on('change input', updateSummary);
@@ -239,6 +277,11 @@
                 }
 
                 const supplierMode = getSupplierMode();
+                if (supplierMode === 'none') {
+                    Swal.fire({ icon: 'warning', title: 'Supplier wajib dipilih.' });
+                    return;
+                }
+
                 if (supplierMode === 'new' && !$('#new_supplier_name').val().trim()) {
                     Swal.fire({ icon: 'warning', title: 'Nama supplier baru wajib diisi.' });
                     return;
@@ -254,7 +297,11 @@
                     payment_method: $('#payment_method').val(),
                     bank_account_id: $('#bank_account_id').val() || null,
                     items: cart.map(function (l) {
-                        return { item_id: l.item_id, quantity: l.quantity };
+                        return {
+                            item_id: l.item_id,
+                            quantity: l.quantity,
+                            unit_price: l.unit_price,
+                        };
                     }),
                 };
 

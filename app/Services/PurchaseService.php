@@ -268,7 +268,21 @@ class PurchaseService
             if ($itemId <= 0 || $qty <= 0) {
                 continue;
             }
-            $merged[$itemId] = ($merged[$itemId] ?? 0) + $qty;
+            $customPrice = isset($line['unit_price']) && is_numeric($line['unit_price'])
+                ? max(0, (float) $line['unit_price'])
+                : null;
+
+            if (! isset($merged[$itemId])) {
+                $merged[$itemId] = [
+                    'qty' => $qty,
+                    'unit_price' => $customPrice,
+                ];
+            } else {
+                $merged[$itemId]['qty'] += $qty;
+                if ($customPrice !== null) {
+                    $merged[$itemId]['unit_price'] = $customPrice;
+                }
+            }
         }
 
         if (empty($merged)) {
@@ -288,7 +302,7 @@ class PurchaseService
         $resolved = collect();
 
         foreach ($itemIds as $itemId) {
-            $qty = $merged[$itemId];
+            $qty = $merged[$itemId]['qty'];
             $item = $items->get($itemId);
 
             if (! $item) {
@@ -306,7 +320,13 @@ class PurchaseService
                 );
             }
 
-            $unitPrice = (float) $item->purchase_price;
+            $unitPrice = $merged[$itemId]['unit_price'] !== null
+                ? (float) $merged[$itemId]['unit_price']
+                : (float) $item->purchase_price;
+
+            if ($merged[$itemId]['unit_price'] !== null && $unitPrice > 0 && (float) $item->purchase_price !== $unitPrice) {
+                $item->update(['purchase_price' => $unitPrice]);
+            }
 
             $resolved->push([
                 'item_id' => $item->id,
