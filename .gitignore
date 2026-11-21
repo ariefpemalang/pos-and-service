@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/deploy-to-proxmox.ps1
+/deploy.bat
+
