@@ -26,6 +26,24 @@
             </div>
         </div>
         <div class="data-panel-body pt-3">
+            @php
+                $today = now()->toDateString();
+                $startMonth = now()->startOfMonth()->toDateString();
+                $endMonth = now()->endOfMonth()->toDateString();
+                $isToday = ($from === $today && $to === $today);
+                $isMonth = ($from === $startMonth && ($to === $endMonth || $to === $today));
+            @endphp
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <span class="small fw-semibold text-muted"><i class="bi bi-lightning-charge me-1"></i>Filter Cepat:</span>
+                <a href="{{ route('financial-reports.index', ['from' => $today, 'to' => $today]) }}" 
+                   class="btn btn-sm {{ $isToday ? 'btn-primary' : 'btn-outline-secondary' }}">
+                    <i class="bi bi-calendar-event me-1"></i> Hari Ini
+                </a>
+                <a href="{{ route('financial-reports.index', ['from' => $startMonth, 'to' => $endMonth]) }}" 
+                   class="btn btn-sm {{ $isMonth ? 'btn-primary' : 'btn-outline-secondary' }}">
+                    <i class="bi bi-calendar-month me-1"></i> Bulan Ini
+                </a>
+            </div>
             <form method="get" class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label small fw-semibold mb-1">Dari Tanggal</label>
