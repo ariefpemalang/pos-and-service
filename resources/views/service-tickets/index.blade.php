@@ -152,7 +152,7 @@
                     { data: 'status_label', name: 'status', orderable: false, searchable: false },
                     { data: 'technician_name', name: 'technician.name', orderable: false },
                     { data: 'created_at', name: 'created_at' },
-                    { data: 'completed_at', name: 'completed_at', orderable: false },
+                    { data: 'completed_at', name: 'completed_at', orderable: false, visible: ('{{ $filters['status'] }}' === 'completed') },
                     { data: 'action', orderable: false, searchable: false, className: 'text-end' },
                 ],
             });
@@ -167,7 +167,7 @@
 
             function updateKeluarColumn(status) {
                 const isCompleted = (status === 'completed');
-                table.column(8).visible(isCompleted);
+                table.column(8).visible(isCompleted, false);
             }
 
             function setActiveChip(status) {
@@ -180,8 +180,6 @@
                 }
                 updateKeluarColumn(status);
             }
-
-            updateKeluarColumn($('.ticket-chip.is-active').data('status') || '{{ $filters['status'] }}');
 
             $('.ticket-chip').on('click', function () {
                 setActiveChip($(this).data('status') || '');

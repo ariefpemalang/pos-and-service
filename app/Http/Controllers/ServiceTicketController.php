@@ -45,16 +45,6 @@ class ServiceTicketController extends Controller
             };
 
             return DataTables::of($query)
-                ->order(function ($q) use ($sort) {
-                    match ($sort) {
-                        'tanggal_asc' => $q->orderBy('service_tickets.created_at', 'asc'),
-                        'status' => $q->orderBy('service_tickets.status', 'asc'),
-                        'pelanggan_asc' => $q->leftJoin('customers', 'customers.id', '=', 'service_tickets.customer_id')
-                            ->select('service_tickets.*')
-                            ->orderBy('customers.name', 'asc'),
-                        default => $q->orderBy('service_tickets.created_at', 'desc'),
-                    };
-                })
                 ->addIndexColumn()
                 ->addColumn('customer_name', fn (ServiceTicket $t) => $t->customer?->name ?? '-')
                 ->addColumn('device', fn (ServiceTicket $t) => $t->deviceSummary())
