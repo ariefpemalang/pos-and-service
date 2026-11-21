@@ -93,14 +93,6 @@ class ManualIncomeController extends Controller
         };
 
         return DataTables::of($query)
-            ->order(function ($q) use ($sort) {
-                match ($sort) {
-                    'tanggal_asc' => $q->orderBy('occurred_at', 'asc'),
-                    'nominal_desc' => $q->orderBy('amount', 'desc'),
-                    'nominal_asc' => $q->orderBy('amount', 'asc'),
-                    default => $q->orderBy('occurred_at', 'desc'),
-                };
-            })
             ->addIndexColumn()
             ->addColumn('amount_fmt', fn (ManualCashEntry $e) => 'Rp '.number_format((float) $e->amount, 0, ',', '.'))
             ->addColumn('occurred_at_fmt', fn (ManualCashEntry $e) => $e->occurred_at?->format('d/m/Y H:i'))

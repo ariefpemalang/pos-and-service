@@ -121,7 +121,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: '{{ route('workshop-services.index') }}',
+                url: '{{ route('workshop-services.index', [], false) }}',
                 data: function (d) {
                     d.sort = $('#filter-sort').val();
                 }

@@ -100,7 +100,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: '{{ route('transactions.index') }}',
+                url: '{{ route('transactions.index', [], false) }}',
                 data: function (d) {
                     d.from = $('#filter-from').val();
                     d.to = $('#filter-to').val();

@@ -45,15 +45,6 @@ class ItemController extends Controller
             };
 
             return DataTables::of($query)
-                ->order(function ($q) use ($sort) {
-                    match ($sort) {
-                        'harga_asc' => $q->orderBy('selling_price', 'asc'),
-                        'harga_desc' => $q->orderBy('selling_price', 'desc'),
-                        'stok_desc' => $q->orderBy('stock', 'desc'),
-                        'stok_asc' => $q->orderBy('stock', 'asc'),
-                        default => $q->orderBy('name', 'asc'),
-                    };
-                })
                 ->addIndexColumn()
                 ->addColumn('photo_thumb', function (Item $i) {
                     if ($i->photo_url) {

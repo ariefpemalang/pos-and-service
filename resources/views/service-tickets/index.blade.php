@@ -127,7 +127,7 @@
                 serverSide: true,
                 autoWidth: false,
                 ajax: {
-                    url: '{{ route('service-tickets.index') }}',
+                    url: '{{ route('service-tickets.index', [], false) }}',
                     data: function (d) {
                         d.status = $('.ticket-chip.is-active').data('status') || '';
                         d.technician_id = $('#filter-technician').val();

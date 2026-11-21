@@ -38,14 +38,6 @@ class CustomerController extends Controller
             };
 
             return DataTables::of($query)
-                ->order(function ($q) use ($sort) {
-                    match ($sort) {
-                        'nama_asc' => $q->orderBy('name', 'asc'),
-                        'nama_desc' => $q->orderBy('name', 'desc'),
-                        'tanggal_asc' => $q->orderBy('created_at', 'asc'),
-                        default => $q->orderBy('created_at', 'desc'),
-                    };
-                })
                 ->addIndexColumn()
                 ->addColumn('phone', fn (Customer $c) => $c->phone ?: '-')
                 ->addColumn('created_at', fn (Customer $c) => $c->created_at?->format('d/m/Y H:i'))

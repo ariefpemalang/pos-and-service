@@ -93,7 +93,7 @@
     <script>
         AthaManualCashEntry.init({
             table: '#data-table',
-            ajaxUrl: '{{ route('manual-incomes.index') }}',
+            ajaxUrl: '{{ route('manual-incomes.index', [], false) }}',
             storeUrl: '{{ route('manual-incomes.store') }}',
             showUrlTemplate: '{{ route('manual-incomes.show', '__ID__') }}',
             cancelUrlTemplate: '{{ route('manual-incomes.destroy', '__ID__') }}',

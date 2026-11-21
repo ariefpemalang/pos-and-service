@@ -56,14 +56,6 @@ class TransactionController extends Controller
             }
 
             return DataTables::of($query)
-                ->order(function ($q) use ($sort) {
-                    match ($sort) {
-                        'tanggal_asc' => $q->orderBy('created_at', 'asc'),
-                        'total_desc' => $q->orderBy('total', 'desc'),
-                        'total_asc' => $q->orderBy('total', 'asc'),
-                        default => $q->orderBy('created_at', 'desc'),
-                    };
-                })
                 ->addIndexColumn()
                 ->addColumn('type_label', fn (Transaction $t) => match (true) {
                     $t->isDownPayment() && $t->isRefunded() => '<span class="badge bg-warning-subtle text-warning">UMK dikembalikan</span>',

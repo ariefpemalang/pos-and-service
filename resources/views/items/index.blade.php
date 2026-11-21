@@ -251,7 +251,7 @@
     <script>
         const rupiah = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
 
-        const itemsIndexUrl = @json(route('items.index'));
+        const itemsIndexUrl = @json(route('items.index', [], false));
         const itemsTable = $('#data-table').DataTable({
             processing: true,
             serverSide: true,

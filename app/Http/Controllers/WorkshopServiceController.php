@@ -37,13 +37,6 @@ class WorkshopServiceController extends Controller
             };
 
             return DataTables::of($query)
-                ->order(function ($q) use ($sort) {
-                    match ($sort) {
-                        'harga_asc' => $q->orderBy('price', 'asc'),
-                        'harga_desc' => $q->orderBy('price', 'desc'),
-                        default => $q->orderBy('name', 'asc'),
-                    };
-                })
                 ->addIndexColumn()
                 ->addColumn('price_fmt', fn (WorkshopService $s) => 'Rp '.number_format((float) $s->price, 0, ',', '.'))
                 ->addColumn('status', fn (WorkshopService $s) => $s->is_active

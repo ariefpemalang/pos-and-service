@@ -124,7 +124,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: '{{ route('customers.index') }}',
+                url: '{{ route('customers.index', [], false) }}',
                 data: function (d) {
                     d.sort = $('#filter-sort').val();
                 }

@@ -37,13 +37,6 @@ class SupplierController extends Controller
             };
 
             return DataTables::of($query)
-                ->order(function ($q) use ($sort) {
-                    match ($sort) {
-                        'nama_asc' => $q->orderBy('name', 'asc'),
-                        'nama_desc' => $q->orderBy('name', 'desc'),
-                        default => $q->orderBy('created_at', 'desc'),
-                    };
-                })
                 ->addIndexColumn()
                 ->addColumn('phone', fn (Supplier $s) => $s->phone ?: '-')
                 ->addColumn('created_at', fn (Supplier $s) => $s->created_at?->format('d/m/Y H:i'))
