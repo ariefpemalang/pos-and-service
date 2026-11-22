@@ -268,8 +268,9 @@ class PurchaseService
             if ($itemId <= 0 || $qty <= 0) {
                 continue;
             }
-            $customPrice = isset($line['unit_price']) && is_numeric($line['unit_price'])
-                ? max(0, (float) $line['unit_price'])
+            $rawPrice = $line['unit_price'] ?? $line['cost_price'] ?? null;
+            $customPrice = $rawPrice !== null && is_numeric($rawPrice)
+                ? max(0, (float) $rawPrice)
                 : null;
 
             if (! isset($merged[$itemId])) {

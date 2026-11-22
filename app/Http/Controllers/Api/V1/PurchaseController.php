@@ -192,6 +192,8 @@ class PurchaseController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.item_id' => ['required', 'exists:items,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items.*.unit_price' => ['nullable', 'numeric', 'min:0'],
+            'items.*.cost_price' => ['nullable', 'numeric', 'min:0'],
             'payment_method' => ['required', 'in:'.implode(',', $methods)],
             'bank_account_id' => ['nullable', 'required_if:payment_method,transfer', 'exists:bank_accounts,id'],
         ];
