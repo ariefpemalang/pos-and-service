@@ -62,7 +62,7 @@ class ServiceTicketController extends Controller
                 ->orderColumn('created_at', 'service_tickets.created_at $1')
                 ->addColumn('customer_name', fn (ServiceTicket $t) => $t->customer?->name ?? '-')
                 ->addColumn('device', fn (ServiceTicket $t) => $t->deviceSummary())
-                ->addColumn('complaint', fn (ServiceTicket $t) => $t->complaint ? e($t->complaint) : '-')
+                ->addColumn('complaint', fn (ServiceTicket $t) => $t->complaint ? htmlspecialchars_decode($t->complaint) : '-')
                 ->addColumn('status_label', fn (ServiceTicket $t) => '<span class="badge text-bg-'.$t->statusColor().'">'.$t->statusLabel().'</span>')
                 ->addColumn('technician_name', fn (ServiceTicket $t) => $t->technician?->name ?? '-')
                 ->addColumn('created_at', fn (ServiceTicket $t) => $t->created_at?->format('d/m/Y H:i'))
