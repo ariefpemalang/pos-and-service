@@ -35,17 +35,31 @@ class ServiceTicketController extends Controller
 
             $this->applyIndexFilters($query);
 
-            match ($sort) {
-                'tanggal_asc' => $query->orderBy('service_tickets.created_at', 'asc'),
-                'status' => $query->orderBy('service_tickets.status', 'asc'),
-                'pelanggan_asc' => $query->leftJoin('customers', 'customers.id', '=', 'service_tickets.customer_id')
-                    ->select('service_tickets.*')
-                    ->orderBy('customers.name', 'asc'),
-                default => $query->orderBy('service_tickets.created_at', 'desc'),
-            };
+            $hasDtOrder = request()->filled('order.0.column');
+
+            if (! $hasDtOrder) {
+                $status = request()->string('status')->toString();
+                if ($status === 'completed' && in_array($sort, ['tanggal_desc', 'tanggal_asc'], true)) {
+                    $dir = ($sort === 'tanggal_asc') ? 'asc' : 'desc';
+                    $query->orderByRaw("COALESCE(service_tickets.completed_at, service_tickets.updated_at, service_tickets.created_at) {$dir}");
+                } else {
+                    match ($sort) {
+                        'tanggal_asc' => $query->orderBy('service_tickets.created_at', 'asc'),
+                        'status' => $query->orderBy('service_tickets.status', 'asc'),
+                        'pelanggan_asc' => $query->leftJoin('customers', 'customers.id', '=', 'service_tickets.customer_id')
+                            ->select('service_tickets.*')
+                            ->orderBy('customers.name', 'asc'),
+                        default => $query->orderBy('service_tickets.created_at', 'desc'),
+                    };
+                }
+            }
 
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->orderColumn('completed_at', function ($q, $order) {
+                    $q->orderByRaw("COALESCE(service_tickets.completed_at, service_tickets.updated_at, service_tickets.created_at) {$order}");
+                })
+                ->orderColumn('created_at', 'service_tickets.created_at $1')
                 ->addColumn('customer_name', fn (ServiceTicket $t) => $t->customer?->name ?? '-')
                 ->addColumn('device', fn (ServiceTicket $t) => $t->deviceSummary())
                 ->addColumn('complaint', fn (ServiceTicket $t) => $t->complaint ? e($t->complaint) : '-')

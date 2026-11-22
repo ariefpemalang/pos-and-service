@@ -142,7 +142,7 @@
                         return json.data;
                     },
                 },
-                order: [],
+                order: ('{{ $filters['status'] }}' === 'completed') ? [[8, 'desc']] : [[7, 'desc']],
                 columns: [
                     { data: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'ticket_no', name: 'ticket_no' },
@@ -152,7 +152,7 @@
                     { data: 'status_label', name: 'status', orderable: false, searchable: false },
                     { data: 'technician_name', name: 'technician.name', orderable: false },
                     { data: 'created_at', name: 'created_at' },
-                    { data: 'completed_at', name: 'completed_at', orderable: false, visible: ('{{ $filters['status'] }}' === 'completed') },
+                    { data: 'completed_at', name: 'completed_at', orderable: true, visible: ('{{ $filters['status'] }}' === 'completed') },
                     { data: 'action', orderable: false, searchable: false, className: 'text-end' },
                 ],
             });
@@ -168,6 +168,11 @@
             function updateKeluarColumn(status) {
                 const isCompleted = (status === 'completed');
                 table.column(8).visible(isCompleted, false);
+                if (isCompleted) {
+                    table.order([[8, 'desc']]);
+                } else {
+                    table.order([[7, 'desc']]);
+                }
             }
 
             function setActiveChip(status) {
@@ -186,7 +191,22 @@
                 table.ajax.reload();
             });
 
-            $('#filter-technician, #filter-device, #filter-warranty, #filter-sort').on('change', function () {
+            $('#filter-technician, #filter-device, #filter-warranty').on('change', function () {
+                table.ajax.reload();
+            });
+
+            $('#filter-sort').on('change', function () {
+                const val = $(this).val();
+                const isCompleted = ($('.ticket-chip.is-active').data('status') === 'completed');
+                const targetCol = isCompleted ? 8 : 7;
+
+                if (val === 'tanggal_desc') {
+                    table.order([[targetCol, 'desc']]);
+                } else if (val === 'tanggal_asc') {
+                    table.order([[targetCol, 'asc']]);
+                } else {
+                    table.order([]);
+                }
                 table.ajax.reload();
             });
 
@@ -194,6 +214,7 @@
                 setActiveChip('received');
                 $('#filter-technician, #filter-device, #filter-warranty').val('');
                 $('#filter-sort').val('tanggal_desc');
+                table.order([[7, 'desc']]);
                 table.ajax.reload();
             });
         })(jQuery);
