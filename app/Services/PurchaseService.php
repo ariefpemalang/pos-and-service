@@ -325,8 +325,11 @@ class PurchaseService
                 ? (float) $merged[$itemId]['unit_price']
                 : (float) $item->purchase_price;
 
-            if ($merged[$itemId]['unit_price'] !== null && $unitPrice > 0 && (float) $item->purchase_price !== $unitPrice) {
-                $item->update(['purchase_price' => $unitPrice]);
+            if ($merged[$itemId]['unit_price'] !== null && $unitPrice > 0) {
+                $item->update([
+                    'purchase_price' => $unitPrice,
+                    'selling_price' => $unitPrice,
+                ]);
             }
 
             $resolved->push([
