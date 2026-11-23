@@ -151,9 +151,9 @@ return [
                             'permission' => 'asset report view',
                         ],
                         [
-                            'label' => 'Keuangan',
-                            'route' => 'manual-incomes.index',
-                            'permission' => 'manual income view',
+                            'label' => 'Pengeluaran Manual',
+                            'route' => 'manual-expenses.index',
+                            'permission' => 'manual expense view',
                         ],
                     ],
                 ],
