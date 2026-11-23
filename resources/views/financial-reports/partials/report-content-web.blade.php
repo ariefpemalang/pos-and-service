@@ -30,18 +30,7 @@
             </div>
         </div>
     </div>
-    @can('financial report commission view')
-    <div class="col-sm-6 col-xl">
-        <div class="dash-kpi dash-kpi-info">
-            <div class="dash-kpi-icon"><i class="bi bi-person-gear"></i></div>
-            <div class="dash-kpi-body">
-                <div class="dash-kpi-label">Komisi Teknisi</div>
-                <div class="dash-kpi-value text-info">{{ $rp($sales['technician_commission']) }}</div>
-                <div class="dash-kpi-meta">Sesuai % komisi masing-masing teknisi</div>
-            </div>
-        </div>
-    </div>
-    @endcan
+    {{-- Sembunyikan Komisi Teknisi sesuai permintaan --}}
     <div class="col-sm-6 col-xl">
         <div class="dash-kpi dash-kpi-primary">
             <div class="dash-kpi-icon"><i class="bi bi-wallet2"></i></div>

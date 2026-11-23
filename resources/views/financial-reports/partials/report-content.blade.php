@@ -21,13 +21,7 @@
                 <div class="fr-stat-value fr-text-warning">{{ $rp($purchases['expense'] + $manualExpense['amount']) }}</div>
                 <div class="fr-stat-meta">{{ $purchases['purchase_count'] }} pembelian + {{ $manualExpense['entry_count'] }} manual</div>
             </td>
-            @can('financial report commission view')
-            <td class="fr-stat-card">
-                <div class="fr-stat-label">Komisi Teknisi</div>
-                <div class="fr-stat-value fr-text-info">{{ $rp($sales['technician_commission']) }}</div>
-                <div class="fr-stat-meta">Sesuai % komisi masing-masing teknisi</div>
-            </td>
-            @endcan
+            {{-- Sembunyikan Komisi Teknisi --}}
             <td class="fr-stat-card">
                 <div class="fr-stat-label">Sisa Kas Bulan Ini</div>
                 <div class="fr-stat-value" style="color: #6366f1;">{{ $rp($report['this_month']['cash_flow_estimate'] ?? 0) }}</div>
