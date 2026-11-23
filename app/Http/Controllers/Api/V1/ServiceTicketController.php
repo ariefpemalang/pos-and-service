@@ -39,8 +39,19 @@ class ServiceTicketController extends Controller
         $search = trim((string) $request->query('search', ''));
         $status = $request->string('status')->toString();
 
-        $query = ServiceTicket::query()
-            ->with(['customer:id,code,name,phone', 'technician:id,name,commission_percent,photo', 'paidTransaction', 'downPaymentTransaction']);
+        $relations = [
+            'customer:id,code,name,phone',
+            'technician:id,name,commission_percent,photo',
+            'paidTransaction',
+            'downPaymentTransaction',
+        ];
+
+        if ($request->boolean('include_lines') || $status === 'completed') {
+            $relations[] = 'itemLines';
+            $relations[] = 'serviceLines';
+        }
+
+        $query = ServiceTicket::query()->with($relations);
 
         if ($status === 'completed') {
             $query->orderByRaw('COALESCE(completed_at, updated_at) DESC');

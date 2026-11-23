@@ -124,10 +124,10 @@ class ServiceTicketResource extends JsonResource
                 $this->relationLoaded('serviceLines'),
                 fn () => collect($this->workServicesPayload())->values(),
             ),
-            'work_total' => $this->when(
-                $this->relationLoaded('itemLines') && $this->relationLoaded('serviceLines'),
-                fn () => $this->workTotal(),
-            ),
+            'work_total' => $this->relationLoaded('itemLines') && $this->relationLoaded('serviceLines')
+                ? (float) $this->workTotal()
+                : (float) ($paid?->total ?? 0),
+            'paid_total' => $paid ? (float) $paid->total : null,
             'ready_at' => $this->ready_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
