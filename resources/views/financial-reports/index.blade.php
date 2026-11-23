@@ -28,9 +28,11 @@
         <div class="data-panel-body pt-3">
             @php
                 $today = now()->toDateString();
+                $yesterday = now()->subDay()->toDateString();
                 $startMonth = now()->startOfMonth()->toDateString();
                 $endMonth = now()->endOfMonth()->toDateString();
                 $isToday = ($from === $today && $to === $today);
+                $isYesterday = ($from === $yesterday && $to === $yesterday);
                 $isMonth = ($from === $startMonth && ($to === $endMonth || $to === $today));
             @endphp
             <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -38,6 +40,10 @@
                 <a href="{{ route('financial-reports.index', ['from' => $today, 'to' => $today]) }}" 
                    class="btn btn-sm {{ $isToday ? 'btn-primary' : 'btn-outline-secondary' }}">
                     <i class="bi bi-calendar-event me-1"></i> Hari Ini
+                </a>
+                <a href="{{ route('financial-reports.index', ['from' => $yesterday, 'to' => $yesterday]) }}" 
+                   class="btn btn-sm {{ $isYesterday ? 'btn-primary' : 'btn-outline-secondary' }}">
+                    <i class="bi bi-calendar-event me-1"></i> Kemaren
                 </a>
                 <a href="{{ route('financial-reports.index', ['from' => $startMonth, 'to' => $endMonth]) }}" 
                    class="btn btn-sm {{ $isMonth ? 'btn-primary' : 'btn-outline-secondary' }}">

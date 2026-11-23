@@ -35,12 +35,18 @@ class ServiceTicketController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $perPage = min(max((int) $request->integer('per_page', 15), 1), 50);
+        $perPage = min(max((int) $request->integer('per_page', 15), 1), 200);
         $search = trim((string) $request->query('search', ''));
+        $status = $request->string('status')->toString();
 
         $query = ServiceTicket::query()
-            ->with(['customer:id,code,name,phone', 'technician:id,name,commission_percent,photo', 'paidTransaction', 'downPaymentTransaction'])
-            ->latest('created_at');
+            ->with(['customer:id,code,name,phone', 'technician:id,name,commission_percent,photo', 'paidTransaction', 'downPaymentTransaction']);
+
+        if ($status === 'completed') {
+            $query->orderByRaw('COALESCE(completed_at, updated_at) DESC');
+        } else {
+            $query->latest('created_at');
+        }
 
         $this->applyIndexFilters($query, $request);
 
@@ -494,6 +500,15 @@ class ServiceTicketController extends Controller
                 ->whereNotNull('completed_at')
                 ->where('status', '!=', 'cancelled')
                 ->whereRaw('DATE_ADD(completed_at, INTERVAL warranty_days DAY) < ?', [now()]);
+        }
+
+        if ($request->filled('date_from')) {
+            $col = $status === 'completed' ? 'completed_at' : 'created_at';
+            $query->whereDate($col, '>=', $request->date('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $col = $status === 'completed' ? 'completed_at' : 'created_at';
+            $query->whereDate($col, '<=', $request->date('date_to'));
         }
     }
 
