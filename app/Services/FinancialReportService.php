@@ -127,6 +127,59 @@ class FinancialReportService
         'inflows' => $this->mergePaymentBreakdowns($transactionInflows, $manualInflows),
         'outflows' => $this->mergePaymentBreakdowns($purchaseOutflows, $manualOutflows),
       ],
+      'this_month' => $this->buildCurrentMonthCashFlow(),
+    ];
+  }
+
+  /**
+   * @return array{month_label: string, inflow: float, outflow: float, cash_flow_estimate: float, sales_revenue: float, manual_income: float, purchases_expense: float, manual_expense: float, technician_commission: float}
+   */
+  public function buildCurrentMonthCashFlow(): array
+  {
+    $mStart = now()->startOfMonth()->startOfDay();
+    $mEnd = now()->endOfMonth()->endOfDay();
+
+    $salesRevenue = (float) Transaction::query()
+      ->where('status', 'completed')
+      ->whereBetween('created_at', [$mStart, $mEnd])
+      ->sum('total');
+
+    $technicianCommission = (float) Transaction::query()
+      ->where('status', 'completed')
+      ->whereBetween('created_at', [$mStart, $mEnd])
+      ->sum('technician_commission');
+
+    $manualIncome = (float) ManualCashEntry::query()
+      ->where('type', 'income')
+      ->completed()
+      ->whereBetween('occurred_at', [$mStart, $mEnd])
+      ->sum('amount');
+
+    $purchasesExpense = (float) Purchase::query()
+      ->where('status', 'completed')
+      ->whereBetween('created_at', [$mStart, $mEnd])
+      ->sum('total');
+
+    $manualExpense = (float) ManualCashEntry::query()
+      ->where('type', 'expense')
+      ->completed()
+      ->whereBetween('occurred_at', [$mStart, $mEnd])
+      ->sum('amount');
+
+    $inflow = round($salesRevenue + $manualIncome, 2);
+    $outflow = round($purchasesExpense + $manualExpense + $technicianCommission, 2);
+    $cashFlowEstimate = round($inflow - $outflow, 2);
+
+    return [
+      'month_label' => now()->translatedFormat('F Y'),
+      'inflow' => $inflow,
+      'outflow' => $outflow,
+      'cash_flow_estimate' => $cashFlowEstimate,
+      'sales_revenue' => $salesRevenue,
+      'manual_income' => $manualIncome,
+      'purchases_expense' => $purchasesExpense,
+      'manual_expense' => $manualExpense,
+      'technician_commission' => $technicianCommission,
     ];
   }
 

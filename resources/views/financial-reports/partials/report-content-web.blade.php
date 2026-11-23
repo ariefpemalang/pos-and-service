@@ -10,7 +10,7 @@
 
 {{-- KPI ringkasan --}}
 <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-xl">
         <div class="dash-kpi dash-kpi-success">
             <div class="dash-kpi-icon"><i class="bi bi-cash-stack"></i></div>
             <div class="dash-kpi-body">
@@ -20,7 +20,7 @@
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-6 col-xl">
         <div class="dash-kpi dash-kpi-warning">
             <div class="dash-kpi-icon"><i class="bi bi-cart-dash"></i></div>
             <div class="dash-kpi-body">
@@ -30,7 +30,8 @@
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    @can('financial report commission view')
+    <div class="col-sm-6 col-xl">
         <div class="dash-kpi dash-kpi-info">
             <div class="dash-kpi-icon"><i class="bi bi-person-gear"></i></div>
             <div class="dash-kpi-body">
@@ -40,7 +41,20 @@
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    @endcan
+    <div class="col-sm-6 col-xl">
+        <div class="dash-kpi dash-kpi-primary">
+            <div class="dash-kpi-icon"><i class="bi bi-wallet2"></i></div>
+            <div class="dash-kpi-body">
+                <div class="dash-kpi-label">Sisa Kas (Bulan Ini)</div>
+                <div class="dash-kpi-value {{ ($report['this_month']['cash_flow_estimate'] ?? 0) >= 0 ? 'text-primary' : 'text-danger' }}">
+                    {{ $rp($report['this_month']['cash_flow_estimate'] ?? 0) }}
+                </div>
+                <div class="dash-kpi-meta">Estimasi kas berjalan {{ $report['this_month']['month_label'] ?? '' }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl">
         <div class="dash-kpi fr-kpi-owner">
             <div class="dash-kpi-icon"><i class="bi bi-piggy-bank"></i></div>
             <div class="dash-kpi-body">
@@ -107,10 +121,12 @@
             <div class="data-panel-body pt-3">
                 <table class="table table-borderless fr-detail-table mb-0">
                     <tbody>
+                        @can('financial report commission view')
                         <tr>
                             <td>Komisi Teknisi (dari jasa)</td>
                             <td class="text-end">{{ $rp($sales['technician_commission']) }}</td>
                         </tr>
+                        @endcan
                         <tr>
                             <td>Bagian Owner — Jasa</td>
                             <td class="text-end">{{ $rp($sales['owner_service_share']) }}</td>
@@ -208,6 +224,7 @@
     </div>
 </div>
 
+@can('financial report commission view')
 {{-- Komisi per teknisi --}}
 <div class="data-panel mb-4">
     <div class="data-panel-head">
@@ -256,6 +273,7 @@
         </div>
     </div>
 </div>
+@endcan
 
 @php $inflows = $report['payment_sources']['inflows']; @endphp
 <div class="data-panel mb-4">
@@ -380,22 +398,29 @@
     </div>
     <div class="data-panel-body">
         <div class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="fr-cash-tile fr-cash-tile-in">
-                    <div class="fr-cash-tile-label">Total pemasukan</div>
+                    <div class="fr-cash-tile-label">Total Pemasukan (Periode Ini)</div>
                     <div class="fr-cash-tile-value text-success">{{ $rp($totals['inflow']) }}</div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="fr-cash-tile fr-cash-tile-out">
-                    <div class="fr-cash-tile-label">Total pengeluaran + komisi</div>
+                    <div class="fr-cash-tile-label">Total Pengeluaran @can('financial report commission view') + Komisi @endcan (Periode Ini)</div>
                     <div class="fr-cash-tile-value text-danger">− {{ $rp($totals['operating_outflow']) }}</div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="fr-cash-tile fr-cash-tile-net">
-                    <div class="fr-cash-tile-label">Estimasi sisa kas</div>
+                    <div class="fr-cash-tile-label">Estimasi Sisa Kas (Periode Ini)</div>
                     <div class="fr-cash-tile-value">{{ $rp($profit['cash_flow_estimate']) }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="fr-cash-tile" style="border: 1px solid rgba(99, 102, 241, 0.35); background: rgba(99, 102, 241, 0.06); border-radius: 8px; padding: 14px;">
+                    <div class="fr-cash-tile-label fw-semibold text-primary">Sisa Kas Bulan Ini ({{ $report['this_month']['month_label'] ?? '' }})</div>
+                    <div class="fr-cash-tile-value fw-bold text-primary">{{ $rp($report['this_month']['cash_flow_estimate'] ?? 0) }}</div>
+                    <div class="small text-muted mt-1">Masuk: {{ $rp($report['this_month']['inflow'] ?? 0) }} | Keluar: {{ $rp($report['this_month']['outflow'] ?? 0) }}</div>
                 </div>
             </div>
         </div>

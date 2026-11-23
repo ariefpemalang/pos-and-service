@@ -84,7 +84,10 @@ return [
     ],
     [
         'group' => 'Laporan Keuangan',
-        'access' => ['financial report view'],
+        'access' => [
+            'financial report view',
+            'financial report commission view',
+        ],
     ],
     [
         'group' => 'Laporan Servis',

@@ -21,10 +21,17 @@
                 <div class="fr-stat-value fr-text-warning">{{ $rp($purchases['expense'] + $manualExpense['amount']) }}</div>
                 <div class="fr-stat-meta">{{ $purchases['purchase_count'] }} pembelian + {{ $manualExpense['entry_count'] }} manual</div>
             </td>
+            @can('financial report commission view')
             <td class="fr-stat-card">
                 <div class="fr-stat-label">Komisi Teknisi</div>
                 <div class="fr-stat-value fr-text-info">{{ $rp($sales['technician_commission']) }}</div>
                 <div class="fr-stat-meta">Sesuai % komisi masing-masing teknisi</div>
+            </td>
+            @endcan
+            <td class="fr-stat-card">
+                <div class="fr-stat-label">Sisa Kas Bulan Ini</div>
+                <div class="fr-stat-value" style="color: #6366f1;">{{ $rp($report['this_month']['cash_flow_estimate'] ?? 0) }}</div>
+                <div class="fr-stat-meta">{{ $report['this_month']['month_label'] ?? '' }}</div>
             </td>
             <td class="fr-stat-card">
                 <div class="fr-stat-label">Estimasi Laba Owner</div>
@@ -58,7 +65,9 @@
             <div class="fr-panel-body">
                 <table class="fr-table fr-table-simple" width="100%">
                     <tbody>
+                        @can('financial report commission view')
                         <tr><td>Komisi Teknisi (dari jasa)</td><td class="text-end">{{ $rp($sales['technician_commission']) }}</td></tr>
+                        @endcan
                         <tr><td>Bagian Owner — Jasa</td><td class="text-end">{{ $rp($sales['owner_service_share']) }}</td></tr>
                         <tr><td>HPP Barang (harga beli)</td><td class="text-end">{{ $rp($sales['items_cost'] ?? 0) }}</td></tr>
                         <tr><td>Bagian Owner — Barang (margin)</td><td class="text-end">{{ $rp($sales['owner_items_share']) }}</td></tr>
@@ -127,6 +136,7 @@
     </tr>
 </table>
 
+@can('financial report commission view')
 <div class="fr-panel fr-panel-block">
     <div class="fr-panel-head">Komisi per Teknisi</div>
     <div class="fr-panel-body">
@@ -162,6 +172,7 @@
         </table>
     </div>
 </div>
+@endcan
 
 @php $inflows = $report['payment_sources']['inflows']; @endphp
 <div class="fr-panel fr-panel-block">
@@ -262,18 +273,23 @@
         <table class="fr-source-grid" width="100%" cellspacing="0" cellpadding="0">
             <tr>
                 <td class="fr-source-box">
-                    <div class="fr-source-label">Total pemasukan</div>
+                    <div class="fr-source-label">Total pemasukan (Periode)</div>
                     <div class="fr-source-value fr-text-success">{{ $rp($totals['inflow']) }}</div>
                 </td>
-                <td width="8"></td>
+                <td width="6"></td>
                 <td class="fr-source-box">
-                    <div class="fr-source-label">Total pengeluaran + komisi</div>
+                    <div class="fr-source-label">Total pengeluaran (Periode)</div>
                     <div class="fr-source-value fr-text-danger">- {{ $rp($totals['operating_outflow']) }}</div>
                 </td>
-                <td width="8"></td>
+                <td width="6"></td>
+                <td class="fr-source-box">
+                    <div class="fr-source-label">Sisa kas (Periode)</div>
+                    <div class="fr-source-value">{{ $rp($profit['cash_flow_estimate']) }}</div>
+                </td>
+                <td width="6"></td>
                 <td class="fr-source-box fr-source-box-highlight">
-                    <div class="fr-source-label">Estimasi sisa kas</div>
-                    <div class="fr-source-value fw-bold">{{ $rp($profit['cash_flow_estimate']) }}</div>
+                    <div class="fr-source-label">Sisa Kas Bulan Ini</div>
+                    <div class="fr-source-value fw-bold" style="color: #6366f1;">{{ $rp($report['this_month']['cash_flow_estimate'] ?? 0) }}</div>
                 </td>
             </tr>
         </table>
