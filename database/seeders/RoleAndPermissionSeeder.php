@@ -51,13 +51,13 @@ class RoleAndPermissionSeeder extends Seeder
     public function syncPermissionsAndRoles(): void
     {
         foreach (array_unique([...self::permissionNames(), ...PermissionGroups::names()]) as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        $superAdmin = Role::firstOrCreate(['name' => 'Super Admin']);
-        $superAdmin->syncPermissions(Permission::all());
+        $superAdmin = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+        $superAdmin->syncPermissions(Permission::where('guard_name', 'web')->get());
 
-        $kasir = Role::firstOrCreate(['name' => 'Kasir']);
+        $kasir = Role::firstOrCreate(['name' => 'Kasir', 'guard_name' => 'web']);
         $kasir->syncPermissions([
             'dashboard view',
             'customer view', 'customer create', 'customer edit',
@@ -80,7 +80,7 @@ class RoleAndPermissionSeeder extends Seeder
             'manual expense view', 'manual expense create', 'manual expense cancel',
         ]);
 
-        Role::firstOrCreate(['name' => 'Teknisi'])->syncPermissions([
+        Role::firstOrCreate(['name' => 'Teknisi', 'guard_name' => 'web'])->syncPermissions([
             'dashboard view',
             'customer view',
             'technician view',
