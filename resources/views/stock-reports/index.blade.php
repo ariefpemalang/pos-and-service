@@ -38,21 +38,16 @@
             </a>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <a href="{{ route('asset-reports.index') }}" class="dash-card-link" title="Buka Laporan Aset Kategori">
-                <div class="stat-card">
-                    <div class="stat-label">Nilai Stok (HPP) <i class="bi bi-arrow-right-short"></i></div>
-                    <div class="stat-value" style="font-size:1.1rem">Rp {{ number_format($stats['total_stock_value'], 0, ',', '.') }}</div>
-                </div>
-            </a>
+            <div class="stat-card">
+                <div class="stat-label">Nilai Stok (HPP)</div>
+                <div class="stat-value" style="font-size:1.1rem">Rp {{ number_format($stats['total_stock_value'], 0, ',', '.') }}</div>
+            </div>
         </div>
     </div>
 
     <div class="data-panel">
-        <div class="data-panel-head d-flex justify-content-between align-items-center">
+        <div class="data-panel-head">
             <h2 class="data-panel-title">Kondisi Stok Barang</h2>
-            <a href="{{ route('asset-reports.index') }}" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-wallet2 me-1"></i> Laporan Uang Aset per Kategori
-            </a>
         </div>
         <div class="data-panel-body">
             @if (! empty($filter))
