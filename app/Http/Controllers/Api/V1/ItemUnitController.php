@@ -17,8 +17,8 @@ class ItemUnitController extends Controller
 
     public function __construct()
     {
-        $this->middleware('permission:item unit view')->only(['index', 'show']);
-        $this->middleware('permission:item unit create')->only('store');
+        $this->middleware('permission:item unit view|item view')->only(['index', 'show']);
+        $this->middleware('permission:item unit create|item create')->only('store');
         $this->middleware('permission:item unit edit')->only('update');
         $this->middleware('permission:item unit delete')->only('destroy');
     }

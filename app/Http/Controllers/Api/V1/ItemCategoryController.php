@@ -17,8 +17,8 @@ class ItemCategoryController extends Controller
 
     public function __construct()
     {
-        $this->middleware('permission:item category view')->only(['index', 'show']);
-        $this->middleware('permission:item category create')->only('store');
+        $this->middleware('permission:item category view|item view')->only(['index', 'show']);
+        $this->middleware('permission:item category create|item create')->only('store');
         $this->middleware('permission:item category edit')->only('update');
         $this->middleware('permission:item category delete')->only('destroy');
     }
